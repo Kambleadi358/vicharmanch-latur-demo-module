@@ -14,16 +14,230 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      account_expenses: {
+        Row: {
+          account_id: string
+          amount: number
+          created_at: string
+          id: string
+          item: string
+        }
+        Insert: {
+          account_id: string
+          amount: number
+          created_at?: string
+          id?: string
+          item: string
+        }
+        Update: {
+          account_id?: string
+          amount?: number
+          created_at?: string
+          id?: string
+          item?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "account_expenses_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "yearly_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notices: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          is_new: boolean | null
+          is_visible: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          is_new?: boolean | null
+          is_visible?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          is_new?: boolean | null
+          is_visible?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          category: string
+          correct_answer: string
+          created_at: string
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+        }
+        Insert: {
+          category: string
+          correct_answer: string
+          created_at?: string
+          id?: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+        }
+        Update: {
+          category?: string
+          correct_answer?: string
+          created_at?: string
+          id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          question?: string
+        }
+        Relationships: []
+      }
+      quiz_responses: {
+        Row: {
+          category: string
+          id: string
+          participant_name: string
+          score: number | null
+          submitted_at: string
+          tab_switches: number | null
+          total_questions: number | null
+        }
+        Insert: {
+          category: string
+          id?: string
+          participant_name: string
+          score?: number | null
+          submitted_at?: string
+          tab_switches?: number | null
+          total_questions?: number | null
+        }
+        Update: {
+          category?: string
+          id?: string
+          participant_name?: string
+          score?: number | null
+          submitted_at?: string
+          tab_switches?: number | null
+          total_questions?: number | null
+        }
+        Relationships: []
+      }
+      quiz_settings: {
+        Row: {
+          category: string
+          created_at: string
+          duration_minutes: number | null
+          id: string
+          is_active: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          duration_minutes?: number | null
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      yearly_accounts: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean | null
+          total_expense: number | null
+          total_income: number | null
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean | null
+          total_expense?: number | null
+          total_income?: number | null
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean | null
+          total_expense?: number | null
+          total_income?: number | null
+          updated_at?: string
+          year?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +364,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
