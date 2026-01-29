@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Instagram } from "lucide-react";
+import { Menu, X, Instagram, Shield } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { path: "/", label: "मुख्य पृष्ठ" },
@@ -16,6 +17,7 @@ const navLinks = [
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { isAdmin, user } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-primary-foreground/10">
@@ -66,7 +68,7 @@ const Header = () => {
             ))}
           </nav>
 
-          {/* Social & Mobile Toggle */}
+          {/* Social & Admin & Mobile Toggle */}
           <div className="flex items-center gap-4">
             <a
               href="https://instagram.com/dr.ambedkar_vicharmanch"
@@ -76,6 +78,13 @@ const Header = () => {
             >
               <Instagram size={20} />
             </a>
+            <Link
+              to={isAdmin ? "/admin" : "/admin-login"}
+              className="text-primary-foreground/80 hover:text-accent transition-colors"
+              title={isAdmin ? "Admin Dashboard" : "Admin Login"}
+            >
+              <Shield size={20} />
+            </Link>
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="lg:hidden text-primary-foreground p-2"

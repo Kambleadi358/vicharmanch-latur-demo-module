@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import QuizManagement from "@/components/admin/QuizManagement";
 import NoticeManagement from "@/components/admin/NoticeManagement";
 import AccountsManagement from "@/components/admin/AccountsManagement";
-import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home } from "lucide-react";
+import DonationManagement from "@/components/admin/DonationManagement";
+import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -71,7 +72,7 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Tabs defaultValue="quiz" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
               <TabsTrigger value="quiz" className="gap-2">
                 <HelpCircle className="h-4 w-4" />
                 <span className="hidden sm:inline">प्रश्नमंजुषा</span>
@@ -79,6 +80,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="notices" className="gap-2">
                 <Bell className="h-4 w-4" />
                 <span className="hidden sm:inline">सूचना</span>
+              </TabsTrigger>
+              <TabsTrigger value="donations" className="gap-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">देणगी</span>
               </TabsTrigger>
               <TabsTrigger value="accounts" className="gap-2">
                 <IndianRupee className="h-4 w-4" />
@@ -114,6 +119,21 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <NoticeManagement />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="donations">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    देणगी व्यवस्थापन
+                  </CardTitle>
+                  <CardDescription>घरनिहाय देणगी नियुक्त करा आणि जमा नोंदवा</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DonationManagement />
                 </CardContent>
               </Card>
             </TabsContent>
