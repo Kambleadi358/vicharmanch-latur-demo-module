@@ -156,6 +156,86 @@ export type Database = {
         }
         Relationships: []
       }
+      program_winners: {
+        Row: {
+          category: string
+          created_at: string
+          first_place: string | null
+          id: string
+          program_id: string
+          second_place: string | null
+          third_place: string | null
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          first_place?: string | null
+          id?: string
+          program_id: string
+          second_place?: string | null
+          third_place?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          first_place?: string | null
+          id?: string
+          program_id?: string
+          second_place?: string | null
+          third_place?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "program_winners_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      programs: {
+        Row: {
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          is_visible: boolean | null
+          location: string | null
+          name: string
+          status: string
+          time: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean | null
+          location?: string | null
+          name: string
+          status?: string
+          time: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean | null
+          location?: string | null
+          name?: string
+          status?: string
+          time?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       quiz_questions: {
         Row: {
           category: string
