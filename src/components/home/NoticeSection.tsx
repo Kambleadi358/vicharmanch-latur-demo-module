@@ -1,31 +1,57 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, Calendar, Clock } from "lucide-react";
+import { Bell, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-const notices = [
-  {
-    id: 1,
-    title: "आंबेडकर जयंती २०२५ तयारी बैठक",
-    date: "१५ मार्च २०२५",
-    description: "सर्व कार्यकर्त्यांसाठी महत्त्वाची बैठक. सायंकाळी ६ वाजता.",
-    isNew: true,
-  },
-  {
-    id: 2,
-    title: "प्रश्नमंजुषा नोंदणी सुरू",
-    date: "१ मार्च २०२५",
-    description: "छोटा गट, मोठा गट आणि खुला गट यासाठी नोंदणी सुरू झाली आहे.",
-    isNew: true,
-  },
-  {
-    id: 3,
-    title: "वार्षिक अहवाल प्रकाशित",
-    date: "२० फेब्रुवारी २०२५",
-    description: "२०२४ वर्षाचा संपूर्ण खाते अहवाल वेबसाइटवर उपलब्ध.",
-    isNew: false,
-  },
-];
+interface Notice {
+  id: string;
+  title: string;
+  description: string | null;
+  date: string;
+  is_new: boolean | null;
+}
 
 const NoticeSection = () => {
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchNotices = async () => {
+      const { data, error } = await supabase
+        .from("notices")
+        .select("id, title, description, date, is_new")
+        .eq("is_visible", true)
+        .order("created_at", { ascending: false })
+        .limit(6);
+
+      if (!error && data) {
+        setNotices(data);
+      }
+      setIsLoading(false);
+    };
+
+    fetchNotices();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <section className="py-20 bg-secondary">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-pulse flex flex-col items-center gap-4">
+              <div className="h-8 w-48 bg-muted rounded"></div>
+              <div className="h-4 w-32 bg-muted rounded"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (notices.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-20 bg-secondary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -54,10 +80,10 @@ const NoticeSection = () => {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               className={`card-hover bg-card rounded-xl p-6 border-2 ${
-                notice.isNew ? "border-accent pulse-border" : "border-border"
+                notice.is_new ? "border-accent pulse-border" : "border-border"
               }`}
             >
-              {notice.isNew && (
+              {notice.is_new && (
                 <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-full mb-4">
                   नवीन
                 </span>

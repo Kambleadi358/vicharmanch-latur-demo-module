@@ -46,6 +46,83 @@ export type Database = {
           },
         ]
       }
+      home_donations: {
+        Row: {
+          assigned_amount: number
+          created_at: string
+          home_id: string
+          id: string
+          notes: string | null
+          paid_amount: number
+          payment_date: string | null
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          assigned_amount?: number
+          created_at?: string
+          home_id: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number
+          payment_date?: string | null
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          assigned_amount?: number
+          created_at?: string
+          home_id?: string
+          id?: string
+          notes?: string | null
+          paid_amount?: number
+          payment_date?: string | null
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "home_donations_home_id_fkey"
+            columns: ["home_id"]
+            isOneToOne: false
+            referencedRelation: "homes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      homes: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          created_at: string
+          home_name: string | null
+          home_number: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          home_name?: string | null
+          home_number: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          home_name?: string | null
+          home_number?: number
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notices: {
         Row: {
           created_at: string
