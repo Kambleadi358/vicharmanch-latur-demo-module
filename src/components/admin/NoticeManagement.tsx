@@ -17,6 +17,7 @@ interface Notice {
   date: string;
   is_new: boolean | null;
   is_visible: boolean | null;
+  notice_type: string;
   created_at: string;
 }
 
@@ -30,6 +31,7 @@ const NoticeManagement = () => {
     date: new Date().toISOString().split("T")[0],
     is_new: true,
     is_visible: true,
+    notice_type: "notice" as "notice" | "meeting_minutes",
   });
   const { toast } = useToast();
 
@@ -53,6 +55,7 @@ const NoticeManagement = () => {
       date: new Date().toISOString().split("T")[0],
       is_new: true,
       is_visible: true,
+      notice_type: "notice",
     });
     setIsAdding(false);
     setEditingId(null);
@@ -92,6 +95,7 @@ const NoticeManagement = () => {
       date: notice.date,
       is_new: notice.is_new ?? true,
       is_visible: notice.is_visible ?? true,
+      notice_type: (notice.notice_type as "notice" | "meeting_minutes") ?? "notice",
     });
     setEditingId(notice.id);
     setIsAdding(true);
@@ -144,6 +148,31 @@ const NoticeManagement = () => {
                 rows={3}
               />
             </div>
+            <div className="space-y-2">
+              <Label>प्रकार</Label>
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="notice_type"
+                    checked={formData.notice_type === "notice"}
+                    onChange={() => setFormData({ ...formData, notice_type: "notice" })}
+                    className="w-4 h-4 text-primary"
+                  />
+                  <span>सूचना</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="notice_type"
+                    checked={formData.notice_type === "meeting_minutes"}
+                    onChange={() => setFormData({ ...formData, notice_type: "meeting_minutes" })}
+                    className="w-4 h-4 text-primary"
+                  />
+                  <span>इतिवृत्त (Minutes of Meeting)</span>
+                </label>
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>तारीख</Label>
@@ -176,6 +205,7 @@ const NoticeManagement = () => {
         <TableHeader>
           <TableRow>
             <TableHead>शीर्षक</TableHead>
+            <TableHead>प्रकार</TableHead>
             <TableHead>तारीख</TableHead>
             <TableHead>स्थिती</TableHead>
             <TableHead>दृश्यता</TableHead>
@@ -190,6 +220,15 @@ const NoticeManagement = () => {
                   <p className="font-medium">{notice.title}</p>
                   {notice.description && <p className="text-sm text-muted-foreground truncate max-w-xs">{notice.description}</p>}
                 </div>
+              </TableCell>
+              <TableCell>
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  notice.notice_type === "meeting_minutes" 
+                    ? "bg-primary/10 text-primary" 
+                    : "bg-secondary text-secondary-foreground"
+                }`}>
+                  {notice.notice_type === "meeting_minutes" ? "इतिवृत्त" : "सूचना"}
+                </span>
               </TableCell>
               <TableCell>{notice.date}</TableCell>
               <TableCell>
