@@ -7,10 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import QuizManagement from "@/components/admin/QuizManagement";
 import NoticeManagement from "@/components/admin/NoticeManagement";
-import AccountsManagement from "@/components/admin/AccountsManagement";
 import DonationManagement from "@/components/admin/DonationManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
-import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, Users, CalendarDays } from "lucide-react";
+import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -73,7 +72,7 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Tabs defaultValue="programs" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
               <TabsTrigger value="programs" className="gap-2">
                 <CalendarDays className="h-4 w-4" />
                 <span className="hidden sm:inline">कार्यक्रम</span>
@@ -87,12 +86,8 @@ const AdminDashboard = () => {
                 <span className="hidden sm:inline">सूचना</span>
               </TabsTrigger>
               <TabsTrigger value="donations" className="gap-2">
-                <Users className="h-4 w-4" />
-                <span className="hidden sm:inline">देणगी</span>
-              </TabsTrigger>
-              <TabsTrigger value="accounts" className="gap-2">
                 <IndianRupee className="h-4 w-4" />
-                <span className="hidden sm:inline">खाते</span>
+                <span className="hidden sm:inline">देणगी व खाते</span>
               </TabsTrigger>
             </TabsList>
 
@@ -136,30 +131,13 @@ const AdminDashboard = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    देणगी व्यवस्थापन
+                    <IndianRupee className="h-5 w-5" />
+                    देणगी व खाते व्यवस्थापन
                   </CardTitle>
-                  <CardDescription>घरनिहाय देणगी नियुक्त करा आणि जमा नोंदवा</CardDescription>
+                  <CardDescription>घरमालकांकडून देणगी जमा करा आणि खर्च व्यवस्थापित करा</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <DonationManagement />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="accounts">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <IndianRupee className="h-5 w-5" />
-                    खाते व्यवस्थापन
-                  </CardTitle>
-                  <CardDescription>
-                    वर्षनिहाय जमा-खर्च व्यवस्थापित करा
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <AccountsManagement />
                 </CardContent>
               </Card>
             </TabsContent>
