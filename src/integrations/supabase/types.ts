@@ -131,6 +131,7 @@ export type Database = {
           id: string
           is_new: boolean | null
           is_visible: boolean | null
+          notice_type: string
           title: string
           updated_at: string
         }
@@ -141,6 +142,7 @@ export type Database = {
           id?: string
           is_new?: boolean | null
           is_visible?: boolean | null
+          notice_type?: string
           title: string
           updated_at?: string
         }
@@ -151,6 +153,7 @@ export type Database = {
           id?: string
           is_new?: boolean | null
           is_visible?: boolean | null
+          notice_type?: string
           title?: string
           updated_at?: string
         }
