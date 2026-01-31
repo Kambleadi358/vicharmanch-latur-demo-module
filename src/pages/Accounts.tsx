@@ -1,39 +1,82 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { Wallet, TrendingUp, TrendingDown, Eye, Calendar, FileText } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Eye, Calendar, FileText, Loader2 } from "lucide-react";
 
-const yearlyData = [
-  {
-    year: "२०२४",
-    income: "₹ १,२५,०००",
-    expense: "₹ १,१८,५००",
-    balance: "₹ ६,५००",
-    isActive: true,
-    expenses: [
-      { item: "मंडप व डेकोरेशन", amount: "₹ ४५,०००" },
-      { item: "साउंड सिस्टम", amount: "₹ १५,०००" },
-      { item: "बक्षीस व प्रमाणपत्रे", amount: "₹ २५,०००" },
-      { item: "भोजन व्यवस्था", amount: "₹ २८,५००" },
-      { item: "इतर खर्च", amount: "₹ ५,०००" },
-    ],
-  },
-  {
-    year: "२०२३",
-    income: "₹ १,१०,०००",
-    expense: "₹ १,०५,०००",
-    balance: "₹ ५,०००",
-    isActive: false,
-    expenses: [
-      { item: "मंडप व डेकोरेशन", amount: "₹ ४०,०००" },
-      { item: "साउंड सिस्टम", amount: "₹ १२,०००" },
-      { item: "बक्षीस व प्रमाणपत्रे", amount: "₹ २०,०००" },
-      { item: "भोजन व्यवस्था", amount: "₹ २८,०००" },
-      { item: "इतर खर्च", amount: "₹ ५,०००" },
-    ],
-  },
-];
+interface YearlyAccount {
+  id: string;
+  year: string;
+  total_income: number | null;
+  total_expense: number | null;
+  is_visible: boolean | null;
+}
+
+interface AccountExpense {
+  id: string;
+  account_id: string;
+  item: string;
+  amount: number;
+}
 
 const Accounts = () => {
+  const [accounts, setAccounts] = useState<YearlyAccount[]>([]);
+  const [expensesByAccount, setExpensesByAccount] = useState<Record<string, AccountExpense[]>>({});
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAccountsData();
+  }, []);
+
+  const fetchAccountsData = async () => {
+    setIsLoading(true);
+    
+    // Fetch visible yearly accounts
+    const { data: accountsData, error: accountsError } = await supabase
+      .from("yearly_accounts")
+      .select("*")
+      .eq("is_visible", true)
+      .order("year", { ascending: false });
+
+    if (accountsError) {
+      console.error("Error fetching accounts:", accountsError);
+      setIsLoading(false);
+      return;
+    }
+
+    setAccounts(accountsData || []);
+
+    // Fetch expenses for all visible accounts
+    if (accountsData && accountsData.length > 0) {
+      const accountIds = accountsData.map(a => a.id);
+      const { data: expensesData, error: expensesError } = await supabase
+        .from("account_expenses")
+        .select("*")
+        .in("account_id", accountIds);
+
+      if (!expensesError && expensesData) {
+        const grouped = expensesData.reduce((acc, expense) => {
+          if (!acc[expense.account_id]) {
+            acc[expense.account_id] = [];
+          }
+          acc[expense.account_id].push(expense);
+          return acc;
+        }, {} as Record<string, AccountExpense[]>);
+        setExpensesByAccount(grouped);
+      }
+    }
+
+    setIsLoading(false);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("mr-IN", { 
+      style: "currency", 
+      currency: "INR",
+      maximumFractionDigits: 0 
+    }).format(amount);
+  };
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -88,92 +131,127 @@ const Accounts = () => {
             <div className="decorative-line mt-4" />
           </motion.div>
 
-          <div className="space-y-8">
-            {yearlyData.map((data, index) => (
-              <motion.div
-                key={data.year}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-card rounded-xl border border-border overflow-hidden"
-              >
-                {/* Header */}
-                <div className="bg-primary p-6 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Calendar className="text-primary-foreground" size={24} />
-                    <h3 className="text-2xl font-bold text-primary-foreground">
-                      वर्ष {data.year}
-                    </h3>
-                  </div>
-                  {data.isActive && (
-                    <span className="px-3 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-full">
-                      चालू वर्ष
-                    </span>
-                  )}
-                </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+          ) : accounts.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-xl p-8 border border-border text-center"
+            >
+              <Wallet className="mx-auto mb-6 text-accent" size={64} />
+              <h2 className="text-2xl font-bold text-foreground mb-4">
+                सध्या कोणतीही खाते माहिती उपलब्ध नाही
+              </h2>
+              <p className="text-muted-foreground">
+                प्रशासकाने खाते माहिती प्रकाशित केल्यावर ती येथे दिसेल.
+              </p>
+            </motion.div>
+          ) : (
+            <div className="space-y-8">
+              {accounts.map((account, index) => {
+                const expenses = expensesByAccount[account.id] || [];
+                const totalIncome = account.total_income || 0;
+                const totalExpense = account.total_expense || 0;
+                const balance = totalIncome - totalExpense;
+                const currentYear = new Date().getFullYear().toString();
+                const isCurrentYear = account.year === currentYear;
 
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
-                  <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                      <TrendingUp className="text-white" size={24} />
+                return (
+                  <motion.div
+                    key={account.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: index * 0.1 }}
+                    className="bg-card rounded-xl border border-border overflow-hidden"
+                  >
+                    {/* Header */}
+                    <div className="bg-primary p-6 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Calendar className="text-primary-foreground" size={24} />
+                        <h3 className="text-2xl font-bold text-primary-foreground">
+                          वर्ष {account.year}
+                        </h3>
+                      </div>
+                      {isCurrentYear && (
+                        <span className="px-3 py-1 bg-accent text-accent-foreground text-sm font-semibold rounded-full">
+                          चालू वर्ष
+                        </span>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">एकूण जमा</p>
-                      <p className="text-xl font-bold text-green-600">{data.income}</p>
-                    </div>
-                  </div>
 
-                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                      <TrendingDown className="text-white" size={24} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">एकूण खर्च</p>
-                      <p className="text-xl font-bold text-red-600">{data.expense}</p>
-                    </div>
-                  </div>
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+                      <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                          <TrendingUp className="text-white" size={24} />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">एकूण जमा</p>
+                          <p className="text-xl font-bold text-green-600">{formatCurrency(totalIncome)}</p>
+                        </div>
+                      </div>
 
-                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                      <Wallet className="text-white" size={24} />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">शिल्लक</p>
-                      <p className="text-xl font-bold text-blue-600">{data.balance}</p>
-                    </div>
-                  </div>
-                </div>
+                      <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+                          <TrendingDown className="text-white" size={24} />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">एकूण खर्च</p>
+                          <p className="text-xl font-bold text-red-600">{formatCurrency(totalExpense)}</p>
+                        </div>
+                      </div>
 
-                {/* Expense Details */}
-                <div className="px-6 pb-6">
-                  <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <FileText size={18} className="text-accent" />
-                    खर्चाचा तपशील
-                  </h4>
-                  <div className="bg-secondary rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left p-4 text-muted-foreground font-medium">बाब</th>
-                          <th className="text-right p-4 text-muted-foreground font-medium">रक्कम</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.expenses.map((expense, i) => (
-                          <tr key={i} className="border-b border-border last:border-0">
-                            <td className="p-4 text-foreground">{expense.item}</td>
-                            <td className="p-4 text-right text-foreground font-medium">{expense.amount}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                          <Wallet className="text-white" size={24} />
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">शिल्लक</p>
+                          <p className={`text-xl font-bold ${balance >= 0 ? "text-blue-600" : "text-red-600"}`}>
+                            {formatCurrency(balance)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Expense Details */}
+                    {expenses.length > 0 && (
+                      <div className="px-6 pb-6">
+                        <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                          <FileText size={18} className="text-accent" />
+                          खर्चाचा तपशील
+                        </h4>
+                        <div className="bg-secondary rounded-lg overflow-hidden">
+                          <table className="w-full">
+                            <thead>
+                              <tr className="border-b border-border">
+                                <th className="text-left p-4 text-muted-foreground font-medium">बाब</th>
+                                <th className="text-right p-4 text-muted-foreground font-medium">रक्कम</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {expenses.map((expense) => (
+                                <tr key={expense.id} className="border-b border-border last:border-0">
+                                  <td className="p-4 text-foreground">{expense.item}</td>
+                                  <td className="p-4 text-right text-foreground font-medium">
+                                    {formatCurrency(expense.amount)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 

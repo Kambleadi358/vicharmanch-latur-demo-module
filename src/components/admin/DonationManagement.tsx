@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Home, IndianRupee, Check, X, Edit2, Save, Search, Filter, Plus, Trash2, Wallet, TrendingDown, TrendingUp } from "lucide-react";
+import { Home, IndianRupee, Check, X, Edit2, Save, Search, Filter, Plus, Trash2, Wallet, TrendingDown, TrendingUp, Eye, EyeOff } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -296,6 +297,26 @@ const DonationManagement = () => {
     }
   };
 
+  const toggleAccountVisibility = async () => {
+    if (!yearlyAccount) return;
+    
+    const newVisibility = !yearlyAccount.is_visible;
+    const { error } = await supabase
+      .from("yearly_accounts")
+      .update({ is_visible: newVisibility })
+      .eq("id", yearlyAccount.id);
+
+    if (error) {
+      toast({ title: "त्रुटी", description: "दृश्यता अपडेट करण्यात त्रुटी", variant: "destructive" });
+    } else {
+      toast({ 
+        title: "यशस्वी", 
+        description: newVisibility ? "खाते माहिती आता सार्वजनिक आहे" : "खाते माहिती आता लपलेली आहे" 
+      });
+      fetchOrCreateYearlyAccount();
+    }
+  };
+
   const getPaymentStatus = (donation: DonationData | undefined) => {
     if (!donation) return "none";
     if (donation.paid_amount >= donation.assigned_amount && donation.assigned_amount > 0) return "paid";
@@ -391,6 +412,35 @@ const DonationManagement = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Visibility Toggle */}
+      <Card className={yearlyAccount?.is_visible ? "border-green-500 bg-green-50 dark:bg-green-900/20" : "border-orange-500 bg-orange-50 dark:bg-orange-900/20"}>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {yearlyAccount?.is_visible ? (
+                <Eye className="h-5 w-5 text-green-600" />
+              ) : (
+                <EyeOff className="h-5 w-5 text-orange-600" />
+              )}
+              <div>
+                <p className="font-medium">
+                  {yearlyAccount?.is_visible ? "खाते माहिती सार्वजनिक आहे" : "खाते माहिती लपलेली आहे"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {yearlyAccount?.is_visible 
+                    ? "वापरकर्ते /accounts पेजवर ही माहिती पाहू शकतात" 
+                    : "ही माहिती सार्वजनिक करण्यासाठी टॉगल करा"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={yearlyAccount?.is_visible || false}
+              onCheckedChange={toggleAccountVisibility}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Controls */}
       <Card>
