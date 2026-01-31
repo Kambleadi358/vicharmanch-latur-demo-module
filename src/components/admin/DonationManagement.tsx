@@ -7,11 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Home, IndianRupee, Check, X, Edit2, Save, Search, Filter, Plus, Trash2, Wallet, TrendingDown, TrendingUp, Eye, EyeOff } from "lucide-react";
+import { Home, IndianRupee, X, Edit2, Save, Search, Filter, Plus, Trash2, Wallet, TrendingDown, TrendingUp, Eye, EyeOff, Download, FileSpreadsheet } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface HomeData {
   id: string;
@@ -27,6 +26,7 @@ interface DonationData {
   year: string;
   assigned_amount: number;
   paid_amount: number;
+  payment_date: string | null;
   notes: string | null;
 }
 
@@ -105,7 +105,6 @@ const DonationManagement = () => {
   };
 
   const fetchOrCreateYearlyAccount = async () => {
-    // Check if account exists for this year
     const { data: existingAccount } = await supabase
       .from("yearly_accounts")
       .select("*")
@@ -116,7 +115,6 @@ const DonationManagement = () => {
       setYearlyAccount(existingAccount);
       fetchExpenses(existingAccount.id);
     } else {
-      // Create new account for this year
       const { data: newAccount, error } = await supabase
         .from("yearly_accounts")
         .insert({ year: selectedYear, total_income: 0, total_expense: 0, is_visible: false })
@@ -190,13 +188,17 @@ const DonationManagement = () => {
   const handleSaveDonation = async () => {
     if (!editingDonation) return;
 
+    const currentDonation = donations.find(d => d.id === editingDonation);
+    const paidAmountChanged = currentDonation && currentDonation.paid_amount !== editForm.paid_amount;
+
     const { error } = await supabase
       .from("home_donations")
       .update({
         assigned_amount: editForm.assigned_amount,
         paid_amount: editForm.paid_amount,
         notes: editForm.notes || null,
-        payment_date: editForm.paid_amount > 0 ? new Date().toISOString() : null,
+        // Update payment date if paid amount changed or if this is a new payment
+        payment_date: editForm.paid_amount > 0 && paidAmountChanged ? new Date().toISOString() : currentDonation?.payment_date,
       })
       .eq("id", editingDonation);
 
@@ -248,7 +250,14 @@ const DonationManagement = () => {
   const updateYearlyIncome = async () => {
     if (!yearlyAccount) return;
     
-    const totalPaid = donations.reduce((sum, d) => sum + Number(d.paid_amount), 0);
+    // Recalculate from database
+    const { data } = await supabase
+      .from("home_donations")
+      .select("paid_amount")
+      .eq("year", selectedYear);
+    
+    const totalPaid = data?.reduce((sum, d) => sum + Number(d.paid_amount), 0) || 0;
+    
     await supabase
       .from("yearly_accounts")
       .update({ total_income: totalPaid })
@@ -350,6 +359,72 @@ const DonationManagement = () => {
     return new Intl.NumberFormat("mr-IN", { style: "currency", currency: "INR" }).format(amount);
   };
 
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("mr-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    });
+  };
+
+  // Download full account report
+  const downloadAccountReport = () => {
+    // Prepare donation data
+    const donationRows = donations
+      .filter(d => d.paid_amount > 0)
+      .map(d => {
+        const home = homes.find(h => h.id === d.home_id);
+        return {
+          name: home?.home_name || `घर क्र. ${home?.home_number}`,
+          amount: d.paid_amount,
+          date: d.payment_date
+        };
+      })
+      .sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
+
+    // CSV content
+    let csvContent = "खाते अहवाल - वर्ष " + selectedYear + "\n\n";
+    csvContent += "=== जमा तपशील ===\n";
+    csvContent += "क्रमांक,घरमालकाचे नाव,तारीख,रक्कम\n";
+    
+    donationRows.forEach((row, index) => {
+      csvContent += `${index + 1},"${row.name}","${formatDate(row.date)}","₹${row.amount}"\n`;
+    });
+    
+    csvContent += `\nएकूण जमा,,,${formatCurrency(totalPaid)}\n\n`;
+    
+    csvContent += "=== खर्च तपशील ===\n";
+    csvContent += "क्रमांक,बाब,रक्कम\n";
+    
+    expenses.forEach((expense, index) => {
+      csvContent += `${index + 1},"${expense.item}","₹${expense.amount}"\n`;
+    });
+    
+    csvContent += `\nएकूण खर्च,,${formatCurrency(totalExpense)}\n`;
+    csvContent += `\n=== सारांश ===\n`;
+    csvContent += `एकूण जमा,${formatCurrency(totalPaid)}\n`;
+    csvContent += `एकूण खर्च,${formatCurrency(totalExpense)}\n`;
+    csvContent += `शिल्लक रक्कम,${formatCurrency(remainingBalance)}\n`;
+
+    // Add BOM for UTF-8 support
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `account_report_${selectedYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({ title: "यशस्वी", description: "रिपोर्ट डाउनलोड झाला" });
+  };
+
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
@@ -413,10 +488,10 @@ const DonationManagement = () => {
         </Card>
       </div>
 
-      {/* Visibility Toggle */}
+      {/* Visibility Toggle & Report Download */}
       <Card className={yearlyAccount?.is_visible ? "border-green-500 bg-green-50 dark:bg-green-900/20" : "border-orange-500 bg-orange-50 dark:bg-orange-900/20"}>
         <CardContent className="py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
               {yearlyAccount?.is_visible ? (
                 <Eye className="h-5 w-5 text-green-600" />
@@ -434,10 +509,16 @@ const DonationManagement = () => {
                 </p>
               </div>
             </div>
-            <Switch
-              checked={yearlyAccount?.is_visible || false}
-              onCheckedChange={toggleAccountVisibility}
-            />
+            <div className="flex items-center gap-4">
+              <Button variant="outline" onClick={downloadAccountReport} className="gap-2">
+                <Download className="h-4 w-4" />
+                रिपोर्ट डाउनलोड
+              </Button>
+              <Switch
+                checked={yearlyAccount?.is_visible || false}
+                onCheckedChange={toggleAccountVisibility}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -445,7 +526,7 @@ const DonationManagement = () => {
       {/* Controls */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <Home className="h-5 w-5" />
               देणगी व्यवस्थापन - {selectedYear}
@@ -621,7 +702,7 @@ const DonationManagement = () => {
               <TableHead>संपर्क</TableHead>
               <TableHead className="text-right">नियुक्त</TableHead>
               <TableHead className="text-right">दिले</TableHead>
-              <TableHead className="text-right">बाकी</TableHead>
+              <TableHead>तारीख</TableHead>
               <TableHead>स्थिती</TableHead>
               <TableHead>क्रिया</TableHead>
             </TableRow>
@@ -694,10 +775,8 @@ const DonationManagement = () => {
                       <span className="text-green-600">₹{donation?.paid_amount?.toLocaleString() || 0}</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <span className={remaining > 0 ? "text-red-600" : "text-green-600"}>
-                      ₹{remaining.toLocaleString()}
-                    </span>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {donation?.payment_date ? formatDate(donation.payment_date) : "-"}
                   </TableCell>
                   <TableCell>
                     {status === "paid" && <Badge className="bg-green-500">पूर्ण</Badge>}
