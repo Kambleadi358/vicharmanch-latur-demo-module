@@ -3,14 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { BookOpen, Users, Award, AlertTriangle, Clock, CheckCircle, Loader2 } from "lucide-react";
+import { BookOpen, Award, AlertTriangle, Clock, CheckCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface QuizCategory {
-  category: string;
-  is_active: boolean;
-  duration_minutes: number | null;
-}
 
 const rules = [
   "प्रश्नमंजुषा डॉ. बाबासाहेब आंबेडकरांच्या जीवनावर आधारित आहे",
@@ -21,24 +15,26 @@ const rules = [
 ];
 
 const Quiz = () => {
-  const [activeCategories, setActiveCategories] = useState<QuizCategory[]>([]);
+  const [isQuizActive, setIsQuizActive] = useState(false);
+  const [quizDuration, setQuizDuration] = useState(30);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [step, setStep] = useState<"register" | "instructions">("register");
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchActiveCategories();
+    checkQuizActive();
   }, []);
 
-  const fetchActiveCategories = async () => {
+  const checkQuizActive = async () => {
     setIsLoading(true);
+    // Check if any quiz is active
     const { data, error } = await supabase
       .from("quiz_settings")
-      .select("category, is_active, duration_minutes")
-      .eq("is_active", true);
+      .select("is_active, duration_minutes")
+      .eq("is_active", true)
+      .limit(1);
 
     if (error) {
       toast({
@@ -46,15 +42,19 @@ const Quiz = () => {
         description: "क्विझ माहिती लोड करण्यात त्रुटी",
         variant: "destructive",
       });
+    } else if (data && data.length > 0) {
+      setIsQuizActive(true);
+      setQuizDuration(data[0].duration_minutes || 30);
     } else {
-      setActiveCategories(data || []);
+      setIsQuizActive(false);
     }
     setIsLoading(false);
   };
 
   const handleStartQuiz = () => {
-    if (!name || !selectedCategory) return;
-    navigate(`/quiz/${encodeURIComponent(selectedCategory)}`, { 
+    if (!name) return;
+    // Navigate to quiz with a generic category - all questions will be fetched
+    navigate(`/quiz/general`, { 
       state: { participantName: name } 
     });
   };
@@ -90,7 +90,7 @@ const Quiz = () => {
             <div className="flex items-center justify-center py-20">
               <Loader2 className="h-8 w-8 animate-spin text-accent" />
             </div>
-          ) : activeCategories.length === 0 ? (
+          ) : !isQuizActive ? (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -132,34 +132,16 @@ const Quiz = () => {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-foreground font-medium mb-4">
-                      गट निवडा * (सक्रिय क्विझ)
-                    </label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {activeCategories.map((cat) => (
-                        <button
-                          key={cat.category}
-                          onClick={() => setSelectedCategory(cat.category)}
-                          className={`p-4 rounded-lg border-2 transition-all ${
-                            selectedCategory === cat.category
-                              ? "border-accent bg-accent/10"
-                              : "border-border hover:border-accent/50"
-                          }`}
-                        >
-                          <Users className="mx-auto mb-2 text-accent" size={24} />
-                          <div className="font-semibold text-foreground">{cat.category}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {cat.duration_minutes || 30} मिनिटे
-                          </div>
-                        </button>
-                      ))}
-                    </div>
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="flex items-center gap-2 text-foreground">
+                      <Clock className="h-5 w-5 text-accent" />
+                      <span>वेळ मर्यादा: <strong>{quizDuration} मिनिटे</strong></span>
+                    </p>
                   </div>
 
                   <button
-                    onClick={() => name && selectedCategory && setStep("instructions")}
-                    disabled={!name || !selectedCategory}
+                    onClick={() => name && setStep("instructions")}
+                    disabled={!name}
                     className="w-full btn-hero disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     पुढे जा
@@ -180,7 +162,7 @@ const Quiz = () => {
                   <Clock className="mx-auto mb-4 text-accent" size={32} />
                   <h3 className="font-semibold text-foreground mb-2">वेळ</h3>
                   <p className="text-sm text-muted-foreground">
-                    निश्चित वेळ मर्यादा
+                    {quizDuration} मिनिटे वेळ मर्यादा
                   </p>
                 </div>
                 <div className="card-hover bg-card rounded-xl p-6 border border-border text-center">

@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Trash2, Edit2, Save, X } from "lucide-react";
+import { Plus, Trash2, Save, X, Download, FileSpreadsheet } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface QuizQuestion {
@@ -43,7 +43,8 @@ const QuizManagement = () => {
   const [settings, setSettings] = useState<QuizSettings[]>([]);
   const [responses, setResponses] = useState<QuizResponse[]>([]);
   const [isAddingQuestion, setIsAddingQuestion] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isQuizActive, setIsQuizActive] = useState(false);
+  const [quizDuration, setQuizDuration] = useState(30);
   const [newQuestion, setNewQuestion] = useState({
     question: "",
     option_a: "",
@@ -76,11 +77,17 @@ const QuizManagement = () => {
       toast({ title: "त्रुटी", description: "सेटिंग्स लोड करण्यात त्रुटी", variant: "destructive" });
     } else {
       setSettings(data || []);
+      // Check if any quiz is active
+      const activeSetting = data?.find(s => s.is_active);
+      setIsQuizActive(!!activeSetting);
+      if (activeSetting) {
+        setQuizDuration(activeSetting.duration_minutes || 30);
+      }
     }
   };
 
   const fetchResponses = async () => {
-    const { data, error } = await supabase.from("quiz_responses").select("*").order("submitted_at", { ascending: false });
+    const { data, error } = await supabase.from("quiz_responses").select("*").order("score", { ascending: false });
     if (error) {
       toast({ title: "त्रुटी", description: "प्रतिसाद लोड करण्यात त्रुटी", variant: "destructive" });
     } else {
@@ -110,26 +117,103 @@ const QuizManagement = () => {
     }
   };
 
-  const toggleQuizActive = async (category: string, currentStatus: boolean) => {
-    const existingSetting = settings.find((s) => s.category === category);
-    if (existingSetting) {
-      const { error } = await supabase.from("quiz_settings").update({ is_active: !currentStatus }).eq("id", existingSetting.id);
+  const toggleQuizActive = async () => {
+    const newStatus = !isQuizActive;
+    
+    // First check if we have a general setting
+    const generalSetting = settings.find(s => s.category === "general");
+    
+    if (generalSetting) {
+      // Update all settings to match the new status
+      const { error } = await supabase
+        .from("quiz_settings")
+        .update({ is_active: newStatus, duration_minutes: quizDuration })
+        .eq("id", generalSetting.id);
+      
       if (error) {
         toast({ title: "त्रुटी", description: "स्थिती अपडेट करण्यात त्रुटी", variant: "destructive" });
-      } else {
-        fetchSettings();
+        return;
       }
     } else {
-      const { error } = await supabase.from("quiz_settings").insert([{ category, is_active: true, duration_minutes: 30 }]);
+      // Create new general setting
+      const { error } = await supabase
+        .from("quiz_settings")
+        .insert([{ category: "general", is_active: newStatus, duration_minutes: quizDuration }]);
+      
       if (error) {
         toast({ title: "त्रुटी", description: "सेटिंग तयार करण्यात त्रुटी", variant: "destructive" });
+        return;
+      }
+    }
+    
+    setIsQuizActive(newStatus);
+    toast({ 
+      title: "यशस्वी", 
+      description: newStatus ? "क्विझ सक्रिय केला" : "क्विझ निष्क्रिय केला" 
+    });
+    fetchSettings();
+  };
+
+  const updateDuration = async () => {
+    const generalSetting = settings.find(s => s.category === "general");
+    
+    if (generalSetting) {
+      const { error } = await supabase
+        .from("quiz_settings")
+        .update({ duration_minutes: quizDuration })
+        .eq("id", generalSetting.id);
+      
+      if (error) {
+        toast({ title: "त्रुटी", description: "वेळ अपडेट करण्यात त्रुटी", variant: "destructive" });
       } else {
-        fetchSettings();
+        toast({ title: "यशस्वी", description: "वेळ अपडेट केला" });
       }
     }
   };
 
-  const categories = [...new Set(questions.map((q) => q.category))];
+  // Download report as CSV
+  const downloadReport = () => {
+    if (responses.length === 0) {
+      toast({ title: "माहिती नाही", description: "डाउनलोड करण्यासाठी प्रतिसाद नाहीत", variant: "destructive" });
+      return;
+    }
+
+    // Sort by score descending
+    const sortedResponses = [...responses].sort((a, b) => b.score - a.score);
+
+    // Create CSV content
+    const headers = ["क्रमांक", "नाव", "गुण", "एकूण प्रश्न", "टक्केवारी", "टॅब स्विच", "वेळ"];
+    const rows = sortedResponses.map((r, index) => {
+      const percentage = Math.round((r.score / r.total_questions) * 100);
+      return [
+        index + 1,
+        r.participant_name,
+        r.score,
+        r.total_questions,
+        `${percentage}%`,
+        r.tab_switches || 0,
+        new Date(r.submitted_at).toLocaleString("mr-IN"),
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    // Add BOM for UTF-8 support in Excel
+    const BOM = "\uFEFF";
+    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `quiz_report_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast({ title: "यशस्वी", description: "रिपोर्ट डाउनलोड झाला" });
+  };
 
   return (
     <div className="space-y-6">
@@ -142,7 +226,7 @@ const QuizManagement = () => {
 
         <TabsContent value="questions" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">प्रश्न व्यवस्थापन</h3>
+            <h3 className="text-lg font-semibold">प्रश्न व्यवस्थापन ({questions.length} प्रश्न)</h3>
             <Button onClick={() => setIsAddingQuestion(true)} disabled={isAddingQuestion}>
               <Plus className="h-4 w-4 mr-2" /> नवीन प्रश्न
             </Button>
@@ -176,24 +260,18 @@ const QuizManagement = () => {
                     <Input value={newQuestion.option_d} onChange={(e) => setNewQuestion({ ...newQuestion, option_d: e.target.value })} />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>बरोबर उत्तर</Label>
-                    <select
-                      className="w-full border rounded-md p-2"
-                      value={newQuestion.correct_answer}
-                      onChange={(e) => setNewQuestion({ ...newQuestion, correct_answer: e.target.value })}
-                    >
-                      <option value="A">A</option>
-                      <option value="B">B</option>
-                      <option value="C">C</option>
-                      <option value="D">D</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>विभाग</Label>
-                    <Input value={newQuestion.category} onChange={(e) => setNewQuestion({ ...newQuestion, category: e.target.value })} />
-                  </div>
+                <div className="space-y-2">
+                  <Label>बरोबर उत्तर</Label>
+                  <select
+                    className="w-full border rounded-md p-2"
+                    value={newQuestion.correct_answer}
+                    onChange={(e) => setNewQuestion({ ...newQuestion, correct_answer: e.target.value })}
+                  >
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                  </select>
                 </div>
                 <div className="flex gap-2">
                   <Button onClick={handleAddQuestion}>
@@ -210,17 +288,17 @@ const QuizManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>क्र.</TableHead>
                 <TableHead>प्रश्न</TableHead>
-                <TableHead>विभाग</TableHead>
                 <TableHead>बरोबर उत्तर</TableHead>
                 <TableHead>क्रिया</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {questions.map((q) => (
+              {questions.map((q, index) => (
                 <TableRow key={q.id}>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell className="max-w-md truncate">{q.question}</TableCell>
-                  <TableCell>{q.category}</TableCell>
                   <TableCell>{q.correct_answer}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon" onClick={() => handleDeleteQuestion(q.id)}>
@@ -235,59 +313,103 @@ const QuizManagement = () => {
 
         <TabsContent value="settings" className="space-y-4">
           <h3 className="text-lg font-semibold">क्विझ सेटिंग्स</h3>
-          <div className="grid gap-4">
-            {categories.length > 0 ? (
-              categories.map((category) => {
-                const setting = settings.find((s) => s.category === category);
-                return (
-                  <Card key={category}>
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div>
-                        <p className="font-medium">{category}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {questions.filter((q) => q.category === category).length} प्रश्न
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className="text-sm">{setting?.is_active ? "सक्रिय" : "निष्क्रिय"}</span>
-                        <Switch checked={setting?.is_active || false} onCheckedChange={() => toggleQuizActive(category, setting?.is_active || false)} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
-            ) : (
-              <p className="text-muted-foreground">कोणतेही विभाग उपलब्ध नाहीत. प्रथम प्रश्न जोडा.</p>
-            )}
-          </div>
+          
+          <Card>
+            <CardContent className="pt-6 space-y-6">
+              <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
+                <div>
+                  <p className="font-medium text-lg">क्विझ स्थिती</p>
+                  <p className="text-sm text-muted-foreground">
+                    {isQuizActive ? "क्विझ सध्या सक्रिय आहे - विद्यार्थी भाग घेऊ शकतात" : "क्विझ निष्क्रिय आहे"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4">
+                  <span className={`text-sm font-medium ${isQuizActive ? "text-green-600" : "text-muted-foreground"}`}>
+                    {isQuizActive ? "सक्रिय" : "निष्क्रिय"}
+                  </span>
+                  <Switch checked={isQuizActive} onCheckedChange={toggleQuizActive} />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+                <div className="flex-1">
+                  <p className="font-medium">वेळ मर्यादा (मिनिटे)</p>
+                  <p className="text-sm text-muted-foreground">क्विझसाठी एकूण वेळ</p>
+                </div>
+                <Input
+                  type="number"
+                  value={quizDuration}
+                  onChange={(e) => setQuizDuration(parseInt(e.target.value) || 30)}
+                  className="w-24"
+                />
+                <Button onClick={updateDuration}>अपडेट</Button>
+              </div>
+
+              <div className="p-4 bg-accent/10 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>सूचना:</strong> क्विझ सक्रिय केल्यावर सर्व प्रश्न ({questions.length}) विद्यार्थ्यांना दिसतील. 
+                  सर्व वर्गांना सारखेच प्रश्न असतील.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="responses" className="space-y-4">
-          <h3 className="text-lg font-semibold">प्रतिसाद ({responses.length})</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>नाव</TableHead>
-                <TableHead>विभाग</TableHead>
-                <TableHead>गुण</TableHead>
-                <TableHead>टॅब स्विच</TableHead>
-                <TableHead>वेळ</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {responses.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell>{r.participant_name}</TableCell>
-                  <TableCell>{r.category}</TableCell>
-                  <TableCell>
-                    {r.score}/{r.total_questions}
-                  </TableCell>
-                  <TableCell className={r.tab_switches && r.tab_switches > 2 ? "text-destructive" : ""}>{r.tab_switches || 0}</TableCell>
-                  <TableCell>{new Date(r.submitted_at).toLocaleString("mr-IN")}</TableCell>
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold">प्रतिसाद ({responses.length})</h3>
+            <Button onClick={downloadReport} className="gap-2" disabled={responses.length === 0}>
+              <Download className="h-4 w-4" />
+              रिपोर्ट डाउनलोड करा
+            </Button>
+          </div>
+
+          {responses.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                <FileSpreadsheet className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                <p>अद्याप कोणताही प्रतिसाद नाही</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>क्रमांक</TableHead>
+                  <TableHead>नाव</TableHead>
+                  <TableHead>गुण</TableHead>
+                  <TableHead>टक्केवारी</TableHead>
+                  <TableHead>टॅब स्विच</TableHead>
+                  <TableHead>वेळ</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {responses.map((r, index) => {
+                  const percentage = Math.round((r.score / r.total_questions) * 100);
+                  return (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                      <TableCell>{r.participant_name}</TableCell>
+                      <TableCell>
+                        <span className="font-semibold">{r.score}</span>/{r.total_questions}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`font-medium ${percentage >= 60 ? "text-green-600" : "text-red-600"}`}>
+                          {percentage}%
+                        </span>
+                      </TableCell>
+                      <TableCell className={r.tab_switches && r.tab_switches > 2 ? "text-destructive font-medium" : ""}>
+                        {r.tab_switches || 0}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(r.submitted_at).toLocaleString("mr-IN")}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
         </TabsContent>
       </Tabs>
     </div>

@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { Wallet, TrendingUp, TrendingDown, Eye, Calendar, FileText, Loader2 } from "lucide-react";
+import { Wallet, TrendingUp, TrendingDown, Eye, Calendar, FileText, Loader2, User, IndianRupee } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface YearlyAccount {
   id: string;
@@ -19,9 +20,24 @@ interface AccountExpense {
   amount: number;
 }
 
+interface HomeData {
+  id: string;
+  home_number: number;
+  home_name: string | null;
+}
+
+interface DonationData {
+  id: string;
+  home_id: string;
+  year: string;
+  paid_amount: number;
+  payment_date: string | null;
+}
+
 const Accounts = () => {
   const [accounts, setAccounts] = useState<YearlyAccount[]>([]);
   const [expensesByAccount, setExpensesByAccount] = useState<Record<string, AccountExpense[]>>({});
+  const [homesByYear, setHomesByYear] = useState<Record<string, { home: HomeData; donation: DonationData }[]>>({});
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -49,6 +65,8 @@ const Accounts = () => {
     // Fetch expenses for all visible accounts
     if (accountsData && accountsData.length > 0) {
       const accountIds = accountsData.map(a => a.id);
+      const years = accountsData.map(a => a.year);
+
       const { data: expensesData, error: expensesError } = await supabase
         .from("account_expenses")
         .select("*")
@@ -64,6 +82,44 @@ const Accounts = () => {
         }, {} as Record<string, AccountExpense[]>);
         setExpensesByAccount(grouped);
       }
+
+      // Fetch homes
+      const { data: homesData } = await supabase
+        .from("homes")
+        .select("id, home_number, home_name")
+        .order("home_number", { ascending: true });
+
+      // Fetch donations for visible years
+      const { data: donationsData } = await supabase
+        .from("home_donations")
+        .select("*")
+        .in("year", years)
+        .gt("paid_amount", 0);
+
+      if (homesData && donationsData) {
+        const groupedByYear: Record<string, { home: HomeData; donation: DonationData }[]> = {};
+        
+        years.forEach(year => {
+          groupedByYear[year] = [];
+          const yearDonations = donationsData.filter(d => d.year === year);
+          
+          yearDonations.forEach(donation => {
+            const home = homesData.find(h => h.id === donation.home_id);
+            if (home) {
+              groupedByYear[year].push({ home, donation });
+            }
+          });
+          
+          // Sort by payment date descending
+          groupedByYear[year].sort((a, b) => {
+            const dateA = a.donation.payment_date ? new Date(a.donation.payment_date).getTime() : 0;
+            const dateB = b.donation.payment_date ? new Date(b.donation.payment_date).getTime() : 0;
+            return dateB - dateA;
+          });
+        });
+        
+        setHomesByYear(groupedByYear);
+      }
     }
 
     setIsLoading(false);
@@ -75,6 +131,15 @@ const Accounts = () => {
       currency: "INR",
       maximumFractionDigits: 0 
     }).format(amount);
+  };
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "-";
+    return new Date(dateString).toLocaleDateString("mr-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric"
+    });
   };
 
   return (
@@ -153,6 +218,7 @@ const Accounts = () => {
             <div className="space-y-8">
               {accounts.map((account, index) => {
                 const expenses = expensesByAccount[account.id] || [];
+                const donations = homesByYear[account.year] || [];
                 const totalIncome = account.total_income || 0;
                 const totalExpense = account.total_expense || 0;
                 const balance = totalIncome - totalExpense;
@@ -218,32 +284,68 @@ const Accounts = () => {
                       </div>
                     </div>
 
+                    {/* Donations Details */}
+                    {donations.length > 0 && (
+                      <div className="px-6 pb-6">
+                        <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                          <User size={18} className="text-green-500" />
+                          जमा तपशील ({donations.length} घरे)
+                        </h4>
+                        <div className="bg-secondary rounded-lg overflow-hidden">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>घरमालकाचे नाव</TableHead>
+                                <TableHead>तारीख</TableHead>
+                                <TableHead className="text-right">रक्कम</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {donations.map(({ home, donation }) => (
+                                <TableRow key={donation.id}>
+                                  <TableCell className="font-medium">
+                                    {home.home_name || `घर क्र. ${home.home_number}`}
+                                  </TableCell>
+                                  <TableCell className="text-muted-foreground">
+                                    {formatDate(donation.payment_date)}
+                                  </TableCell>
+                                  <TableCell className="text-right text-green-600 font-medium">
+                                    {formatCurrency(donation.paid_amount)}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Expense Details */}
                     {expenses.length > 0 && (
                       <div className="px-6 pb-6">
                         <h4 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                          <FileText size={18} className="text-accent" />
+                          <FileText size={18} className="text-red-500" />
                           खर्चाचा तपशील
                         </h4>
                         <div className="bg-secondary rounded-lg overflow-hidden">
-                          <table className="w-full">
-                            <thead>
-                              <tr className="border-b border-border">
-                                <th className="text-left p-4 text-muted-foreground font-medium">बाब</th>
-                                <th className="text-right p-4 text-muted-foreground font-medium">रक्कम</th>
-                              </tr>
-                            </thead>
-                            <tbody>
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>बाब</TableHead>
+                                <TableHead className="text-right">रक्कम</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
                               {expenses.map((expense) => (
-                                <tr key={expense.id} className="border-b border-border last:border-0">
-                                  <td className="p-4 text-foreground">{expense.item}</td>
-                                  <td className="p-4 text-right text-foreground font-medium">
+                                <TableRow key={expense.id}>
+                                  <TableCell>{expense.item}</TableCell>
+                                  <TableCell className="text-right text-red-600 font-medium">
                                     {formatCurrency(expense.amount)}
-                                  </td>
-                                </tr>
+                                  </TableCell>
+                                </TableRow>
                               ))}
-                            </tbody>
-                          </table>
+                            </TableBody>
+                          </Table>
                         </div>
                       </div>
                     )}

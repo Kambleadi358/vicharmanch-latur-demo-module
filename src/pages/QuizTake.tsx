@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,14 +21,9 @@ interface Question {
   correct_answer: string;
 }
 
-interface QuizSettings {
-  duration_minutes: number;
-  is_active: boolean;
-}
-
 const QuizTake = () => {
-  const { category } = useParams<{ category: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
 
   const [participantName, setParticipantName] = useState("");
@@ -41,33 +36,21 @@ const QuizTake = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [score, setScore] = useState(0);
-  const [quizSettings, setQuizSettings] = useState<QuizSettings | null>(null);
+  const [quizDuration, setQuizDuration] = useState(30);
   const [isLoading, setIsLoading] = useState(true);
 
   const submittedRef = useRef(false);
 
-  // Fetch quiz settings
+  // Fetch quiz settings - get any active quiz settings
   useEffect(() => {
     const fetchSettings = async () => {
-      if (!category) return;
-
       const { data, error } = await supabase
         .from("quiz_settings")
         .select("duration_minutes, is_active")
-        .eq("category", category)
-        .maybeSingle();
+        .eq("is_active", true)
+        .limit(1);
 
-      if (error || !data) {
-        toast({
-          title: "त्रुटी",
-          description: "क्विझ सेटिंग्स लोड करण्यात त्रुटी",
-          variant: "destructive",
-        });
-        navigate("/quiz");
-        return;
-      }
-
-      if (!data.is_active) {
+      if (error || !data || data.length === 0) {
         toast({
           title: "क्विझ बंद आहे",
           description: "हा क्विझ सध्या सक्रिय नाही.",
@@ -77,15 +60,15 @@ const QuizTake = () => {
         return;
       }
 
-      setQuizSettings(data);
-      setTimeLeft((data.duration_minutes || 30) * 60);
+      setQuizDuration(data[0].duration_minutes || 30);
+      setTimeLeft((data[0].duration_minutes || 30) * 60);
       setIsLoading(false);
     };
 
     fetchSettings();
-  }, [category, navigate, toast]);
+  }, [navigate, toast]);
 
-  // Fetch questions when quiz starts
+  // Fetch ALL questions when quiz starts (no category filter)
   const startQuiz = async () => {
     if (!participantName.trim()) {
       toast({
@@ -96,10 +79,10 @@ const QuizTake = () => {
       return;
     }
 
+    // Fetch all questions regardless of category
     const { data, error } = await supabase
       .from("quiz_questions")
-      .select("*")
-      .eq("category", category);
+      .select("*");
 
     if (error || !data || data.length === 0) {
       toast({
@@ -133,7 +116,7 @@ const QuizTake = () => {
     const { error } = await supabase.from("quiz_responses").insert([
       {
         participant_name: participantName,
-        category: category,
+        category: "general", // Use generic category since we removed categories
         score: correctCount,
         total_questions: questions.length,
         tab_switches: tabSwitches,
@@ -154,7 +137,7 @@ const QuizTake = () => {
     setScore(correctCount);
     setIsComplete(true);
     setIsSubmitting(false);
-  }, [answers, category, participantName, questions, tabSwitches, toast]);
+  }, [answers, participantName, questions, tabSwitches, toast]);
 
   // Timer countdown
   useEffect(() => {
@@ -317,9 +300,6 @@ const QuizTake = () => {
             <Card className="shadow-xl">
               <CardHeader className="text-center">
                 <CardTitle className="text-2xl">प्रश्नमंजुषा</CardTitle>
-                <p className="text-muted-foreground mt-2">
-                  विभाग: <span className="font-semibold capitalize">{category}</span>
-                </p>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
@@ -335,7 +315,7 @@ const QuizTake = () => {
                 <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
                   <p className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    वेळ: {quizSettings?.duration_minutes} मिनिटे
+                    वेळ: {quizDuration} मिनिटे
                   </p>
                   <p className="flex items-center gap-2 text-destructive">
                     <AlertTriangle className="h-4 w-4" />
