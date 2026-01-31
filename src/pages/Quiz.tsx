@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { BookOpen, Users, Award, AlertTriangle, Clock, CheckCircle } from "lucide-react";
+import { BookOpen, Users, Award, AlertTriangle, Clock, CheckCircle, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const categories = [
-  { id: "small", label: "छोटा गट", ageGroup: "१ ली ते ४ थी" },
-  { id: "medium", label: "मोठा गट", ageGroup: "५ वी ते १० वी" },
-  { id: "open", label: "खुला गट", ageGroup: "सर्वांसाठी" },
-];
+interface QuizCategory {
+  category: string;
+  is_active: boolean;
+  duration_minutes: number | null;
+}
 
 const rules = [
   "प्रश्नमंजुषा डॉ. बाबासाहेब आंबेडकरांच्या जीवनावर आधारित आहे",
@@ -18,9 +21,43 @@ const rules = [
 ];
 
 const Quiz = () => {
+  const [activeCategories, setActiveCategories] = useState<QuizCategory[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [name, setName] = useState("");
-  const [step, setStep] = useState<"register" | "instructions" | "quiz">("register");
+  const [step, setStep] = useState<"register" | "instructions">("register");
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchActiveCategories();
+  }, []);
+
+  const fetchActiveCategories = async () => {
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("quiz_settings")
+      .select("category, is_active, duration_minutes")
+      .eq("is_active", true);
+
+    if (error) {
+      toast({
+        title: "त्रुटी",
+        description: "क्विझ माहिती लोड करण्यात त्रुटी",
+        variant: "destructive",
+      });
+    } else {
+      setActiveCategories(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  const handleStartQuiz = () => {
+    if (!name || !selectedCategory) return;
+    navigate(`/quiz/${encodeURIComponent(selectedCategory)}`, { 
+      state: { participantName: name } 
+    });
+  };
 
   return (
     <Layout>
@@ -49,7 +86,27 @@ const Quiz = () => {
       {/* Main Content */}
       <section className="py-20 bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {step === "register" && (
+          {isLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
+            </div>
+          ) : activeCategories.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-card rounded-xl p-8 border border-border text-center"
+            >
+              <BookOpen className="mx-auto mb-6 text-accent" size={64} />
+              <h2 className="text-2xl font-bold text-foreground mb-4">
+                सध्या कोणतीही प्रश्नमंजुषा सक्रिय नाही
+              </h2>
+              <p className="text-muted-foreground">
+                प्रशासकाने प्रश्नमंजुषा सक्रिय केल्यावर तुम्ही येथे भाग घेऊ शकता.
+                <br />
+                कृपया प्रतीक्षा करा किंवा प्रशासकाशी संपर्क साधा.
+              </p>
+            </motion.div>
+          ) : step === "register" ? (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -77,22 +134,24 @@ const Quiz = () => {
 
                   <div>
                     <label className="block text-foreground font-medium mb-4">
-                      गट निवडा *
+                      गट निवडा * (सक्रिय क्विझ)
                     </label>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {categories.map((cat) => (
+                      {activeCategories.map((cat) => (
                         <button
-                          key={cat.id}
-                          onClick={() => setSelectedCategory(cat.id)}
+                          key={cat.category}
+                          onClick={() => setSelectedCategory(cat.category)}
                           className={`p-4 rounded-lg border-2 transition-all ${
-                            selectedCategory === cat.id
+                            selectedCategory === cat.category
                               ? "border-accent bg-accent/10"
                               : "border-border hover:border-accent/50"
                           }`}
                         >
                           <Users className="mx-auto mb-2 text-accent" size={24} />
-                          <div className="font-semibold text-foreground">{cat.label}</div>
-                          <div className="text-sm text-muted-foreground">{cat.ageGroup}</div>
+                          <div className="font-semibold text-foreground">{cat.category}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {cat.duration_minutes || 30} मिनिटे
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -133,9 +192,7 @@ const Quiz = () => {
                 </div>
               </div>
             </motion.div>
-          )}
-
-          {step === "instructions" && (
+          ) : (
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
@@ -175,33 +232,12 @@ const Quiz = () => {
                   मागे जा
                 </button>
                 <button
-                  onClick={() => setStep("quiz")}
+                  onClick={handleStartQuiz}
                   className="flex-1 btn-hero"
                 >
                   प्रश्नमंजुषा सुरू करा
                 </button>
               </div>
-            </motion.div>
-          )}
-
-          {step === "quiz" && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-xl p-8 border border-border text-center"
-            >
-              <BookOpen className="mx-auto mb-6 text-accent" size={64} />
-              <h2 className="text-2xl font-bold text-foreground mb-4">
-                प्रश्नमंजुषा लवकरच सुरू होईल
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                प्रशासकाने प्रश्नमंजुषा सक्रिय केल्यावर तुम्ही येथे प्रश्न सोडवू शकता.
-                <br />
-                कृपया प्रतीक्षा करा किंवा प्रशासकाशी संपर्क साधा.
-              </p>
-              <p className="text-accent font-semibold">
-                {name} • {categories.find(c => c.id === selectedCategory)?.label}
-              </p>
             </motion.div>
           )}
         </div>
