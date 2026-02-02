@@ -113,17 +113,18 @@ const QuizTake = () => {
       }
     });
 
-    const { error } = await supabase.from("quiz_responses").insert([
+    // Insert main response first
+    const { data: responseData, error } = await supabase.from("quiz_responses").insert([
       {
         participant_name: participantName,
-        category: "general", // Use generic category since we removed categories
+        category: "general",
         score: correctCount,
         total_questions: questions.length,
         tab_switches: tabSwitches,
       },
-    ]);
+    ]).select("id").single();
 
-    if (error) {
+    if (error || !responseData) {
       toast({
         title: "त्रुटी",
         description: "प्रतिसाद सबमिट करण्यात त्रुटी",
@@ -133,6 +134,16 @@ const QuizTake = () => {
       setIsSubmitting(false);
       return;
     }
+
+    // Insert individual answers
+    const answerRecords = questions.map((q) => ({
+      response_id: responseData.id,
+      question_id: q.id,
+      selected_answer: answers[q.id] || "",
+      is_correct: answers[q.id] === q.correct_answer,
+    }));
+
+    await supabase.from("quiz_answers").insert(answerRecords);
 
     setScore(correctCount);
     setIsComplete(true);
