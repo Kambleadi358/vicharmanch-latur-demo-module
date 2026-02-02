@@ -38,6 +38,14 @@ interface QuizResponse {
   submitted_at: string;
 }
 
+interface QuizAnswer {
+  id: string;
+  response_id: string;
+  question_id: string;
+  selected_answer: string;
+  is_correct: boolean;
+}
+
 const QuizManagement = () => {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [settings, setSettings] = useState<QuizSettings[]>([]);
@@ -171,20 +179,51 @@ const QuizManagement = () => {
     }
   };
 
-  // Download report as CSV
-  const downloadReport = () => {
+  // Download detailed report as CSV with answers
+  const downloadReport = async () => {
     if (responses.length === 0) {
       toast({ title: "माहिती नाही", description: "डाउनलोड करण्यासाठी प्रतिसाद नाहीत", variant: "destructive" });
+      return;
+    }
+
+    // Fetch all answers
+    const { data: allAnswers, error: answersError } = await supabase
+      .from("quiz_answers")
+      .select("*");
+
+    if (answersError) {
+      toast({ title: "त्रुटी", description: "उत्तरे लोड करण्यात त्रुटी", variant: "destructive" });
       return;
     }
 
     // Sort by score descending
     const sortedResponses = [...responses].sort((a, b) => b.score - a.score);
 
-    // Create CSV content
-    const headers = ["क्रमांक", "नाव", "गुण", "एकूण प्रश्न", "टक्केवारी", "टॅब स्विच", "वेळ"];
+    // Create question lookup for column headers
+    const questionMap = new Map(questions.map(q => [q.id, q]));
+
+    // Create CSV content with answers
+    const baseHeaders = ["क्रमांक", "नाव", "गुण", "एकूण प्रश्न", "टक्केवारी", "टॅब स्विच", "वेळ"];
+    const questionHeaders = questions.map((q, idx) => `प्रश्न ${idx + 1}`);
+    const correctAnswerHeaders = questions.map((q, idx) => `बरोबर ${idx + 1}`);
+    const headers = [...baseHeaders, ...questionHeaders, ...correctAnswerHeaders];
+
     const rows = sortedResponses.map((r, index) => {
       const percentage = Math.round((r.score / r.total_questions) * 100);
+      const userAnswers = (allAnswers || []).filter(a => a.response_id === r.id);
+      
+      // Get selected answers in question order
+      const selectedAnswerCells = questions.map(q => {
+        const answer = userAnswers.find(a => a.question_id === q.id);
+        return answer ? answer.selected_answer || "उत्तर नाही" : "उत्तर नाही";
+      });
+
+      // Get correctness indicator
+      const correctnessCells = questions.map(q => {
+        const answer = userAnswers.find(a => a.question_id === q.id);
+        return answer ? (answer.is_correct ? "✓" : "✗") : "✗";
+      });
+
       return [
         index + 1,
         r.participant_name,
@@ -193,6 +232,8 @@ const QuizManagement = () => {
         `${percentage}%`,
         r.tab_switches || 0,
         new Date(r.submitted_at).toLocaleString("mr-IN"),
+        ...selectedAnswerCells,
+        ...correctnessCells,
       ];
     });
 
@@ -207,7 +248,7 @@ const QuizManagement = () => {
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `quiz_report_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("download", `quiz_report_detailed_${new Date().toISOString().split("T")[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
