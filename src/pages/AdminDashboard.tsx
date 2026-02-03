@@ -10,7 +10,8 @@ import NoticeManagement from "@/components/admin/NoticeManagement";
 import DonationManagement from "@/components/admin/DonationManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
 import CertificateManagement from "@/components/admin/CertificateManagement";
-import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award } from "lucide-react";
+import AdminSettings from "@/components/admin/AdminSettings";
+import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -73,7 +74,7 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Tabs defaultValue="programs" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:inline-grid">
+            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
               <TabsTrigger value="programs" className="gap-2">
                 <CalendarDays className="h-4 w-4" />
                 <span className="hidden sm:inline">कार्यक्रम</span>
@@ -93,6 +94,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="donations" className="gap-2">
                 <IndianRupee className="h-4 w-4" />
                 <span className="hidden sm:inline">देणगी व खाते</span>
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                <span className="hidden sm:inline">सेटिंग्स</span>
               </TabsTrigger>
             </TabsList>
 
@@ -147,6 +152,21 @@ const AdminDashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <DonationManagement />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="settings">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Settings className="h-5 w-5" />
+                    सेटिंग्स
+                  </CardTitle>
+                  <CardDescription>खाते सेटिंग्स आणि प्रशासकीय क्रिया</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AdminSettings />
                 </CardContent>
               </Card>
             </TabsContent>
