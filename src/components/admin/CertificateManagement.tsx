@@ -97,7 +97,7 @@ const CertificateManagement = () => {
       <head>
         <title>Certificate - ${winnerName}</title>
         <style>
-          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Cinzel:wght@400;500;600;700&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Tiro+Devanagari+Marathi:wght@400;500&display=swap');
           @page { 
             size: A4 landscape; 
             margin: 0; 
@@ -108,7 +108,7 @@ const CertificateManagement = () => {
             box-sizing: border-box;
           }
           body {
-            font-family: 'Noto Sans Devanagari', sans-serif;
+            font-family: 'Tiro Devanagari Marathi', 'Noto Sans Devanagari', serif;
             width: 297mm;
             height: 210mm;
             position: relative;
@@ -125,103 +125,87 @@ const CertificateManagement = () => {
           }
           .text-content {
             position: absolute;
-            left: 0;
-            top: 0;
-            width: 58%;
-            height: 100%;
+            left: 5%;
+            top: 28%;
+            width: 52%;
+            height: 65%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 35px 45px;
+            justify-content: flex-start;
+            padding: 20px 30px;
             text-align: center;
           }
-          .org-name {
-            font-family: 'Cinzel', serif;
-            font-size: 15px;
-            font-weight: 600;
+          .certificate-title {
+            font-size: 44px;
+            font-weight: 700;
             color: #1e3a5f;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            letter-spacing: 2px;
+          }
+          .certificate-subtitle {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 20px;
             letter-spacing: 3px;
             text-transform: uppercase;
           }
-          .certificate-title {
-            font-family: 'Playfair Display', serif;
-            font-size: 48px;
-            font-weight: 700;
-            color: #1e3a5f;
-            margin-bottom: 5px;
-            letter-spacing: 4px;
-          }
-          .certificate-subtitle {
-            font-family: 'Cinzel', serif;
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 25px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-          }
           .presented-to {
-            font-size: 13px;
+            font-size: 14px;
             color: #444;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
+            margin-bottom: 6px;
           }
           .winner-name {
-            font-family: 'Playfair Display', serif;
-            font-size: 38px;
+            font-size: 36px;
             font-weight: 700;
-            color: #8B4513;
-            margin: 8px 0 20px 0;
+            color: #1e3a5f;
+            margin: 6px 0 16px 0;
             border-bottom: 2px solid #c9a227;
-            padding-bottom: 8px;
-            min-width: 280px;
+            padding-bottom: 6px;
+            min-width: 250px;
           }
           .rank-container {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 15px;
-            margin: 12px 0;
+            gap: 12px;
+            margin: 10px 0;
           }
           .rank-line {
-            width: 40px;
+            width: 35px;
             height: 2px;
             background: linear-gradient(90deg, transparent, #c9a227, transparent);
           }
           .rank-badge {
-            font-family: 'Cinzel', serif;
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: #1e3a5f;
-            background: linear-gradient(135deg, #f4e4bc 0%, #e8d5a3 50%, #d4c089 100%);
-            padding: 10px 35px;
+            background: linear-gradient(135deg, #f5e6c8 0%, #e8d9b0 50%, #dccb9a 100%);
+            padding: 8px 28px;
             border-radius: 4px;
             border: 2px solid #c9a227;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
           }
           .category-text {
             font-size: 16px;
-            color: #555;
-            margin: 12px 0;
+            color: #444;
+            margin: 10px 0;
             font-weight: 500;
           }
           .program-name {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 600;
             color: #1e3a5f;
-            margin: 12px 0 5px 0;
+            margin: 10px 0 4px 0;
           }
           .program-date {
             font-size: 13px;
-            color: #666;
+            color: #555;
           }
           .appreciation-text {
             font-size: 12px;
-            color: #666;
-            margin-top: 20px;
+            color: #555;
+            margin-top: 15px;
             font-style: italic;
-            letter-spacing: 0.5px;
           }
           @media print {
             body {
@@ -234,7 +218,6 @@ const CertificateManagement = () => {
       <body>
         <div class="certificate-container">
           <div class="text-content">
-            <div class="org-name">विचारमंच परिवार</div>
             <div class="certificate-title">प्रमाणपत्र</div>
             <div class="certificate-subtitle">Certificate of Achievement</div>
             <div class="presented-to">हे प्रमाणपत्र याद्वारे प्रदान करण्यात येते</div>
@@ -329,21 +312,20 @@ const CertificateManagement = () => {
         const rankEnglish: Record<string, string> = { first: "1st", second: "2nd", third: "3rd" };
         
         certElement.innerHTML = `
-          <div style="position: absolute; left: 0; top: 0; width: 58%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 35px; text-align: center;">
-            <div style="font-size: 12px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px; letter-spacing: 2px; text-transform: uppercase;">विचारमंच परिवार</div>
-            <div style="font-size: 36px; font-weight: 700; color: #1e3a5f; margin-bottom: 4px; letter-spacing: 3px; font-family: Georgia, serif;">प्रमाणपत्र</div>
-            <div style="font-size: 10px; color: #666; margin-bottom: 18px; letter-spacing: 3px; text-transform: uppercase;">Certificate of Achievement</div>
-            <div style="font-size: 10px; color: #444; margin-bottom: 6px; letter-spacing: 1px;">हे प्रमाणपत्र याद्वारे प्रदान करण्यात येते</div>
-            <div style="font-size: 28px; font-weight: 700; color: #8B4513; margin: 6px 0 16px 0; border-bottom: 2px solid #c9a227; padding-bottom: 6px; min-width: 220px; font-family: Georgia, serif;">${winner.name}</div>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0;">
-              <div style="width: 30px; height: 2px; background: linear-gradient(90deg, transparent, #c9a227);"></div>
-              <div style="font-size: 16px; font-weight: 700; color: #1e3a5f; background: linear-gradient(135deg, #f4e4bc 0%, #e8d5a3 50%, #d4c089 100%); padding: 8px 25px; border-radius: 4px; border: 2px solid #c9a227;">${rankLabels[winner.rank]} क्रमांक (${rankEnglish[winner.rank]})</div>
-              <div style="width: 30px; height: 2px; background: linear-gradient(90deg, #c9a227, transparent);"></div>
+          <div style="position: absolute; left: 5%; top: 28%; width: 52%; height: 65%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 16px 25px; text-align: center;">
+            <div style="font-size: 34px; font-weight: 700; color: #1e3a5f; margin-bottom: 6px; letter-spacing: 2px;">प्रमाणपत्र</div>
+            <div style="font-size: 11px; color: #555; margin-bottom: 16px; letter-spacing: 3px; text-transform: uppercase;">Certificate of Achievement</div>
+            <div style="font-size: 11px; color: #444; margin-bottom: 5px;">हे प्रमाणपत्र याद्वारे प्रदान करण्यात येते</div>
+            <div style="font-size: 28px; font-weight: 700; color: #1e3a5f; margin: 5px 0 14px 0; border-bottom: 2px solid #c9a227; padding-bottom: 5px; min-width: 200px;">${winner.name}</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0;">
+              <div style="width: 25px; height: 2px; background: linear-gradient(90deg, transparent, #c9a227);"></div>
+              <div style="font-size: 15px; font-weight: 700; color: #1e3a5f; background: linear-gradient(135deg, #f5e6c8 0%, #e8d9b0 50%, #dccb9a 100%); padding: 6px 20px; border-radius: 4px; border: 2px solid #c9a227;">${rankLabels[winner.rank]} क्रमांक (${rankEnglish[winner.rank]})</div>
+              <div style="width: 25px; height: 2px; background: linear-gradient(90deg, #c9a227, transparent);"></div>
             </div>
-            <div style="font-size: 13px; color: #555; margin: 8px 0; font-weight: 500;">वर्ग: ${winner.category}</div>
-            <div style="font-size: 14px; font-weight: 600; color: #1e3a5f; margin: 10px 0 4px 0;">${selectedProgram?.name || ""}</div>
-            <div style="font-size: 10px; color: #666;">दिनांक: ${selectedProgram?.date || ""}</div>
-            <div style="font-size: 9px; color: #666; margin-top: 14px; font-style: italic;">आपल्या उत्कृष्ट कामगिरीबद्दल हार्दिक अभिनंदन</div>
+            <div style="font-size: 13px; color: #444; margin: 8px 0; font-weight: 500;">वर्ग: ${winner.category}</div>
+            <div style="font-size: 13px; font-weight: 600; color: #1e3a5f; margin: 8px 0 3px 0;">${selectedProgram?.name || ""}</div>
+            <div style="font-size: 10px; color: #555;">दिनांक: ${selectedProgram?.date || ""}</div>
+            <div style="font-size: 9px; color: #555; margin-top: 12px; font-style: italic;">आपल्या उत्कृष्ट कामगिरीबद्दल हार्दिक अभिनंदन</div>
           </div>
         `;
 
