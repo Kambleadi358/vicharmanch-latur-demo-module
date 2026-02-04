@@ -70,10 +70,37 @@ const QuizTake = () => {
 
   // Fetch ALL questions when quiz starts (no category filter)
   const startQuiz = async () => {
-    if (!participantName.trim()) {
+    const trimmedName = participantName.trim();
+    
+    if (!trimmedName) {
       toast({
         title: "त्रुटी",
         description: "कृपया तुमचे नाव टाका",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if this participant has already taken the quiz
+    const { data: existingResponse, error: checkError } = await supabase
+      .from("quiz_responses")
+      .select("id, submitted_at")
+      .eq("participant_name", trimmedName)
+      .limit(1);
+
+    if (checkError) {
+      toast({
+        title: "त्रुटी",
+        description: "तपासणी करताना त्रुटी आली",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (existingResponse && existingResponse.length > 0) {
+      toast({
+        title: "क्विझ आधीच दिला आहे",
+        description: `"${trimmedName}" या नावाने आधीच क्विझ दिला आहे. एकाच नावाने पुन्हा क्विझ देता येत नाही.`,
         variant: "destructive",
       });
       return;
