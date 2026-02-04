@@ -368,9 +368,8 @@ const DonationManagement = () => {
     });
   };
 
-  // Download full account report
-  const downloadAccountReport = () => {
-    // Prepare donation data
+  // Open printable HTML report for donations
+  const openDonationReport = () => {
     const donationRows = donations
       .filter(d => d.paid_amount > 0)
       .map(d => {
@@ -387,42 +386,293 @@ const DonationManagement = () => {
         return dateB - dateA;
       });
 
-    // CSV content
-    let csvContent = "खाते अहवाल - वर्ष " + selectedYear + "\n\n";
-    csvContent += "=== जमा तपशील ===\n";
-    csvContent += "क्रमांक,घरमालकाचे नाव,तारीख,रक्कम\n";
-    
-    donationRows.forEach((row, index) => {
-      csvContent += `${index + 1},"${row.name}","${formatDate(row.date)}","₹${row.amount}"\n`;
-    });
-    
-    csvContent += `\nएकूण जमा,,,${formatCurrency(totalPaid)}\n\n`;
-    
-    csvContent += "=== खर्च तपशील ===\n";
-    csvContent += "क्रमांक,बाब,रक्कम\n";
-    
-    expenses.forEach((expense, index) => {
-      csvContent += `${index + 1},"${expense.item}","₹${expense.amount}"\n`;
-    });
-    
-    csvContent += `\nएकूण खर्च,,${formatCurrency(totalExpense)}\n`;
-    csvContent += `\n=== सारांश ===\n`;
-    csvContent += `एकूण जमा,${formatCurrency(totalPaid)}\n`;
-    csvContent += `एकूण खर्च,${formatCurrency(totalExpense)}\n`;
-    csvContent += `शिल्लक रक्कम,${formatCurrency(remainingBalance)}\n`;
+    const reportHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>जमा अहवाल - ${selectedYear}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Noto Sans Devanagari', sans-serif; padding: 30px; background: #fff; color: #333; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1e3a5f; padding-bottom: 20px; }
+          .header h1 { font-size: 24px; color: #1e3a5f; margin-bottom: 5px; }
+          .header p { font-size: 14px; color: #666; }
+          .org-name { font-size: 18px; color: #1e3a5f; font-weight: 600; margin-bottom: 10px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          th { background: #1e3a5f; color: white; padding: 12px 15px; text-align: left; font-weight: 600; }
+          td { padding: 10px 15px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .amount { text-align: right; font-weight: 500; }
+          .total-row { background: #e8f4e8 !important; font-weight: 700; font-size: 16px; }
+          .total-row td { border-top: 2px solid #1e3a5f; padding: 15px; }
+          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #888; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="org-name">विचारमंच परिवार</div>
+          <h1>जमा अहवाल (देणगी)</h1>
+          <p>वर्ष: ${selectedYear}</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px;">क्र.</th>
+              <th>घरमालकाचे नाव</th>
+              <th style="width: 140px;">तारीख</th>
+              <th style="width: 140px; text-align: right;">रक्कम</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${donationRows.map((row, idx) => `
+              <tr>
+                <td>${idx + 1}</td>
+                <td>${row.name}</td>
+                <td>${formatDate(row.date)}</td>
+                <td class="amount">${formatCurrency(row.amount)}</td>
+              </tr>
+            `).join('')}
+            <tr class="total-row">
+              <td colspan="3" style="text-align: right;">एकूण जमा:</td>
+              <td class="amount">${formatCurrency(totalPaid)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="footer">
+          <p>हा अहवाल ${new Date().toLocaleDateString("mr-IN")} रोजी तयार केला</p>
+          <p style="margin-top: 5px;">Ctrl+P दाबून PDF म्हणून सेव्ह करा</p>
+        </div>
+      </body>
+      </html>
+    `;
 
-    // Add BOM for UTF-8 support
-    const BOM = "\uFEFF";
-    const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `account_report_${selectedYear}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({ title: "यशस्वी", description: "रिपोर्ट डाउनलोड झाला" });
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(reportHTML);
+      printWindow.document.close();
+    }
+  };
+
+  // Open printable HTML report for expenses
+  const openExpenseReport = () => {
+    const reportHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>खर्च अहवाल - ${selectedYear}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Noto Sans Devanagari', sans-serif; padding: 30px; background: #fff; color: #333; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #c0392b; padding-bottom: 20px; }
+          .header h1 { font-size: 24px; color: #c0392b; margin-bottom: 5px; }
+          .header p { font-size: 14px; color: #666; }
+          .org-name { font-size: 18px; color: #1e3a5f; font-weight: 600; margin-bottom: 10px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+          th { background: #c0392b; color: white; padding: 12px 15px; text-align: left; font-weight: 600; }
+          td { padding: 10px 15px; border-bottom: 1px solid #ddd; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .amount { text-align: right; font-weight: 500; }
+          .total-row { background: #fdecea !important; font-weight: 700; font-size: 16px; }
+          .total-row td { border-top: 2px solid #c0392b; padding: 15px; }
+          .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #888; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="org-name">विचारमंच परिवार</div>
+          <h1>खर्च अहवाल</h1>
+          <p>वर्ष: ${selectedYear}</p>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 60px;">क्र.</th>
+              <th>बाब (तपशील)</th>
+              <th style="width: 160px; text-align: right;">रक्कम</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${expenses.map((expense, idx) => `
+              <tr>
+                <td>${idx + 1}</td>
+                <td>${expense.item}</td>
+                <td class="amount">${formatCurrency(expense.amount)}</td>
+              </tr>
+            `).join('')}
+            <tr class="total-row">
+              <td colspan="2" style="text-align: right;">एकूण खर्च:</td>
+              <td class="amount">${formatCurrency(totalExpense)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="footer">
+          <p>हा अहवाल ${new Date().toLocaleDateString("mr-IN")} रोजी तयार केला</p>
+          <p style="margin-top: 5px;">Ctrl+P दाबून PDF म्हणून सेव्ह करा</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(reportHTML);
+      printWindow.document.close();
+    }
+  };
+
+  // Open combined summary report
+  const openSummaryReport = () => {
+    const donationRows = donations
+      .filter(d => d.paid_amount > 0)
+      .map(d => {
+        const home = homes.find(h => h.id === d.home_id);
+        return {
+          name: home?.home_name || `घर क्र. ${home?.home_number}`,
+          amount: d.paid_amount,
+          date: d.payment_date
+        };
+      })
+      .sort((a, b) => {
+        const dateA = a.date ? new Date(a.date).getTime() : 0;
+        const dateB = b.date ? new Date(b.date).getTime() : 0;
+        return dateB - dateA;
+      });
+
+    const reportHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>संपूर्ण खाते अहवाल - ${selectedYear}</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          body { font-family: 'Noto Sans Devanagari', sans-serif; padding: 30px; background: #fff; color: #333; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1e3a5f; padding-bottom: 20px; }
+          .header h1 { font-size: 26px; color: #1e3a5f; margin-bottom: 5px; }
+          .header p { font-size: 14px; color: #666; }
+          .org-name { font-size: 20px; color: #1e3a5f; font-weight: 700; margin-bottom: 10px; }
+          .section { margin-bottom: 35px; }
+          .section-title { font-size: 18px; font-weight: 600; color: #1e3a5f; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #1e3a5f; }
+          .section-title.expense { color: #c0392b; border-color: #c0392b; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+          th { background: #1e3a5f; color: white; padding: 10px 12px; text-align: left; font-weight: 600; font-size: 13px; }
+          th.expense-header { background: #c0392b; }
+          td { padding: 8px 12px; border-bottom: 1px solid #ddd; font-size: 13px; }
+          tr:nth-child(even) { background: #f9f9f9; }
+          .amount { text-align: right; font-weight: 500; }
+          .total-row { font-weight: 700; font-size: 14px; }
+          .total-row.income { background: #e8f4e8 !important; }
+          .total-row.expense { background: #fdecea !important; }
+          .total-row td { border-top: 2px solid #333; padding: 12px; }
+          .summary-box { background: #f5f5f5; padding: 20px; border-radius: 8px; margin-top: 30px; }
+          .summary-box h3 { font-size: 18px; color: #1e3a5f; margin-bottom: 15px; text-align: center; }
+          .summary-grid { display: flex; justify-content: space-around; text-align: center; }
+          .summary-item { padding: 10px 20px; }
+          .summary-item .label { font-size: 12px; color: #666; margin-bottom: 5px; }
+          .summary-item .value { font-size: 22px; font-weight: 700; }
+          .summary-item .value.income { color: #27ae60; }
+          .summary-item .value.expense { color: #c0392b; }
+          .summary-item .value.balance { color: #1e3a5f; }
+          .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #888; }
+          @media print { body { padding: 20px; } .summary-box { break-inside: avoid; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="org-name">विचारमंच परिवार</div>
+          <h1>संपूर्ण खाते अहवाल</h1>
+          <p>वर्ष: ${selectedYear}</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">जमा तपशील (देणगी)</div>
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 50px;">क्र.</th>
+                <th>घरमालकाचे नाव</th>
+                <th style="width: 120px;">तारीख</th>
+                <th style="width: 120px; text-align: right;">रक्कम</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${donationRows.map((row, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${row.name}</td>
+                  <td>${formatDate(row.date)}</td>
+                  <td class="amount">${formatCurrency(row.amount)}</td>
+                </tr>
+              `).join('')}
+              <tr class="total-row income">
+                <td colspan="3" style="text-align: right;">एकूण जमा:</td>
+                <td class="amount">${formatCurrency(totalPaid)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title expense">खर्च तपशील</div>
+          <table>
+            <thead>
+              <tr>
+                <th class="expense-header" style="width: 50px;">क्र.</th>
+                <th class="expense-header">बाब (तपशील)</th>
+                <th class="expense-header" style="width: 140px; text-align: right;">रक्कम</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${expenses.length > 0 ? expenses.map((expense, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${expense.item}</td>
+                  <td class="amount">${formatCurrency(expense.amount)}</td>
+                </tr>
+              `).join('') : '<tr><td colspan="3" style="text-align: center; color: #888;">कोणताही खर्च नोंदवलेला नाही</td></tr>'}
+              <tr class="total-row expense">
+                <td colspan="2" style="text-align: right;">एकूण खर्च:</td>
+                <td class="amount">${formatCurrency(totalExpense)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="summary-box">
+          <h3>सारांश</h3>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <div class="label">एकूण जमा</div>
+              <div class="value income">${formatCurrency(totalPaid)}</div>
+            </div>
+            <div class="summary-item">
+              <div class="label">एकूण खर्च</div>
+              <div class="value expense">${formatCurrency(totalExpense)}</div>
+            </div>
+            <div class="summary-item">
+              <div class="label">शिल्लक रक्कम</div>
+              <div class="value balance">${formatCurrency(remainingBalance)}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>हा अहवाल ${new Date().toLocaleDateString("mr-IN")} रोजी तयार केला</p>
+          <p style="margin-top: 5px;">Ctrl+P दाबून PDF म्हणून सेव्ह करा</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(reportHTML);
+      printWindow.document.close();
+    }
   };
 
   return (
@@ -509,10 +759,18 @@ const DonationManagement = () => {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <Button variant="outline" onClick={downloadAccountReport} className="gap-2">
-                <Download className="h-4 w-4" />
-                रिपोर्ट डाउनलोड
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" onClick={openSummaryReport} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" />
+                संपूर्ण अहवाल
+              </Button>
+              <Button variant="outline" onClick={openDonationReport} className="gap-2">
+                <TrendingUp className="h-4 w-4" />
+                जमा अहवाल
+              </Button>
+              <Button variant="outline" onClick={openExpenseReport} className="gap-2">
+                <TrendingDown className="h-4 w-4" />
+                खर्च अहवाल
               </Button>
               <Switch
                 checked={yearlyAccount?.is_visible || false}
