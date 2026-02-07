@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Key, User, Shield, RefreshCw } from "lucide-react";
+import YearLockManager from "./YearLockManager";
 
 const passwordSchema = z.object({
   currentPassword: z.string().min(6, "सध्याचा पासवर्ड आवश्यक आहे"),
@@ -204,6 +205,9 @@ const AdminSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Year Lock Section */}
+      <YearLockManager />
     </div>
   );
 };
