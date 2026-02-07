@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import GratitudeCarousel from "@/components/ideology/GratitudeCarousel";
+import MuktiMantraSection from "@/components/ideology/MuktiMantraSection";
+import buddhaEnlightenmentBg from "@/assets/buddha-enlightenment-bg.jpg";
 import { 
   Scale, 
   Heart, 
@@ -11,6 +13,7 @@ import {
   Sparkles,
   Shield
 } from "lucide-react";
+
 const ideologies = [
   { icon: Scale, title: "समता", description: "सर्वांना समान हक्क व संधी" },
   { icon: Heart, title: "बंधुता", description: "एकमेकांप्रती आदर व प्रेम" },
@@ -156,26 +159,87 @@ const Ideology = () => {
         </div>
       </section>
 
-      {/* Buddha Dhamma Sangha */}
-      <section className="py-20 hero-gradient">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* 22 Vows - Mukti Mantra Section */}
+      <MuktiMantraSection />
+
+      {/* Buddha Dhamma Sangha - with Buddha image background */}
+      <section className="py-20 relative overflow-hidden">
+        {/* Buddha Image Background */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${buddhaEnlightenmentBg})` }}
+        />
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-primary/85" />
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="space-y-8"
           >
+            {/* Triratna Symbol */}
+            <motion.div
+              initial={{ scale: 0 }}
+              whileInView={{ scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2, type: "spring" }}
+              className="flex justify-center gap-4 text-4xl md:text-5xl mb-8"
+            >
+              <span className="text-accent animate-pulse">☸</span>
+            </motion.div>
+
             <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground">
               बुद्ध • धम्म • संघ
             </h2>
-            <p className="text-lg text-primary-foreground/70 leading-relaxed">
+            
+            {/* Three Refuges in Pali */}
+            <div className="space-y-3 py-6">
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3 }}
+                className="text-lg md:text-xl text-primary-foreground/90 italic"
+              >
+                बुद्धं शरणं गच्छामि
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, x: 30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4 }}
+                className="text-lg md:text-xl text-primary-foreground/90 italic"
+              >
+                धम्मं शरणं गच्छामि
+              </motion.p>
+              <motion.p
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5 }}
+                className="text-lg md:text-xl text-primary-foreground/90 italic"
+              >
+                संघं शरणं गच्छामि
+              </motion.p>
+            </div>
+
+            <p className="text-lg text-primary-foreground/80 leading-relaxed">
               बुद्ध भगवानांच्या शिकवणुकीवर आधारित, डॉ. बाबासाहेब आंबेडकरांच्या विचारांनी 
               प्रेरित, आणि संविधानाच्या मूल्यांवर उभारलेली आमची चळवळ म्हणजे एक नवीन 
               सामाजिक क्रांतीचे स्वप्न.
             </p>
-            <div className="text-accent text-xl font-semibold">
+            
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.6 }}
+              className="text-accent text-xl font-semibold pt-4"
+            >
               जय भीम • नमो बुद्धाय
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
