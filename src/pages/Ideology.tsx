@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
+import GratitudeCarousel from "@/components/ideology/GratitudeCarousel";
 import { 
   Scale, 
   Heart, 
@@ -10,7 +11,6 @@ import {
   Sparkles,
   Shield
 } from "lucide-react";
-
 const ideologies = [
   { icon: Scale, title: "समता", description: "सर्वांना समान हक्क व संधी" },
   { icon: Heart, title: "बंधुता", description: "एकमेकांप्रती आदर व प्रेम" },
@@ -76,6 +76,8 @@ const Ideology = () => {
         </div>
       </section>
 
+      {/* Gratitude Carousel - बाबासाहेबांच्या उपकारांची जाणीव */}
+      <GratitudeCarousel />
       {/* Ideologies Grid */}
       <section className="py-20 bg-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
