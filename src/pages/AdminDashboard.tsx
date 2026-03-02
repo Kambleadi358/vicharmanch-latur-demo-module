@@ -45,25 +45,25 @@ const AdminDashboard = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-primary text-primary-foreground shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Shield className="h-8 w-8" />
+            <div className="flex items-center gap-2">
+              <Shield className="h-6 w-6 sm:h-8 sm:w-8 flex-shrink-0" />
               <div>
-                <h1 className="text-xl font-bold">Admin Dashboard</h1>
-                <p className="text-sm opacity-80">विचारमंच प्रशासक पॅनेल</p>
+                <h1 className="text-base sm:text-xl font-bold">Admin Dashboard</h1>
+                <p className="text-xs sm:text-sm opacity-80">प्रशासक पॅनेल</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1 sm:gap-4">
               <Link to="/">
-                <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">
-                  <Home className="h-4 w-4 mr-2" />
-                  मुख्यपृष्ठ
+                <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10 px-2 sm:px-4">
+                  <Home className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">मुख्यपृष्ठ</span>
                 </Button>
               </Link>
-              <Button variant="ghost" onClick={handleSignOut} className="text-primary-foreground hover:bg-primary-foreground/10">
-                <LogOut className="h-4 w-4 mr-2" />
-                लॉगआउट
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-primary-foreground hover:bg-primary-foreground/10 px-2 sm:px-4">
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline ml-2">लॉगआउट</span>
               </Button>
             </div>
           </div>
@@ -71,33 +71,33 @@ const AdminDashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <Tabs defaultValue="programs" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="programs" className="gap-2">
+          <Tabs defaultValue="programs" className="space-y-4 sm:space-y-6">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 h-auto p-1">
+              <TabsTrigger value="programs" className="gap-1 text-xs sm:text-sm py-2">
                 <CalendarDays className="h-4 w-4" />
-                <span className="hidden sm:inline">कार्यक्रम</span>
+                <span className="hidden xs:inline">कार्यक्रम</span>
               </TabsTrigger>
-              <TabsTrigger value="certificates" className="gap-2">
+              <TabsTrigger value="certificates" className="gap-1 text-xs sm:text-sm py-2">
                 <Award className="h-4 w-4" />
-                <span className="hidden sm:inline">प्रमाणपत्र</span>
+                <span className="hidden xs:inline">प्रमाणपत्र</span>
               </TabsTrigger>
-              <TabsTrigger value="quiz" className="gap-2">
+              <TabsTrigger value="quiz" className="gap-1 text-xs sm:text-sm py-2">
                 <HelpCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">प्रश्नमंजुषा</span>
+                <span className="hidden xs:inline">प्रश्नमंजुषा</span>
               </TabsTrigger>
-              <TabsTrigger value="notices" className="gap-2">
+              <TabsTrigger value="notices" className="gap-1 text-xs sm:text-sm py-2">
                 <Bell className="h-4 w-4" />
-                <span className="hidden sm:inline">सूचना</span>
+                <span className="hidden xs:inline">सूचना</span>
               </TabsTrigger>
-              <TabsTrigger value="donations" className="gap-2">
+              <TabsTrigger value="donations" className="gap-1 text-xs sm:text-sm py-2">
                 <IndianRupee className="h-4 w-4" />
-                <span className="hidden sm:inline">देणगी व खाते</span>
+                <span className="hidden xs:inline">देणगी</span>
               </TabsTrigger>
-              <TabsTrigger value="settings" className="gap-2">
+              <TabsTrigger value="settings" className="gap-1 text-xs sm:text-sm py-2">
                 <Settings className="h-4 w-4" />
-                <span className="hidden sm:inline">सेटिंग्स</span>
+                <span className="hidden xs:inline">सेटिंग्स</span>
               </TabsTrigger>
             </TabsList>
 

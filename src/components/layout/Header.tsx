@@ -22,7 +22,7 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-primary-foreground/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <motion.div
@@ -32,9 +32,9 @@ const Header = () => {
               <img
                 src={logo}
                 alt="विचारमंच लोगो"
-                className="w-14 h-14 rounded-full border-2 border-accent object-cover"
+                className="w-10 h-10 sm:w-14 sm:h-14 rounded-full border-2 border-accent object-cover"
               />
-              <div className="absolute inset-0 rounded-full border-2 border-accent/50 animate-glow" />
+              <div className="absolute inset-0 rounded-full border-2 border-accent/50" />
             </motion.div>
             <div className="hidden sm:block">
               <h1 className="text-primary-foreground font-semibold text-sm leading-tight">
