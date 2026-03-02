@@ -126,43 +126,45 @@ const CertificateManagement = () => {
           .text-content {
             position: absolute;
             left: 5%;
-            top: 28%;
+            top: 22%;
             width: 52%;
-            height: 65%;
+            height: 70%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            padding: 20px 30px;
+            justify-content: center;
+            padding: 15px 25px;
             text-align: center;
           }
           .certificate-title {
-            font-size: 44px;
+            font-size: 38px;
             font-weight: 700;
             color: #1e3a5f;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
             letter-spacing: 2px;
           }
           .certificate-subtitle {
-            font-size: 14px;
+            font-size: 12px;
             color: #555;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
             letter-spacing: 3px;
             text-transform: uppercase;
           }
           .presented-to {
-            font-size: 14px;
+            font-size: 12px;
             color: #444;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
           }
           .winner-name {
-            font-size: 36px;
+            font-size: 30px;
             font-weight: 700;
             color: #1e3a5f;
-            margin: 6px 0 16px 0;
+            margin: 4px 0 12px 0;
             border-bottom: 2px solid #c9a227;
-            padding-bottom: 6px;
-            min-width: 250px;
+            padding-bottom: 4px;
+            min-width: 200px;
+            max-width: 90%;
+            word-break: break-word;
           }
           .rank-container {
             display: flex;
@@ -177,34 +179,37 @@ const CertificateManagement = () => {
             background: linear-gradient(90deg, transparent, #c9a227, transparent);
           }
           .rank-badge {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
             color: #1e3a5f;
             background: linear-gradient(135deg, #f5e6c8 0%, #e8d9b0 50%, #dccb9a 100%);
-            padding: 8px 28px;
+            padding: 6px 22px;
             border-radius: 4px;
             border: 2px solid #c9a227;
+            white-space: nowrap;
           }
           .category-text {
-            font-size: 16px;
+            font-size: 14px;
             color: #444;
-            margin: 10px 0;
+            margin: 6px 0;
             font-weight: 500;
           }
           .program-name {
-            font-size: 17px;
+            font-size: 14px;
             font-weight: 600;
             color: #1e3a5f;
-            margin: 10px 0 4px 0;
+            margin: 6px 0 3px 0;
+            max-width: 90%;
+            word-break: break-word;
           }
           .program-date {
-            font-size: 13px;
+            font-size: 11px;
             color: #555;
           }
           .appreciation-text {
-            font-size: 12px;
+            font-size: 10px;
             color: #555;
-            margin-top: 15px;
+            margin-top: 10px;
             font-style: italic;
           }
           @media print {
@@ -312,20 +317,20 @@ const CertificateManagement = () => {
         const rankEnglish: Record<string, string> = { first: "1st", second: "2nd", third: "3rd" };
         
         certElement.innerHTML = `
-          <div style="position: absolute; left: 5%; top: 28%; width: 52%; height: 65%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 16px 25px; text-align: center;">
-            <div style="font-size: 34px; font-weight: 700; color: #1e3a5f; margin-bottom: 6px; letter-spacing: 2px;">प्रमाणपत्र</div>
-            <div style="font-size: 11px; color: #555; margin-bottom: 16px; letter-spacing: 3px; text-transform: uppercase;">Certificate of Achievement</div>
-            <div style="font-size: 11px; color: #444; margin-bottom: 5px;">हे प्रमाणपत्र याद्वारे प्रदान करण्यात येते</div>
-            <div style="font-size: 28px; font-weight: 700; color: #1e3a5f; margin: 5px 0 14px 0; border-bottom: 2px solid #c9a227; padding-bottom: 5px; min-width: 200px;">${winner.name}</div>
-            <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 8px 0;">
-              <div style="width: 25px; height: 2px; background: linear-gradient(90deg, transparent, #c9a227);"></div>
-              <div style="font-size: 15px; font-weight: 700; color: #1e3a5f; background: linear-gradient(135deg, #f5e6c8 0%, #e8d9b0 50%, #dccb9a 100%); padding: 6px 20px; border-radius: 4px; border: 2px solid #c9a227;">${rankLabels[winner.rank]} क्रमांक (${rankEnglish[winner.rank]})</div>
-              <div style="width: 25px; height: 2px; background: linear-gradient(90deg, #c9a227, transparent);"></div>
+          <div style="position: absolute; left: 5%; top: 25%; width: 52%; height: 68%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 20px; text-align: center;">
+            <div style="font-size: 32px; font-weight: 700; color: #1e3a5f; margin-bottom: 4px; letter-spacing: 2px;">प्रमाणपत्र</div>
+            <div style="font-size: 10px; color: #555; margin-bottom: 12px; letter-spacing: 3px; text-transform: uppercase;">Certificate of Achievement</div>
+            <div style="font-size: 10px; color: #444; margin-bottom: 4px;">हे प्रमाणपत्र याद्वारे प्रदान करण्यात येते</div>
+            <div style="font-size: 24px; font-weight: 700; color: #1e3a5f; margin: 4px 0 10px 0; border-bottom: 2px solid #c9a227; padding-bottom: 4px; min-width: 180px; word-break: break-word; max-width: 90%;">${winner.name}</div>
+            <div style="display: flex; align-items: center; justify-content: center; gap: 6px; margin: 6px 0;">
+              <div style="width: 20px; height: 2px; background: linear-gradient(90deg, transparent, #c9a227);"></div>
+              <div style="font-size: 13px; font-weight: 700; color: #1e3a5f; background: linear-gradient(135deg, #f5e6c8 0%, #e8d9b0 50%, #dccb9a 100%); padding: 5px 16px; border-radius: 4px; border: 2px solid #c9a227; white-space: nowrap;">${rankLabels[winner.rank]} क्रमांक (${rankEnglish[winner.rank]})</div>
+              <div style="width: 20px; height: 2px; background: linear-gradient(90deg, #c9a227, transparent);"></div>
             </div>
-            <div style="font-size: 13px; color: #444; margin: 8px 0; font-weight: 500;">वर्ग: ${winner.category}</div>
-            <div style="font-size: 13px; font-weight: 600; color: #1e3a5f; margin: 8px 0 3px 0;">${selectedProgram?.name || ""}</div>
-            <div style="font-size: 10px; color: #555;">दिनांक: ${selectedProgram?.date || ""}</div>
-            <div style="font-size: 9px; color: #555; margin-top: 12px; font-style: italic;">आपल्या उत्कृष्ट कामगिरीबद्दल हार्दिक अभिनंदन</div>
+            <div style="font-size: 12px; color: #444; margin: 6px 0; font-weight: 500;">वर्ग: ${winner.category}</div>
+            <div style="font-size: 12px; font-weight: 600; color: #1e3a5f; margin: 6px 0 2px 0; max-width: 90%; word-break: break-word;">${selectedProgram?.name || ""}</div>
+            <div style="font-size: 9px; color: #555;">दिनांक: ${selectedProgram?.date || ""}</div>
+            <div style="font-size: 8px; color: #555; margin-top: 8px; font-style: italic;">आपल्या उत्कृष्ट कामगिरीबद्दल हार्दिक अभिनंदन</div>
           </div>
         `;
 
@@ -479,23 +484,22 @@ const CertificateManagement = () => {
                 alt="Certificate Template"
                 className="w-full h-full object-cover"
               />
-              <div className="absolute left-0 top-0 w-[60%] h-full flex items-center justify-center p-6">
-                <div className="text-center space-y-1">
-                  <p className="text-[8px] font-semibold text-primary">विचारमंच परिवार</p>
+              <div className="absolute left-0 top-0 w-[57%] h-full flex items-center justify-center p-4">
+                <div className="text-center space-y-0.5">
                   <p className="text-sm font-bold text-primary uppercase tracking-wider">प्रमाणपत्र</p>
-                  <p className="text-[6px] text-muted-foreground tracking-widest">CERTIFICATE OF ACHIEVEMENT</p>
-                  <p className="text-[6px] text-foreground mt-2">हे प्रमाणपत्र याद्वारे प्रदान करण्यात येते</p>
-                  <p className="text-xs font-bold text-accent border-b-2 border-accent pb-1 inline-block min-w-[100px]">
+                  <p className="text-[5px] text-muted-foreground tracking-widest">CERTIFICATE OF ACHIEVEMENT</p>
+                  <p className="text-[5px] text-foreground mt-1">हे प्रमाणपत्र याद्वारे प्रदान करण्यात येते</p>
+                  <p className="text-[10px] font-bold text-accent border-b border-accent pb-0.5 inline-block min-w-[80px] leading-tight">
                     {allWinners[0]?.name || "विजेत्याचे नाव"}
                   </p>
-                  <div className="bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 px-3 py-0.5 rounded-full inline-block mt-1">
-                    <p className="text-[8px] font-bold text-primary">
+                  <div className="bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-400 px-2 py-0.5 rounded-full inline-block">
+                    <p className="text-[6px] font-bold text-primary">
                       🏆 {rankLabels[allWinners[0]?.rank || "first"]} क्रमांक 🏆
                     </p>
                   </div>
-                  <p className="text-[7px]">वर्ग: {allWinners[0]?.category}</p>
-                  <p className="text-[8px] font-semibold text-primary">{selectedProgram?.name}</p>
-                  <p className="text-[6px] text-muted-foreground">दिनांक: {selectedProgram?.date}</p>
+                  <p className="text-[6px] leading-tight">वर्ग: {allWinners[0]?.category}</p>
+                  <p className="text-[7px] font-semibold text-primary leading-tight">{selectedProgram?.name}</p>
+                  <p className="text-[5px] text-muted-foreground">दिनांक: {selectedProgram?.date}</p>
                 </div>
               </div>
             </div>

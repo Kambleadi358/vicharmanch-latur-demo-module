@@ -412,7 +412,7 @@ const DonationManagement = () => {
       </head>
       <body>
         <div class="header">
-          <div class="org-name">विचारमंच परिवार</div>
+          <div class="org-name">भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</div>
           <h1>जमा अहवाल (देणगी)</h1>
           <p>वर्ष: ${selectedYear}</p>
         </div>
@@ -483,7 +483,7 @@ const DonationManagement = () => {
       </head>
       <body>
         <div class="header">
-          <div class="org-name">विचारमंच परिवार</div>
+          <div class="org-name">भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</div>
           <h1>खर्च अहवाल</h1>
           <p>वर्ष: ${selectedYear}</p>
         </div>
@@ -583,7 +583,7 @@ const DonationManagement = () => {
       </head>
       <body>
         <div class="header">
-          <div class="org-name">विचारमंच परिवार</div>
+          <div class="org-name">भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</div>
           <h1>संपूर्ण खाते अहवाल</h1>
           <p>वर्ष: ${selectedYear}</p>
         </div>

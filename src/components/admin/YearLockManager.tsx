@@ -50,7 +50,7 @@ const YearLockManager = () => {
     // Header
     lines.push(separator);
     lines.push("");
-    lines.push("        विचार मंच - वार्षिक अहवाल " + year);
+    lines.push("        भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर - वार्षिक अहवाल " + year);
     lines.push("        (Year Lock Archive Report)");
     lines.push("");
     lines.push(separator);
@@ -321,7 +321,7 @@ const YearLockManager = () => {
       
       // Add readable report
       const readableReport = generateReadableReport(data, selectedYear, remark);
-      zip.file(`विचार_मंच_${selectedYear}_अहवाल.txt`, readableReport);
+      zip.file(`विचारमंच_${selectedYear}_अहवाल.txt`, readableReport);
 
       // Add data files folder with readable JSON
       const dataFolder = zip.folder("data");
