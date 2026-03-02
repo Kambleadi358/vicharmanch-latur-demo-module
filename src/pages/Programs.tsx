@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { BookOpen, Users, Lightbulb, Music, Calendar, Clock, MapPin, Trophy, CheckCircle } from "lucide-react";
+import { BookOpen, Users, Music, Calendar, Clock, MapPin, Trophy, CheckCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,12 @@ const programCategories = [
     title: "बौद्धिक कार्यक्रम",
     color: "bg-blue-500",
     programs: [
-      { name: "प्रश्नमंजुषा स्पर्धा", description: "डॉ. आंबेडकरांच्या जीवनावर आधारित" },
-      { name: "वक्तृत्व स्पर्धा", description: "विविध विषयांवर विचार मांडणी" },
-      { name: "निबंध स्पर्धा", description: "सामाजिक विषयांवर लेखन" },
+      { name: "प्रश्नमंजुषा", description: "बौद्धिक ज्ञानावर आधारित स्पर्धा" },
+      { name: "वक्तृत्व", description: "विविध विषयांवर विचार मांडणी" },
+      { name: "भाषण", description: "प्रेरणादायी व वैचारिक भाषणे" },
+      { name: "निबंध", description: "सामाजिक विषयांवर लेखन स्पर्धा" },
+      { name: "सुंदर हस्ताक्षर", description: "सुवाच्य व सुंदर लेखन स्पर्धा" },
+      { name: "संविधान वाचन", description: "भारतीय संविधानाचे वाचन" },
     ],
   },
   {
@@ -23,19 +26,9 @@ const programCategories = [
     title: "सामाजिक कार्यक्रम",
     color: "bg-green-500",
     programs: [
-      { name: "रक्तदान शिबीर", description: "वर्षातून एकदा रक्तदान" },
-      { name: "आरोग्य शिबीर", description: "मोफत आरोग्य तपासणी" },
-      { name: "वृक्षारोपण", description: "पर्यावरण जागृती" },
-    ],
-  },
-  {
-    icon: Lightbulb,
-    title: "वैचारिक कार्यक्रम",
-    color: "bg-amber-500",
-    programs: [
-      { name: "व्याख्यानमाला", description: "विचारवंतांची व्याख्याने" },
-      { name: "पुस्तक वाचन", description: "आंबेडकरी साहित्य वाचन" },
-      { name: "चर्चासत्र", description: "विविध विषयांवर चर्चा" },
+      { name: "अवयव दान शिबीर", description: "अवयव दानाची जागृती व नोंदणी" },
+      { name: "योग आणि ध्यान", description: "शारीरिक व मानसिक आरोग्यासाठी" },
+      { name: "सामाजिक उपक्रम", description: "विविध सामाजिक जागृती उपक्रम" },
     ],
   },
   {
@@ -43,9 +36,14 @@ const programCategories = [
     title: "सांस्कृतिक कार्यक्रम",
     color: "bg-purple-500",
     programs: [
-      { name: "भिमगीत स्पर्धा", description: "आंबेडकरी गीतांचे गायन" },
-      { name: "नृत्य स्पर्धा", description: "पारंपारिक व आधुनिक नृत्य" },
-      { name: "नाटक", description: "सामाजिक विषयांवर नाटके" },
+      { name: "गीतगायन", description: "आंबेडकरी व बौद्ध गीतांचे गायन" },
+      { name: "नृत्य", description: "पारंपारिक व आधुनिक नृत्य स्पर्धा" },
+      { name: "काव्यवाचन", description: "कविता वाचन व सादरीकरण" },
+      { name: "संगीत खुर्ची", description: "मनोरंजनात्मक खेळ" },
+      { name: "लिंबू चमचा", description: "पारंपारिक खेळ स्पर्धा" },
+      { name: "वेशभूषा", description: "महापुरुषांची वेशभूषा स्पर्धा" },
+      { name: "पाककला", description: "पाककला स्पर्धा" },
+      { name: "रांगोळी", description: "रांगोळी कला स्पर्धा" },
     ],
   },
 ];
