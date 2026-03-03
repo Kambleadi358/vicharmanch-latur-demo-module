@@ -213,9 +213,16 @@ const CertificateManagement = () => {
             font-style: italic;
           }
           @media print {
-            body {
+            html, body {
+              width: 297mm;
+              height: 210mm;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+              overflow: hidden;
+            }
+            @page {
+              size: A4 landscape;
+              margin: 0;
             }
           }
         </style>
