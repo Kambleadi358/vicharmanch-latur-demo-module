@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import { MapPin, Mail, Instagram, Users, Shield, Eye } from "lucide-react";
-import logo from "@/assets/vicharmanch-logo.jpeg";
+import ambedkarPortrait from "@/assets/ambedkar-portrait.png";
 
 const values = [
   {
@@ -60,9 +60,12 @@ const About = () => {
             >
               <div className="relative mx-auto w-fit">
                 <img
-                  src={logo}
-                  alt="विचारमंच"
-                  className="w-80 h-80 rounded-2xl object-cover shadow-2xl border-4 border-accent"
+                  src={ambedkarPortrait}
+                  alt="डॉ. बाबासाहेब आंबेडकर"
+                  className="w-72 h-auto max-h-96 rounded-2xl object-cover shadow-2xl border-4 border-accent"
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
                 />
                 <div className="absolute -bottom-4 -right-4 bg-accent text-accent-foreground px-4 py-3 rounded-lg text-sm leading-relaxed text-center">
                   <div>बुद्धं शरणं गच्छामि</div>
