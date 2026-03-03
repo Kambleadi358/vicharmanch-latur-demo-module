@@ -56,6 +56,8 @@ const DonationManagement = () => {
   const [bulkAssignAmount, setBulkAssignAmount] = useState("");
   const [editingHome, setEditingHome] = useState<string | null>(null);
   const [homeNameInput, setHomeNameInput] = useState("");
+  const [isAddingHome, setIsAddingHome] = useState(false);
+  const [newHomeForm, setNewHomeForm] = useState({ home_number: 0, home_name: "", contact_person: "", contact_phone: "" });
   
   // Expense management
   const [yearlyAccount, setYearlyAccount] = useState<YearlyAccount | null>(null);
@@ -224,6 +226,45 @@ const DonationManagement = () => {
       toast({ title: "त्रुटी", description: "देणगी तयार करण्यात त्रुटी", variant: "destructive" });
     } else {
       fetchDonations();
+    }
+  };
+
+  const handleAddHome = async () => {
+    if (newHomeForm.home_number <= 0) {
+      toast({ title: "त्रुटी", description: "वैध घर क्रमांक प्रविष्ट करा", variant: "destructive" });
+      return;
+    }
+    const existing = homes.find(h => h.home_number === newHomeForm.home_number);
+    if (existing) {
+      toast({ title: "त्रुटी", description: "हा घर क्रमांक आधीच अस्तित्वात आहे", variant: "destructive" });
+      return;
+    }
+    const { error } = await supabase.from("homes").insert({
+      home_number: newHomeForm.home_number,
+      home_name: newHomeForm.home_name.trim() || null,
+      contact_person: newHomeForm.contact_person.trim() || null,
+      contact_phone: newHomeForm.contact_phone.trim() || null,
+    });
+    if (error) {
+      toast({ title: "त्रुटी", description: "घर जोडण्यात त्रुटी", variant: "destructive" });
+    } else {
+      toast({ title: "यशस्वी", description: `घर क्र. ${newHomeForm.home_number} जोडले` });
+      setNewHomeForm({ home_number: 0, home_name: "", contact_person: "", contact_phone: "" });
+      setIsAddingHome(false);
+      fetchHomes();
+    }
+  };
+
+  const handleDeleteHome = async (homeId: string, homeNumber: number) => {
+    if (!confirm(`घर क्र. ${homeNumber} हटवायचे आहे का? संबंधित देणगी माहितीही हटवली जाईल.`)) return;
+    // Delete donations first
+    await supabase.from("home_donations").delete().eq("home_id", homeId);
+    const { error } = await supabase.from("homes").delete().eq("id", homeId);
+    if (error) {
+      toast({ title: "त्रुटी", description: "घर हटवण्यात त्रुटी", variant: "destructive" });
+    } else {
+      toast({ title: "यशस्वी", description: `घर क्र. ${homeNumber} हटवले` });
+      fetchHomes();
     }
   };
 
@@ -932,7 +973,7 @@ const DonationManagement = () => {
             </div>
           </div>
 
-          <div className="flex items-end gap-4 p-4 bg-secondary rounded-lg">
+          <div className="flex flex-wrap items-end gap-4 p-4 bg-secondary rounded-lg">
             <div className="space-y-2">
               <Label>सर्व घरांना एकत्र देणगी नियुक्त करा</Label>
               <div className="flex gap-2">
@@ -946,7 +987,38 @@ const DonationManagement = () => {
                 <Button onClick={handleBulkAssign}>सर्वांना नियुक्त करा</Button>
               </div>
             </div>
+            <Button onClick={() => setIsAddingHome(true)} className="gap-2" disabled={isAddingHome}>
+              <Plus className="h-4 w-4" /> घर जोडा
+            </Button>
           </div>
+
+          {isAddingHome && (
+            <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
+              <h4 className="font-medium">नवीन घर जोडा</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">घर क्रमांक *</Label>
+                  <Input type="number" value={newHomeForm.home_number || ""} onChange={(e) => setNewHomeForm({ ...newHomeForm, home_number: parseInt(e.target.value) || 0 })} placeholder="क्र." />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">घरमालकाचे नाव</Label>
+                  <Input value={newHomeForm.home_name} onChange={(e) => setNewHomeForm({ ...newHomeForm, home_name: e.target.value })} placeholder="नाव" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">संपर्क व्यक्ती</Label>
+                  <Input value={newHomeForm.contact_person} onChange={(e) => setNewHomeForm({ ...newHomeForm, contact_person: e.target.value })} placeholder="व्यक्ती" />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">फोन नंबर</Label>
+                  <Input value={newHomeForm.contact_phone} onChange={(e) => setNewHomeForm({ ...newHomeForm, contact_phone: e.target.value })} placeholder="फोन" />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleAddHome}>जोडा</Button>
+                <Button size="sm" variant="outline" onClick={() => { setIsAddingHome(false); setNewHomeForm({ home_number: 0, home_name: "", contact_person: "", contact_phone: "" }); }}>रद्द करा</Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -963,6 +1035,7 @@ const DonationManagement = () => {
               <TableHead>तारीख</TableHead>
               <TableHead>स्थिती</TableHead>
               <TableHead>क्रिया</TableHead>
+              <TableHead className="w-12"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -1063,6 +1136,11 @@ const DonationManagement = () => {
                         नियुक्त करा
                       </Button>
                     )}
+                  </TableCell>
+                  <TableCell>
+                    <Button size="sm" variant="ghost" onClick={() => handleDeleteHome(home.id, home.home_number)} title="घर हटवा">
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               );
