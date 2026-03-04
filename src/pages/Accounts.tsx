@@ -30,6 +30,7 @@ interface DonationData {
   id: string;
   home_id: string;
   year: string;
+  assigned_amount: number;
   paid_amount: number;
   payment_date: string | null;
 }
@@ -93,8 +94,7 @@ const Accounts = () => {
       const { data: donationsData } = await supabase
         .from("home_donations")
         .select("*")
-        .in("year", years)
-        .gt("paid_amount", 0);
+        .in("year", years);
 
       if (homesData && donationsData) {
         const groupedByYear: Record<string, { home: HomeData; donation: DonationData }[]> = {};
@@ -296,24 +296,41 @@ const Accounts = () => {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>घरमालकाचे नाव</TableHead>
+                                <TableHead className="text-right">नियुक्त</TableHead>
+                                <TableHead className="text-right">दिलेली रक्कम</TableHead>
+                                <TableHead className="text-right">बाकी</TableHead>
                                 <TableHead>तारीख</TableHead>
-                                <TableHead className="text-right">रक्कम</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {donations.map(({ home, donation }) => (
-                                <TableRow key={donation.id}>
-                                  <TableCell className="font-medium">
-                                    {home.home_name || `घर क्र. ${home.home_number}`}
-                                  </TableCell>
-                                  <TableCell className="text-muted-foreground">
-                                    {formatDate(donation.payment_date)}
-                                  </TableCell>
-                                  <TableCell className="text-right text-green-600 font-medium">
-                                    {formatCurrency(donation.paid_amount)}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
+                              {donations.map(({ home, donation }) => {
+                                const remaining = donation.assigned_amount > donation.paid_amount 
+                                  ? donation.assigned_amount - donation.paid_amount 
+                                  : 0;
+                                return (
+                                  <TableRow key={donation.id}>
+                                    <TableCell className="font-medium">
+                                      {home.home_name || `घर क्र. ${home.home_number}`}
+                                    </TableCell>
+                                    <TableCell className="text-right text-muted-foreground">
+                                      {formatCurrency(donation.assigned_amount || 0)}
+                                    </TableCell>
+                                    <TableCell className="text-right text-green-600 font-medium">
+                                      {formatCurrency(donation.paid_amount)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {remaining > 0 ? (
+                                        <span className="text-red-600 font-medium">{formatCurrency(remaining)}</span>
+                                      ) : (
+                                        <span className="text-green-600">₹0</span>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="text-muted-foreground">
+                                      {formatDate(donation.payment_date)}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
                             </TableBody>
                           </Table>
                         </div>
