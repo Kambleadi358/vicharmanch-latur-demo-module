@@ -57,7 +57,7 @@ const DonationManagement = () => {
   const [editingHome, setEditingHome] = useState<string | null>(null);
   const [homeNameInput, setHomeNameInput] = useState("");
   const [isAddingHome, setIsAddingHome] = useState(false);
-  const [newHomeForm, setNewHomeForm] = useState({ home_number: 0, home_name: "", contact_person: "", contact_phone: "" });
+  const [newHomeForm, setNewHomeForm] = useState({ home_name: "", contact_phone: "" });
   
   // Expense management
   const [yearlyAccount, setYearlyAccount] = useState<YearlyAccount | null>(null);
@@ -229,27 +229,27 @@ const DonationManagement = () => {
     }
   };
 
+  const getNextHomeNumber = () => {
+    if (homes.length === 0) return 1;
+    return Math.max(...homes.map(h => h.home_number)) + 1;
+  };
+
   const handleAddHome = async () => {
-    if (newHomeForm.home_number <= 0) {
-      toast({ title: "त्रुटी", description: "वैध घर क्रमांक प्रविष्ट करा", variant: "destructive" });
+    if (!newHomeForm.home_name.trim()) {
+      toast({ title: "त्रुटी", description: "घरमालकाचे नाव आवश्यक आहे", variant: "destructive" });
       return;
     }
-    const existing = homes.find(h => h.home_number === newHomeForm.home_number);
-    if (existing) {
-      toast({ title: "त्रुटी", description: "हा घर क्रमांक आधीच अस्तित्वात आहे", variant: "destructive" });
-      return;
-    }
+    const nextNumber = getNextHomeNumber();
     const { error } = await supabase.from("homes").insert({
-      home_number: newHomeForm.home_number,
-      home_name: newHomeForm.home_name.trim() || null,
-      contact_person: newHomeForm.contact_person.trim() || null,
+      home_number: nextNumber,
+      home_name: newHomeForm.home_name.trim(),
       contact_phone: newHomeForm.contact_phone.trim() || null,
     });
     if (error) {
       toast({ title: "त्रुटी", description: "घर जोडण्यात त्रुटी", variant: "destructive" });
     } else {
-      toast({ title: "यशस्वी", description: `घर क्र. ${newHomeForm.home_number} जोडले` });
-      setNewHomeForm({ home_number: 0, home_name: "", contact_person: "", contact_phone: "" });
+      toast({ title: "यशस्वी", description: `घर क्र. ${nextNumber} जोडले` });
+      setNewHomeForm({ home_name: "", contact_phone: "" });
       setIsAddingHome(false);
       fetchHomes();
     }
@@ -264,7 +264,22 @@ const DonationManagement = () => {
       toast({ title: "त्रुटी", description: "घर हटवण्यात त्रुटी", variant: "destructive" });
     } else {
       toast({ title: "यशस्वी", description: `घर क्र. ${homeNumber} हटवले` });
+      // Renumber remaining homes sequentially
+      await renumberHomes();
       fetchHomes();
+    }
+  };
+
+  const renumberHomes = async () => {
+    const { data: allHomes } = await supabase
+      .from("homes")
+      .select("id")
+      .order("home_number", { ascending: true });
+    
+    if (allHomes) {
+      for (let i = 0; i < allHomes.length; i++) {
+        await supabase.from("homes").update({ home_number: i + 1 }).eq("id", allHomes[i].id);
+      }
     }
   };
 
@@ -994,28 +1009,20 @@ const DonationManagement = () => {
 
           {isAddingHome && (
             <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
-              <h4 className="font-medium">नवीन घर जोडा</h4>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <h4 className="font-medium">नवीन घर जोडा (घर क्र. {getNextHomeNumber()} आपोआप नियुक्त होईल)</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">घर क्रमांक *</Label>
-                  <Input type="number" value={newHomeForm.home_number || ""} onChange={(e) => setNewHomeForm({ ...newHomeForm, home_number: parseInt(e.target.value) || 0 })} placeholder="क्र." />
+                  <Label className="text-xs">घरमालकाचे नाव *</Label>
+                  <Input value={newHomeForm.home_name} onChange={(e) => setNewHomeForm({ ...newHomeForm, home_name: e.target.value })} placeholder="घरमालकाचे नाव" />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">घरमालकाचे नाव</Label>
-                  <Input value={newHomeForm.home_name} onChange={(e) => setNewHomeForm({ ...newHomeForm, home_name: e.target.value })} placeholder="नाव" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">संपर्क व्यक्ती</Label>
-                  <Input value={newHomeForm.contact_person} onChange={(e) => setNewHomeForm({ ...newHomeForm, contact_person: e.target.value })} placeholder="व्यक्ती" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">फोन नंबर</Label>
-                  <Input value={newHomeForm.contact_phone} onChange={(e) => setNewHomeForm({ ...newHomeForm, contact_phone: e.target.value })} placeholder="फोन" />
+                  <Label className="text-xs">संपर्क (ऐच्छिक)</Label>
+                  <Input value={newHomeForm.contact_phone} onChange={(e) => setNewHomeForm({ ...newHomeForm, contact_phone: e.target.value })} placeholder="फोन नंबर" />
                 </div>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleAddHome}>जोडा</Button>
-                <Button size="sm" variant="outline" onClick={() => { setIsAddingHome(false); setNewHomeForm({ home_number: 0, home_name: "", contact_person: "", contact_phone: "" }); }}>रद्द करा</Button>
+                <Button size="sm" variant="outline" onClick={() => { setIsAddingHome(false); setNewHomeForm({ home_name: "", contact_phone: "" }); }}>रद्द करा</Button>
               </div>
             </div>
           )}
@@ -1032,6 +1039,7 @@ const DonationManagement = () => {
               <TableHead>संपर्क</TableHead>
               <TableHead className="text-right">नियुक्त</TableHead>
               <TableHead className="text-right">दिले</TableHead>
+              <TableHead className="text-right">बाकी</TableHead>
               <TableHead>तारीख</TableHead>
               <TableHead>स्थिती</TableHead>
               <TableHead>क्रिया</TableHead>
@@ -1077,10 +1085,7 @@ const DonationManagement = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <div className="text-sm">
-                      <p>{home.contact_person || "-"}</p>
-                      <p className="text-muted-foreground">{home.contact_phone || ""}</p>
-                    </div>
+                    <span className="text-sm text-muted-foreground">{home.contact_phone || "-"}</span>
                   </TableCell>
                   <TableCell className="text-right">
                     {isEditing ? (
@@ -1104,6 +1109,13 @@ const DonationManagement = () => {
                       />
                     ) : (
                       <span className="text-green-600">₹{donation?.paid_amount?.toLocaleString() || 0}</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {remaining > 0 ? (
+                      <span className="text-red-600 font-medium">₹{remaining.toLocaleString()}</span>
+                    ) : (
+                      <span className="text-green-600">₹0</span>
                     )}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
