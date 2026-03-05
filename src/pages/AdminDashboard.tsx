@@ -162,18 +162,7 @@ const AdminDashboard = () => {
             </TabsContent>
 
             <TabsContent value="letterpad">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="h-5 w-5" />
-                    दस्तऐवज प्रणाली (Letterpad)
-                  </CardTitle>
-                  <CardDescription>अधिकृत पत्रे तयार करा व प्रिंट करा</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <LetterpadManagement />
-                </CardContent>
-              </Card>
+              <LetterpadManagement />
             </TabsContent>
 
             <TabsContent value="settings">
