@@ -12,7 +12,8 @@ import ProgramManagement from "@/components/admin/ProgramManagement";
 import CertificateManagement from "@/components/admin/CertificateManagement";
 import AdminSettings from "@/components/admin/AdminSettings";
 import LetterpadManagement from "@/components/admin/LetterpadManagement";
-import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText } from "lucide-react";
+import PrizeDistribution from "@/components/admin/PrizeDistribution";
+import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -75,7 +76,7 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Tabs defaultValue="programs" className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 gap-1 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 gap-1 h-auto p-1">
               <TabsTrigger value="programs" className="gap-1 text-xs sm:text-sm py-2">
                 <CalendarDays className="h-4 w-4" />
                 <span className="hidden xs:inline">कार्यक्रम</span>
@@ -95,6 +96,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="donations" className="gap-1 text-xs sm:text-sm py-2">
                 <IndianRupee className="h-4 w-4" />
                 <span className="hidden xs:inline">देणगी</span>
+              </TabsTrigger>
+              <TabsTrigger value="prizes" className="gap-1 text-xs sm:text-sm py-2">
+                <Gift className="h-4 w-4" />
+                <span className="hidden xs:inline">बक्षीस</span>
               </TabsTrigger>
               <TabsTrigger value="letterpad" className="gap-1 text-xs sm:text-sm py-2">
                 <FileText className="h-4 w-4" />
@@ -159,6 +164,10 @@ const AdminDashboard = () => {
                   <DonationManagement />
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="prizes">
+              <PrizeDistribution />
             </TabsContent>
 
             <TabsContent value="letterpad">

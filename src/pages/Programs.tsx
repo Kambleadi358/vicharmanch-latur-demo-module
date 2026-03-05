@@ -65,6 +65,7 @@ interface ProgramWinner {
   first_place: string | null;
   second_place: string | null;
   third_place: string | null;
+  show_on_ui: boolean;
 }
 
 const Programs = () => {
@@ -284,6 +285,8 @@ const ProgramCard = ({ program, index }: { program: Program; index: number }) =>
     (w) => w.first_place || w.second_place || w.third_place
   );
 
+  const winnersHidden = winners && winners.length > 0 && winners.some((w) => !w.show_on_ui);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
@@ -309,7 +312,7 @@ const ProgramCard = ({ program, index }: { program: Program; index: number }) =>
         )}
       </div>
 
-      {hasWinners && (
+      {hasWinners && !winnersHidden && (
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="w-full">
@@ -358,6 +361,14 @@ const ProgramCard = ({ program, index }: { program: Program; index: number }) =>
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {winnersHidden && (
+        <div className="text-center p-3 bg-accent/10 rounded-lg border border-accent/20">
+          <p className="text-sm text-accent font-medium">
+            🏆 विजेते गुपित आहेत. बक्षीस वितरण सोहळ्यात जाहीर केले जातील.
+          </p>
+        </div>
       )}
     </motion.div>
   );

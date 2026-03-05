@@ -9,8 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Eye, Trash2, Edit, Trophy } from "lucide-react";
+import { Plus, Trash2, Trophy } from "lucide-react";
 
 interface Program {
   id: string;
@@ -30,6 +32,7 @@ interface ProgramWinner {
   first_place: string | null;
   second_place: string | null;
   third_place: string | null;
+  show_on_ui: boolean;
 }
 
 const categories = ["छोटा गट", "मोठा गट", "खुला गट"];
@@ -48,8 +51,8 @@ const ProgramManagement = () => {
     description: "",
   });
   const [winnersData, setWinnersData] = useState<Record<string, { first: string; second: string; third: string }>>({});
+  const [showOnUi, setShowOnUi] = useState(true);
 
-  // Fetch programs
   const { data: programs, isLoading } = useQuery({
     queryKey: ["admin-programs"],
     queryFn: async () => {
@@ -62,7 +65,6 @@ const ProgramManagement = () => {
     },
   });
 
-  // Fetch winners for selected program
   const { data: winners } = useQuery({
     queryKey: ["program-winners", selectedProgram?.id],
     queryFn: async () => {
@@ -77,7 +79,6 @@ const ProgramManagement = () => {
     enabled: !!selectedProgram,
   });
 
-  // Add program mutation
   const addProgram = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from("programs").insert({
@@ -99,7 +100,6 @@ const ProgramManagement = () => {
     onError: () => toast.error("कार्यक्रम जोडताना त्रुटी"),
   });
 
-  // Update program mutation
   const updateProgram = useMutation({
     mutationFn: async (program: Program) => {
       const { error } = await supabase
@@ -114,7 +114,6 @@ const ProgramManagement = () => {
     },
   });
 
-  // Delete program mutation
   const deleteProgram = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("programs").delete().eq("id", id);
@@ -126,7 +125,6 @@ const ProgramManagement = () => {
     },
   });
 
-  // Save winners mutation
   const saveWinners = useMutation({
     mutationFn: async () => {
       if (!selectedProgram) return;
@@ -141,6 +139,7 @@ const ProgramManagement = () => {
           first_place: winnerData.first || null,
           second_place: winnerData.second || null,
           third_place: winnerData.third || null,
+          show_on_ui: showOnUi,
         }, { onConflict: "program_id,category" });
         
         if (error) throw error;
@@ -153,30 +152,29 @@ const ProgramManagement = () => {
     onError: () => toast.error("विजेते सेव्ह करताना त्रुटी"),
   });
 
-  // Initialize winners data when winners are loaded
+  const toggleShowOnUi = useMutation({
+    mutationFn: async ({ programId, newValue }: { programId: string; newValue: boolean }) => {
+      const { error } = await supabase
+        .from("program_winners")
+        .update({ show_on_ui: newValue })
+        .eq("program_id", programId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["program-winners"] });
+      toast.success("विजेते दृश्यता अपडेट केली!");
+    },
+  });
+
   const openWinnersDialog = (program: Program) => {
     setSelectedProgram(program);
     setIsWinnersOpen(true);
   };
 
   // Update winners data when winners are fetched
-  useState(() => {
-    if (winners) {
-      const data: Record<string, { first: string; second: string; third: string }> = {};
-      for (const winner of winners) {
-        data[winner.category] = {
-          first: winner.first_place || "",
-          second: winner.second_place || "",
-          third: winner.third_place || "",
-        };
-      }
-      setWinnersData(data);
-    }
-  });
-
-  // Effect to update winners data
   if (winners && Object.keys(winnersData).length === 0) {
     const data: Record<string, { first: string; second: string; third: string }> = {};
+    let currentShowOnUi = true;
     for (const category of categories) {
       const winner = winners.find((w) => w.category === category);
       data[category] = {
@@ -184,9 +182,11 @@ const ProgramManagement = () => {
         second: winner?.second_place || "",
         third: winner?.third_place || "",
       };
+      if (winner) currentShowOnUi = winner.show_on_ui;
     }
     if (JSON.stringify(data) !== JSON.stringify(winnersData)) {
       setWinnersData(data);
+      setShowOnUi(currentShowOnUi);
     }
   }
 
@@ -205,46 +205,19 @@ const ProgramManagement = () => {
               <DialogTitle>नवीन कार्यक्रम</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
-              <Input
-                placeholder="कार्यक्रमाचे नाव"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
-              <Input
-                placeholder="तारीख (उदा. १४ एप्रिल २०२५)"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-              />
-              <Input
-                placeholder="वेळ (उदा. सकाळी ६:०० वाजता)"
-                value={formData.time}
-                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-              />
-              <Input
-                placeholder="ठिकाण"
-                value={formData.location}
-                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              />
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData({ ...formData, status: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+              <Input placeholder="कार्यक्रमाचे नाव" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+              <Input placeholder="तारीख (उदा. १४ एप्रिल २०२५)" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
+              <Input placeholder="वेळ (उदा. सकाळी ६:०० वाजता)" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} />
+              <Input placeholder="ठिकाण" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
+              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="upcoming">आगामी</SelectItem>
                   <SelectItem value="completed">पूर्ण</SelectItem>
                 </SelectContent>
               </Select>
-              <Textarea
-                placeholder="वर्णन (पर्यायी)"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-              <Button onClick={() => addProgram.mutate()} className="w-full">
-                जोडा
-              </Button>
+              <Textarea placeholder="वर्णन (पर्यायी)" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+              <Button onClick={() => addProgram.mutate()} className="w-full">जोडा</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -280,21 +253,10 @@ const ProgramManagement = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => {
-                          setWinnersData({});
-                          openWinnersDialog(program);
-                        }}
-                      >
+                      <Button size="icon" variant="outline" onClick={() => { setWinnersData({}); openWinnersDialog(program); }}>
                         <Trophy className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        onClick={() => deleteProgram.mutate(program.id)}
-                      >
+                      <Button size="icon" variant="destructive" onClick={() => deleteProgram.mutate(program.id)}>
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
@@ -315,6 +277,17 @@ const ProgramManagement = () => {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-6 mt-4">
+              {/* Show on UI Toggle */}
+              <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                <div>
+                  <Label className="text-sm font-semibold">विजेते UI वर दाखवा</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    बंद केल्यास "विजेते गुपित आहेत" असा संदेश दिसेल
+                  </p>
+                </div>
+                <Switch checked={showOnUi} onCheckedChange={setShowOnUi} />
+              </div>
+
               {categories.map((category) => (
                 <div key={category} className="p-4 border rounded-lg bg-muted/30">
                   <h4 className="font-semibold text-lg mb-4 text-accent">{category}</h4>
@@ -324,12 +297,7 @@ const ProgramManagement = () => {
                       <Input
                         placeholder="विजेत्याचे नाव"
                         value={winnersData[category]?.first || ""}
-                        onChange={(e) =>
-                          setWinnersData({
-                            ...winnersData,
-                            [category]: { ...winnersData[category], first: e.target.value },
-                          })
-                        }
+                        onChange={(e) => setWinnersData({ ...winnersData, [category]: { ...winnersData[category], first: e.target.value } })}
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -337,12 +305,7 @@ const ProgramManagement = () => {
                       <Input
                         placeholder="विजेत्याचे नाव"
                         value={winnersData[category]?.second || ""}
-                        onChange={(e) =>
-                          setWinnersData({
-                            ...winnersData,
-                            [category]: { ...winnersData[category], second: e.target.value },
-                          })
-                        }
+                        onChange={(e) => setWinnersData({ ...winnersData, [category]: { ...winnersData[category], second: e.target.value } })}
                       />
                     </div>
                     <div className="flex items-center gap-3">
@@ -350,12 +313,7 @@ const ProgramManagement = () => {
                       <Input
                         placeholder="विजेत्याचे नाव"
                         value={winnersData[category]?.third || ""}
-                        onChange={(e) =>
-                          setWinnersData({
-                            ...winnersData,
-                            [category]: { ...winnersData[category], third: e.target.value },
-                          })
-                        }
+                        onChange={(e) => setWinnersData({ ...winnersData, [category]: { ...winnersData[category], third: e.target.value } })}
                       />
                     </div>
                   </div>
