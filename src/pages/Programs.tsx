@@ -285,6 +285,8 @@ const ProgramCard = ({ program, index }: { program: Program; index: number }) =>
     (w) => w.first_place || w.second_place || w.third_place
   );
 
+  const winnersHidden = winners && winners.length > 0 && winners.some((w) => !w.show_on_ui);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}
