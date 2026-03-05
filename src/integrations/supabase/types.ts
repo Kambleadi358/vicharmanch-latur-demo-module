@@ -159,6 +159,72 @@ export type Database = {
         }
         Relationships: []
       }
+      prize_allocations: {
+        Row: {
+          created_at: string
+          group_name: string
+          id: string
+          prize_item_id: string
+          program_id: string
+          rank: string
+          winner_name: string
+        }
+        Insert: {
+          created_at?: string
+          group_name: string
+          id?: string
+          prize_item_id: string
+          program_id: string
+          rank: string
+          winner_name: string
+        }
+        Update: {
+          created_at?: string
+          group_name?: string
+          id?: string
+          prize_item_id?: string
+          program_id?: string
+          rank?: string
+          winner_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prize_allocations_prize_item_id_fkey"
+            columns: ["prize_item_id"]
+            isOneToOne: false
+            referencedRelation: "prize_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prize_allocations_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prize_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_name: string
+          quantity: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_name: string
+          quantity?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_name?: string
+          quantity?: number
+        }
+        Relationships: []
+      }
       program_winners: {
         Row: {
           category: string
@@ -167,6 +233,7 @@ export type Database = {
           id: string
           program_id: string
           second_place: string | null
+          show_on_ui: boolean
           third_place: string | null
           updated_at: string
         }
@@ -177,6 +244,7 @@ export type Database = {
           id?: string
           program_id: string
           second_place?: string | null
+          show_on_ui?: boolean
           third_place?: string | null
           updated_at?: string
         }
@@ -187,6 +255,7 @@ export type Database = {
           id?: string
           program_id?: string
           second_place?: string | null
+          show_on_ui?: boolean
           third_place?: string | null
           updated_at?: string
         }
