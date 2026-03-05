@@ -312,7 +312,7 @@ const ProgramCard = ({ program, index }: { program: Program; index: number }) =>
         )}
       </div>
 
-      {hasWinners && (
+      {hasWinners && !winnersHidden && (
         <Dialog>
           <DialogTrigger asChild>
             <Button variant="outline" size="sm" className="w-full">
@@ -361,6 +361,14 @@ const ProgramCard = ({ program, index }: { program: Program; index: number }) =>
             </div>
           </DialogContent>
         </Dialog>
+      )}
+
+      {winnersHidden && (
+        <div className="text-center p-3 bg-accent/10 rounded-lg border border-accent/20">
+          <p className="text-sm text-accent font-medium">
+            🏆 विजेते गुपित आहेत. बक्षीस वितरण सोहळ्यात जाहीर केले जातील.
+          </p>
+        </div>
       )}
     </motion.div>
   );
