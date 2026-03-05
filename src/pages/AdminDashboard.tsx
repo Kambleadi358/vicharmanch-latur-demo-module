@@ -166,6 +166,10 @@ const AdminDashboard = () => {
               </Card>
             </TabsContent>
 
+            <TabsContent value="prizes">
+              <PrizeDistribution />
+            </TabsContent>
+
             <TabsContent value="letterpad">
               <LetterpadManagement />
             </TabsContent>
