@@ -65,6 +65,7 @@ interface ProgramWinner {
   first_place: string | null;
   second_place: string | null;
   third_place: string | null;
+  show_on_ui: boolean;
 }
 
 const Programs = () => {
