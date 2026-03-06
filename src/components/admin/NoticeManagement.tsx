@@ -139,16 +139,6 @@ const NoticeManagement = () => {
               <Label>शीर्षक *</Label>
               <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="सूचना शीर्षक" />
             </div>
-            <div className="space-y-2">
-              <Label>वर्णन</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="सूचनेचे तपशील"
-                rows={3}
-              />
-            </div>
-            <div className="space-y-2">
               <Label>प्रकार</Label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
