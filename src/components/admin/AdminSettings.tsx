@@ -28,6 +28,47 @@ const AdminSettings = () => {
   const { user } = useAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isResettingQuiz, setIsResettingQuiz] = useState(false);
+  const [mediaLink, setMediaLink] = useState("");
+  const [isSavingMedia, setIsSavingMedia] = useState(false);
+
+  useEffect(() => {
+    const fetchMediaLink = async () => {
+      const { data } = await supabase
+        .from("site_settings")
+        .select("setting_value")
+        .eq("setting_key", "media_gallery_link")
+        .maybeSingle();
+      if (data) setMediaLink(data.setting_value);
+    };
+    fetchMediaLink();
+  }, []);
+
+  const handleSaveMediaLink = async () => {
+    setIsSavingMedia(true);
+    try {
+      const { data: existing } = await supabase
+        .from("site_settings")
+        .select("id")
+        .eq("setting_key", "media_gallery_link")
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("site_settings")
+          .update({ setting_value: mediaLink })
+          .eq("setting_key", "media_gallery_link");
+      } else {
+        await supabase
+          .from("site_settings")
+          .insert({ setting_key: "media_gallery_link", setting_value: mediaLink });
+      }
+      toast.success("मीडिया गॅलरी लिंक जतन केली!");
+    } catch {
+      toast.error("लिंक जतन करण्यात त्रुटी");
+    } finally {
+      setIsSavingMedia(false);
+    }
+  };
 
   const passwordForm = useForm<PasswordFormValues>({
     resolver: zodResolver(passwordSchema),
