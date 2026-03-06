@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Printer, RotateCcw, ExternalLink, FolderOpen } from "lucide-react";
+import { FileText, Printer, RotateCcw } from "lucide-react";
 import letterpadBg from "@/assets/letterpad-template.png";
 
 const LABEL_COLOR = "#0EA5E9"; // Sky blue for labels
