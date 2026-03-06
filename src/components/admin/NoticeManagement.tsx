@@ -245,11 +245,11 @@ const NoticeManagement = () => {
               </TableCell>
               <TableCell>
                 <span className={`text-xs px-2 py-1 rounded-full ${
-                  notice.notice_type === "meeting_minutes" 
+                  notice.notice_type === "krantigatha" 
                     ? "bg-primary/10 text-primary" 
                     : "bg-secondary text-secondary-foreground"
                 }`}>
-                  {notice.notice_type === "meeting_minutes" ? "इतिवृत्त" : "सूचना"}
+                  {notice.notice_type === "krantigatha" ? "क्रांतिगाथा" : "सूचना"}
                 </span>
               </TableCell>
               <TableCell>{notice.date}</TableCell>
