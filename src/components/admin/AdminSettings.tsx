@@ -248,6 +248,33 @@ const AdminSettings = () => {
         </CardContent>
       </Card>
 
+      {/* Media Gallery Link */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Images className="h-5 w-5" />
+            मीडिया गॅलरी (Google Drive)
+          </CardTitle>
+          <CardDescription>मुख्यपृष्ठावर दिसणारी मीडिया गॅलरी लिंक</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-3 items-end">
+            <div className="flex-1 space-y-1">
+              <Label className="text-xs">Google Drive फोल्डर लिंक</Label>
+              <Input
+                value={mediaLink}
+                onChange={(e) => setMediaLink(e.target.value)}
+                placeholder="https://drive.google.com/drive/folders/..."
+              />
+            </div>
+            <Button onClick={handleSaveMediaLink} disabled={isSavingMedia} className="gap-2">
+              <Save className="h-4 w-4" />
+              {isSavingMedia ? "जतन..." : "जतन करा"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Year Lock Section */}
       <YearLockManager />
     </div>
