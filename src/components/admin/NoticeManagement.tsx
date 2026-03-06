@@ -95,7 +95,7 @@ const NoticeManagement = () => {
       date: notice.date,
       is_new: notice.is_new ?? true,
       is_visible: notice.is_visible ?? true,
-      notice_type: (notice.notice_type as "notice" | "meeting_minutes") ?? "notice",
+      notice_type: (notice.notice_type as "notice" | "krantigatha") ?? "notice",
     });
     setEditingId(notice.id);
     setIsAdding(true);
