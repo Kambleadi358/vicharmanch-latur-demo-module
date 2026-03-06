@@ -282,7 +282,7 @@ ${bodyHTML}
                 {/* Date - top right below header */}
                 <div
                   className="absolute text-right"
-                  style={{ top: "13.5%", right: "5%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
+                  style={{ top: "16%", right: "6%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
                 >
                   <span style={{ color: LABEL_COLOR, fontWeight: 700 }}>दिनांक : </span>
                   <span className="text-foreground">{letterData.date}</span>
@@ -291,7 +291,7 @@ ${bodyHTML}
                 {/* Receiver - left side */}
                 <div
                   className="absolute"
-                  style={{ top: "17%", left: "5%", width: "60%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
+                  style={{ top: "20%", left: "7%", width: "60%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
                 >
                   <div style={{ color: LABEL_COLOR, fontWeight: 700, marginBottom: "2px" }}>प्रति,</div>
                   {receiverLines.map((line, i) => (
