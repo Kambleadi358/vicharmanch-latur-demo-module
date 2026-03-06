@@ -142,36 +142,6 @@ ${bodyHTML}
 
   return (
     <div className="space-y-6">
-      {/* Google Drive Gallery Link */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-sm">
-            <FolderOpen className="h-4 w-4" />
-            डिजिटल दस्तऐवज गॅलरी (Google Drive)
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3 items-end">
-            <div className="flex-1 space-y-1">
-              <Label className="text-xs">Google Drive फोल्डर लिंक</Label>
-              <Input
-                value={driveLink}
-                onChange={(e) => setDriveLink(e.target.value)}
-                placeholder="https://drive.google.com/drive/folders/..."
-              />
-            </div>
-            {driveLink && (
-              <a href={driveLink} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" className="gap-2 bg-gradient-to-r from-sky-500 to-blue-600 text-white hover:text-white hover:from-sky-600 hover:to-blue-700 border-0">
-                  <ExternalLink className="h-4 w-4" />
-                  गॅलरी पहा
-                </Button>
-              </a>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form */}
         <Card>
