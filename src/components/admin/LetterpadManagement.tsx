@@ -317,9 +317,9 @@ ${bodyHTML}
                 <div
                   className="absolute overflow-hidden"
                   style={{
-                    top: `${17 + 3 + receiverLines.length * 2.5 + 5}%`,
-                    left: "5%",
-                    right: "5%",
+                    top: `${20 + 3 + receiverLines.length * 2.5 + 5}%`,
+                    left: "7%",
+                    right: "6%",
                     bottom: "28%",
                     fontSize: "clamp(5px, 1.2vw, 9px)",
                     lineHeight: 1.7,
