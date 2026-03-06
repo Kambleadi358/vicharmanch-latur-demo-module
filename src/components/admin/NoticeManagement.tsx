@@ -31,7 +31,7 @@ const NoticeManagement = () => {
     date: new Date().toISOString().split("T")[0],
     is_new: true,
     is_visible: true,
-    notice_type: "notice" as "notice" | "meeting_minutes",
+    notice_type: "notice" as "notice" | "krantigatha",
   });
   const { toast } = useToast();
 
