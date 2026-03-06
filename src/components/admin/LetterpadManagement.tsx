@@ -15,7 +15,6 @@ const LetterpadManagement = () => {
   const currentYear = new Date().getFullYear();
 
   const [serialCounter, setSerialCounter] = useState(1);
-  const [driveLink, setDriveLink] = useState("");
 
   const [letterData, setLetterData] = useState({
     date: new Date().toLocaleDateString("mr-IN", {
