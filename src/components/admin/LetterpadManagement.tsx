@@ -303,9 +303,9 @@ ${bodyHTML}
                 <div
                   className="absolute"
                   style={{
-                    top: `${17 + 3 + receiverLines.length * 2.5 + 1}%`,
-                    left: "5%",
-                    right: "5%",
+                    top: `${20 + 3 + receiverLines.length * 2.5 + 1}%`,
+                    left: "7%",
+                    right: "6%",
                     fontSize: "clamp(6px, 1.4vw, 10px)",
                   }}
                 >
