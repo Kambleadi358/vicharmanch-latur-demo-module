@@ -336,7 +336,7 @@ ${bodyHTML}
                 {/* Reference ID - bottom left */}
                 <div
                   className="absolute"
-                  style={{ bottom: "22%", left: "5%", fontSize: "clamp(5px, 1.1vw, 8px)", color: LABEL_COLOR, fontWeight: 700 }}
+                  style={{ bottom: "22%", left: "7%", fontSize: "clamp(5px, 1.1vw, 8px)", color: LABEL_COLOR, fontWeight: 700 }}
                 >
                   {referenceId}
                 </div>
