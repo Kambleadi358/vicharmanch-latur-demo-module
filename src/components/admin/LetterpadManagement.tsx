@@ -97,11 +97,11 @@ body{font-family:'Noto Sans Devanagari',sans-serif;background:white;}
 .bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:0;}
 .overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
 .label{font-weight:700;color:${LABEL_COLOR};}
-.date-area{position:absolute;top:126px;right:40px;font-size:13px;}
-.receiver-area{position:absolute;top:160px;left:40px;width:60%;}
-.subject-area{position:absolute;top:${160 + 24 + receiverLines.length * 22}px;left:40px;right:40px;font-size:13px;}
-.body-area{position:absolute;top:${160 + 24 + receiverLines.length * 22 + 50}px;left:40px;right:40px;bottom:220px;overflow:hidden;}
-.ref-area{position:absolute;bottom:195px;left:40px;font-size:11px;}
+.date-area{position:absolute;top:155px;right:50px;font-size:13px;}
+.receiver-area{position:absolute;top:190px;left:55px;width:60%;}
+.subject-area{position:absolute;top:${190 + 24 + receiverLines.length * 22}px;left:55px;right:50px;font-size:13px;}
+.body-area{position:absolute;top:${190 + 24 + receiverLines.length * 22 + 50}px;left:55px;right:50px;bottom:220px;overflow:hidden;}
+.ref-area{position:absolute;bottom:195px;left:55px;font-size:11px;}
 @media print{body{background:white;}.page{margin:0;}}
 @media screen{.page{box-shadow:0 4px 20px rgba(0,0,0,0.15);margin:20px auto;}body{background:#e8e8e8;padding:10px;}}
 </style>
@@ -282,7 +282,7 @@ ${bodyHTML}
                 {/* Date - top right below header */}
                 <div
                   className="absolute text-right"
-                  style={{ top: "13.5%", right: "5%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
+                  style={{ top: "16%", right: "6%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
                 >
                   <span style={{ color: LABEL_COLOR, fontWeight: 700 }}>दिनांक : </span>
                   <span className="text-foreground">{letterData.date}</span>
@@ -291,7 +291,7 @@ ${bodyHTML}
                 {/* Receiver - left side */}
                 <div
                   className="absolute"
-                  style={{ top: "17%", left: "5%", width: "60%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
+                  style={{ top: "20%", left: "7%", width: "60%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
                 >
                   <div style={{ color: LABEL_COLOR, fontWeight: 700, marginBottom: "2px" }}>प्रति,</div>
                   {receiverLines.map((line, i) => (
@@ -303,9 +303,9 @@ ${bodyHTML}
                 <div
                   className="absolute"
                   style={{
-                    top: `${17 + 3 + receiverLines.length * 2.5 + 1}%`,
-                    left: "5%",
-                    right: "5%",
+                    top: `${20 + 3 + receiverLines.length * 2.5 + 1}%`,
+                    left: "7%",
+                    right: "6%",
                     fontSize: "clamp(6px, 1.4vw, 10px)",
                   }}
                 >
@@ -317,9 +317,9 @@ ${bodyHTML}
                 <div
                   className="absolute overflow-hidden"
                   style={{
-                    top: `${17 + 3 + receiverLines.length * 2.5 + 5}%`,
-                    left: "5%",
-                    right: "5%",
+                    top: `${20 + 3 + receiverLines.length * 2.5 + 5}%`,
+                    left: "7%",
+                    right: "6%",
                     bottom: "28%",
                     fontSize: "clamp(5px, 1.2vw, 9px)",
                     lineHeight: 1.7,
@@ -336,7 +336,7 @@ ${bodyHTML}
                 {/* Reference ID - bottom left */}
                 <div
                   className="absolute"
-                  style={{ bottom: "22%", left: "5%", fontSize: "clamp(5px, 1.1vw, 8px)", color: LABEL_COLOR, fontWeight: 700 }}
+                  style={{ bottom: "22%", left: "7%", fontSize: "clamp(5px, 1.1vw, 8px)", color: LABEL_COLOR, fontWeight: 700 }}
                 >
                   {referenceId}
                 </div>
