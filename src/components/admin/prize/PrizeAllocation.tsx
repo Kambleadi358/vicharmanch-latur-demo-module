@@ -4,21 +4,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Gift, Trash2, AlertTriangle } from "lucide-react";
+import { Gift, Trash2 } from "lucide-react";
 
-const groups = ["छोटा गट", "मोठा गट", "खुला गट"];
 const ranks = ["प्रथम", "द्वितीय", "तृतीय"];
 
 const PrizeAllocation = () => {
   const queryClient = useQueryClient();
   const [selectedProgram, setSelectedProgram] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
-  const [winnerName, setWinnerName] = useState("");
+  const [selectedWinner, setSelectedWinner] = useState("");
   const [selectedRank, setSelectedRank] = useState("");
   const [selectedItem, setSelectedItem] = useState("");
 
@@ -30,6 +28,34 @@ const PrizeAllocation = () => {
       return data;
     },
   });
+
+  // Fetch declared winners for the selected program
+  const { data: programWinners } = useQuery({
+    queryKey: ["program-winners", selectedProgram],
+    queryFn: async () => {
+      if (!selectedProgram) return [];
+      const { data, error } = await supabase
+        .from("program_winners")
+        .select("*")
+        .eq("program_id", selectedProgram);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedProgram,
+  });
+
+  // Build winner options from program_winners based on selected group (category)
+  const winnerOptions: { name: string; rank: string }[] = [];
+  if (programWinners && selectedGroup) {
+    programWinners.forEach((w) => {
+      // Match category to group
+      if (w.category === selectedGroup) {
+        if (w.first_place) winnerOptions.push({ name: w.first_place, rank: "प्रथम" });
+        if (w.second_place) winnerOptions.push({ name: w.second_place, rank: "द्वितीय" });
+        if (w.third_place) winnerOptions.push({ name: w.third_place, rank: "तृतीय" });
+      }
+    });
+  }
 
   const { data: prizeItems } = useQuery({
     queryKey: ["prize-items"],
@@ -52,14 +78,27 @@ const PrizeAllocation = () => {
     },
   });
 
-  // Calculate allocated quantities per item
   const getAllocatedCount = (itemId: string) => {
     return allocations?.filter((a) => a.prize_item_id === itemId).length || 0;
   };
 
+  // Get unique categories from program winners for group selection
+  const availableGroups = programWinners
+    ? [...new Set(programWinners.map((w) => w.category))]
+    : [];
+
+  // Auto-set rank when winner is selected
+  const handleWinnerSelect = (winnerName: string) => {
+    setSelectedWinner(winnerName);
+    const match = winnerOptions.find((w) => w.name === winnerName);
+    if (match) {
+      setSelectedRank(match.rank);
+    }
+  };
+
   const allocate = useMutation({
     mutationFn: async () => {
-      if (!selectedProgram || !selectedGroup || !winnerName.trim() || !selectedRank || !selectedItem) {
+      if (!selectedProgram || !selectedGroup || !selectedWinner || !selectedRank || !selectedItem) {
         throw new Error("सर्व फील्ड भरा");
       }
       const item = prizeItems?.find((i) => i.id === selectedItem);
@@ -71,7 +110,7 @@ const PrizeAllocation = () => {
       const { error } = await supabase.from("prize_allocations").insert({
         program_id: selectedProgram,
         group_name: selectedGroup,
-        winner_name: winnerName.trim(),
+        winner_name: selectedWinner,
         rank: selectedRank,
         prize_item_id: selectedItem,
       });
@@ -79,7 +118,7 @@ const PrizeAllocation = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["prize-allocations"] });
-      setWinnerName("");
+      setSelectedWinner("");
       setSelectedRank("");
       setSelectedItem("");
       toast.success("बक्षीस वाटप केले!");
@@ -110,7 +149,7 @@ const PrizeAllocation = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           <div className="space-y-1">
             <Label className="text-xs">कार्यक्रम</Label>
-            <Select value={selectedProgram} onValueChange={setSelectedProgram}>
+            <Select value={selectedProgram} onValueChange={(v) => { setSelectedProgram(v); setSelectedGroup(""); setSelectedWinner(""); setSelectedRank(""); }}>
               <SelectTrigger><SelectValue placeholder="निवडा" /></SelectTrigger>
               <SelectContent>
                 {programs?.map((p) => (
@@ -120,24 +159,38 @@ const PrizeAllocation = () => {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">गट</Label>
-            <Select value={selectedGroup} onValueChange={setSelectedGroup}>
+            <Label className="text-xs">गट (Category)</Label>
+            <Select value={selectedGroup} onValueChange={(v) => { setSelectedGroup(v); setSelectedWinner(""); setSelectedRank(""); }}>
               <SelectTrigger><SelectValue placeholder="निवडा" /></SelectTrigger>
               <SelectContent>
-                {groups.map((g) => (
+                {availableGroups.map((g) => (
                   <SelectItem key={g} value={g}>{g}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">विजेत्याचे नाव</Label>
-            <Input placeholder="नाव" value={winnerName} onChange={(e) => setWinnerName(e.target.value)} />
+            <Label className="text-xs">विजेता (सिस्टम मधून)</Label>
+            <Select value={selectedWinner} onValueChange={handleWinnerSelect}>
+              <SelectTrigger><SelectValue placeholder="विजेता निवडा" /></SelectTrigger>
+              <SelectContent>
+                {winnerOptions.map((w) => (
+                  <SelectItem key={`${w.name}-${w.rank}`} value={w.name}>
+                    {w.rank === "प्रथम" ? "🥇" : w.rank === "द्वितीय" ? "🥈" : "🥉"} {w.name} ({w.rank})
+                  </SelectItem>
+                ))}
+                {winnerOptions.length === 0 && (
+                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                    {!selectedProgram ? "कार्यक्रम निवडा" : !selectedGroup ? "गट निवडा" : "विजेते जाहीर नाहीत"}
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">क्रमांक</Label>
+            <Label className="text-xs">क्रमांक (Auto)</Label>
             <Select value={selectedRank} onValueChange={setSelectedRank}>
-              <SelectTrigger><SelectValue placeholder="निवडा" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Auto" /></SelectTrigger>
               <SelectContent>
                 {ranks.map((r) => (
                   <SelectItem key={r} value={r}>{r}</SelectItem>
