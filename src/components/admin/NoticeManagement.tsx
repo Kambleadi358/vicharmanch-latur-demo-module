@@ -177,7 +177,6 @@ const NoticeManagement = () => {
         <TableHeader>
           <TableRow>
             <TableHead>शीर्षक</TableHead>
-            <TableHead>प्रकार</TableHead>
             <TableHead>तारीख</TableHead>
             <TableHead>स्थिती</TableHead>
             <TableHead>दृश्यता</TableHead>
