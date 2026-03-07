@@ -96,7 +96,7 @@ body{font-family:'Noto Sans Devanagari',sans-serif;background:white;}
 .bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:0;}
 .overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
 .label{font-weight:700;color:${LABEL_COLOR};}
-.date-area{position:absolute;top:155px;right:50px;font-size:13px;}
+.date-area{position:absolute;top:170px;right:50px;font-size:13px;}
 .receiver-area{position:absolute;top:190px;left:55px;width:60%;}
 .subject-area{position:absolute;top:${190 + 24 + receiverLines.length * 22}px;left:55px;right:50px;font-size:13px;}
 .body-area{position:absolute;top:${190 + 24 + receiverLines.length * 22 + 50}px;left:55px;right:50px;bottom:220px;overflow:hidden;}
