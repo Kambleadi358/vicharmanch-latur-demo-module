@@ -96,11 +96,11 @@ body{font-family:'Noto Sans Devanagari',sans-serif;background:white;}
 .bg-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:contain;z-index:0;}
 .overlay{position:absolute;top:0;left:0;width:100%;height:100%;z-index:1;}
 .label{font-weight:700;color:${LABEL_COLOR};}
-.date-area{position:absolute;top:170px;right:50px;font-size:13px;}
-.receiver-area{position:absolute;top:190px;left:55px;width:60%;}
-.subject-area{position:absolute;top:${190 + 24 + receiverLines.length * 22}px;left:55px;right:50px;font-size:13px;}
-.body-area{position:absolute;top:${190 + 24 + receiverLines.length * 22 + 50}px;left:55px;right:50px;bottom:220px;overflow:hidden;}
-.ref-area{position:absolute;bottom:195px;left:55px;font-size:11px;}
+.date-area{position:absolute;top:17.5%;right:6%;font-size:13px;}
+.receiver-area{position:absolute;top:20%;left:7%;width:60%;}
+.subject-area{position:absolute;top:${20 + 3 + receiverLines.length * 2.5 + 1}%;left:7%;right:6%;font-size:13px;}
+.body-area{position:absolute;top:${20 + 3 + receiverLines.length * 2.5 + 5}%;left:7%;right:6%;bottom:22%;overflow:hidden;}
+.ref-area{position:absolute;bottom:22%;left:7%;font-size:11px;}
 @media print{body{background:white;}.page{margin:0;}}
 @media screen{.page{box-shadow:0 4px 20px rgba(0,0,0,0.15);margin:20px auto;}body{background:#e8e8e8;padding:10px;}}
 </style>
