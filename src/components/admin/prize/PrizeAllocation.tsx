@@ -29,7 +29,6 @@ const PrizeAllocation = () => {
     },
   });
 
-  // Fetch declared winners for the selected program
   const { data: programWinners } = useQuery({
     queryKey: ["program-winners", selectedProgram],
     queryFn: async () => {
@@ -43,19 +42,6 @@ const PrizeAllocation = () => {
     },
     enabled: !!selectedProgram,
   });
-
-  // Build winner options from program_winners based on selected group (category)
-  const winnerOptions: { name: string; rank: string }[] = [];
-  if (programWinners && selectedGroup) {
-    programWinners.forEach((w) => {
-      // Match category to group
-      if (w.category === selectedGroup) {
-        if (w.first_place) winnerOptions.push({ name: w.first_place, rank: "प्रथम" });
-        if (w.second_place) winnerOptions.push({ name: w.second_place, rank: "द्वितीय" });
-        if (w.third_place) winnerOptions.push({ name: w.third_place, rank: "तृतीय" });
-      }
-    });
-  }
 
   const { data: prizeItems } = useQuery({
     queryKey: ["prize-items"],
@@ -82,12 +68,47 @@ const PrizeAllocation = () => {
     return allocations?.filter((a) => a.prize_item_id === itemId).length || 0;
   };
 
-  // Get unique categories from program winners for group selection
+  // Check if a winner already has a prize allocated for this program + group
+  const isWinnerAllocated = (winnerName: string, programId: string, groupName: string) => {
+    return allocations?.some(
+      (a) => a.winner_name === winnerName && a.program_id === programId && a.group_name === groupName
+    ) || false;
+  };
+
+  // Build winner options from program_winners based on selected group
+  const winnerOptions: { name: string; rank: string; allocated: boolean }[] = [];
+  if (programWinners && selectedGroup) {
+    programWinners.forEach((w) => {
+      if (w.category === selectedGroup) {
+        if (w.first_place) {
+          winnerOptions.push({
+            name: w.first_place,
+            rank: "प्रथम",
+            allocated: isWinnerAllocated(w.first_place, selectedProgram, selectedGroup),
+          });
+        }
+        if (w.second_place) {
+          winnerOptions.push({
+            name: w.second_place,
+            rank: "द्वितीय",
+            allocated: isWinnerAllocated(w.second_place, selectedProgram, selectedGroup),
+          });
+        }
+        if (w.third_place) {
+          winnerOptions.push({
+            name: w.third_place,
+            rank: "तृतीय",
+            allocated: isWinnerAllocated(w.third_place, selectedProgram, selectedGroup),
+          });
+        }
+      }
+    });
+  }
+
   const availableGroups = programWinners
     ? [...new Set(programWinners.map((w) => w.category))]
     : [];
 
-  // Auto-set rank when winner is selected
   const handleWinnerSelect = (winnerName: string) => {
     setSelectedWinner(winnerName);
     const match = winnerOptions.find((w) => w.name === winnerName);
@@ -100,6 +121,10 @@ const PrizeAllocation = () => {
     mutationFn: async () => {
       if (!selectedProgram || !selectedGroup || !selectedWinner || !selectedRank || !selectedItem) {
         throw new Error("सर्व फील्ड भरा");
+      }
+      // Check if winner already allocated
+      if (isWinnerAllocated(selectedWinner, selectedProgram, selectedGroup)) {
+        throw new Error(`"${selectedWinner}" ला आधीच बक्षीस वाटप केले आहे!`);
       }
       const item = prizeItems?.find((i) => i.id === selectedItem);
       if (!item) throw new Error("वस्तू सापडली नाही");
@@ -175,8 +200,9 @@ const PrizeAllocation = () => {
               <SelectTrigger><SelectValue placeholder="विजेता निवडा" /></SelectTrigger>
               <SelectContent>
                 {winnerOptions.map((w) => (
-                  <SelectItem key={`${w.name}-${w.rank}`} value={w.name}>
+                  <SelectItem key={`${w.name}-${w.rank}`} value={w.name} disabled={w.allocated}>
                     {w.rank === "प्रथम" ? "🥇" : w.rank === "द्वितीय" ? "🥈" : "🥉"} {w.name} ({w.rank})
+                    {w.allocated && " ✅ वाटप झाले"}
                   </SelectItem>
                 ))}
                 {winnerOptions.length === 0 && (
@@ -188,8 +214,8 @@ const PrizeAllocation = () => {
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs">क्रमांक (Auto)</Label>
-            <Select value={selectedRank} onValueChange={setSelectedRank}>
+            <Label className="text-xs">क्रमांक (Auto - बदलता येत नाही)</Label>
+            <Select value={selectedRank} disabled>
               <SelectTrigger><SelectValue placeholder="Auto" /></SelectTrigger>
               <SelectContent>
                 {ranks.map((r) => (

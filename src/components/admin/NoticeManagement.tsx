@@ -195,15 +195,6 @@ const NoticeManagement = () => {
                   {notice.description && <p className="text-sm text-muted-foreground truncate max-w-xs">{notice.description}</p>}
                 </div>
               </TableCell>
-              <TableCell>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  notice.notice_type === "krantigatha" 
-                    ? "bg-primary/10 text-primary" 
-                    : "bg-secondary text-secondary-foreground"
-                }`}>
-                  {notice.notice_type === "krantigatha" ? "क्रांतिगाथा" : "सूचना"}
-                </span>
-              </TableCell>
               <TableCell>{notice.date}</TableCell>
               <TableCell>
                 {notice.is_new && <span className="bg-accent text-accent-foreground text-xs px-2 py-1 rounded-full">नवीन</span>}
