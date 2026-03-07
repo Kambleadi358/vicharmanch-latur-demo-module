@@ -31,7 +31,7 @@ const NoticeManagement = () => {
     date: new Date().toISOString().split("T")[0],
     is_new: true,
     is_visible: true,
-    notice_type: "notice" as "notice" | "krantigatha",
+    notice_type: "notice" as string,
   });
   const { toast } = useToast();
 
@@ -95,7 +95,7 @@ const NoticeManagement = () => {
       date: notice.date,
       is_new: notice.is_new ?? true,
       is_visible: notice.is_visible ?? true,
-      notice_type: (notice.notice_type as "notice" | "krantigatha") ?? "notice",
+      notice_type: notice.notice_type ?? "notice",
     });
     setEditingId(notice.id);
     setIsAdding(true);
@@ -140,52 +140,14 @@ const NoticeManagement = () => {
               <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} placeholder="सूचना शीर्षक" />
             </div>
             <div className="space-y-2">
-              <Label>प्रकार</Label>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="notice_type"
-                    checked={formData.notice_type === "notice"}
-                    onChange={() => setFormData({ ...formData, notice_type: "notice" })}
-                    className="w-4 h-4 text-primary"
-                  />
-                  <span>सूचना</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="radio"
-                    name="notice_type"
-                    checked={formData.notice_type === "krantigatha"}
-                    onChange={() => setFormData({ ...formData, notice_type: "krantigatha" })}
-                    className="w-4 h-4 text-primary"
-                  />
-                  <span>क्रांतिगाथा (External Link)</span>
-                </label>
-              </div>
+              <Label>वर्णन</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="सूचनेचे तपशील"
+                rows={3}
+              />
             </div>
-            {formData.notice_type === "krantigatha" && (
-              <div className="space-y-2">
-                <Label>बाह्य लिंक (URL) *</Label>
-                <Input
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="https://example.com/krantigatha-article"
-                />
-                <p className="text-xs text-muted-foreground">क्रांतिगाथा वर क्लिक केल्यावर ही लिंक उघडेल</p>
-              </div>
-            )}
-            {formData.notice_type === "notice" && (
-              <div className="space-y-2">
-                <Label>वर्णन</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="सूचनेचे तपशील"
-                  rows={3}
-                />
-              </div>
-            )}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>तारीख</Label>
@@ -218,7 +180,6 @@ const NoticeManagement = () => {
         <TableHeader>
           <TableRow>
             <TableHead>शीर्षक</TableHead>
-            <TableHead>प्रकार</TableHead>
             <TableHead>तारीख</TableHead>
             <TableHead>स्थिती</TableHead>
             <TableHead>दृश्यता</TableHead>
@@ -233,15 +194,6 @@ const NoticeManagement = () => {
                   <p className="font-medium">{notice.title}</p>
                   {notice.description && <p className="text-sm text-muted-foreground truncate max-w-xs">{notice.description}</p>}
                 </div>
-              </TableCell>
-              <TableCell>
-                <span className={`text-xs px-2 py-1 rounded-full ${
-                  notice.notice_type === "krantigatha" 
-                    ? "bg-primary/10 text-primary" 
-                    : "bg-secondary text-secondary-foreground"
-                }`}>
-                  {notice.notice_type === "krantigatha" ? "क्रांतिगाथा" : "सूचना"}
-                </span>
               </TableCell>
               <TableCell>{notice.date}</TableCell>
               <TableCell>

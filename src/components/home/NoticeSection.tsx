@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, Calendar, FileText, ExternalLink, BookOpen } from "lucide-react";
+import { Bell, Calendar, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Notice {
   id: string;
@@ -15,7 +14,6 @@ interface Notice {
 
 const NoticeSection = () => {
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [krantigatha, setKrantigatha] = useState<Notice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -24,12 +22,12 @@ const NoticeSection = () => {
         .from("notices")
         .select("id, title, description, date, is_new, notice_type")
         .eq("is_visible", true)
+        .eq("notice_type", "notice")
         .order("created_at", { ascending: false })
         .limit(12);
 
       if (!error && data) {
-        setNotices(data.filter(n => n.notice_type === "notice"));
-        setKrantigatha(data.filter(n => n.notice_type === "krantigatha"));
+        setNotices(data);
       }
       setIsLoading(false);
     };
@@ -52,83 +50,7 @@ const NoticeSection = () => {
     );
   }
 
-  if (notices.length === 0 && krantigatha.length === 0) {
-    return null;
-  }
-
-  const NoticeCard = ({ notice, index }: { notice: Notice; index: number }) => (
-    <motion.div
-      key={notice.id}
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
-      className={`card-hover bg-card rounded-xl p-6 border-2 ${
-        notice.is_new ? "border-accent pulse-border" : "border-border"
-      }`}
-    >
-      {notice.is_new && (
-        <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-full mb-4">
-          नवीन
-        </span>
-      )}
-      
-      <div className="flex items-start gap-3 mb-2">
-        <FileText className="text-accent mt-1" size={18} />
-        <h3 className="text-lg font-semibold text-foreground">
-          {notice.title}
-        </h3>
-      </div>
-      
-      <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3 ml-7">
-        <span className="flex items-center gap-1">
-          <Calendar size={14} />
-          {notice.date}
-        </span>
-      </div>
-      
-      <p className="text-muted-foreground text-sm ml-7">
-        {notice.description}
-      </p>
-    </motion.div>
-  );
-
-  const KrantigathaCard = ({ notice, index }: { notice: Notice; index: number }) => (
-    <motion.a
-      key={notice.id}
-      href={notice.description || "#"}
-      target="_blank"
-      rel="noopener noreferrer"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
-      className={`card-hover bg-card rounded-xl p-6 border-2 block cursor-pointer group ${
-        notice.is_new ? "border-accent pulse-border" : "border-border"
-      } hover:border-primary/50 transition-colors`}
-    >
-      {notice.is_new && (
-        <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-full mb-4">
-          नवीन
-        </span>
-      )}
-      
-      <div className="flex items-start gap-3 mb-2">
-        <BookOpen className="text-primary mt-1" size={18} />
-        <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
-          {notice.title}
-        </h3>
-        <ExternalLink className="ml-auto text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" size={16} />
-      </div>
-      
-      <div className="flex items-center gap-4 text-sm text-muted-foreground ml-7">
-        <span className="flex items-center gap-1">
-          <Calendar size={14} />
-          {notice.date}
-        </span>
-      </div>
-    </motion.a>
-  );
+  if (notices.length === 0) return null;
 
   return (
     <section className="py-20 bg-secondary">
@@ -149,42 +71,37 @@ const NoticeSection = () => {
           <div className="decorative-line mt-4" />
         </motion.div>
 
-        <Tabs defaultValue="notices" className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
-            <TabsTrigger value="notices" className="flex items-center gap-2">
-              <FileText size={16} />
-              सूचना ({notices.length})
-            </TabsTrigger>
-            <TabsTrigger value="krantigatha" className="flex items-center gap-2">
-              <BookOpen size={16} />
-              क्रांतिगाथा ({krantigatha.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="notices">
-            {notices.length === 0 ? (
-              <p className="text-center text-muted-foreground">सध्या कोणतीही सूचना नाही</p>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {notices.map((notice, index) => (
-                  <NoticeCard key={notice.id} notice={notice} index={index} />
-                ))}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {notices.map((notice, index) => (
+            <motion.div
+              key={notice.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.1 }}
+              className={`card-hover bg-card rounded-xl p-6 border-2 ${
+                notice.is_new ? "border-accent pulse-border" : "border-border"
+              }`}
+            >
+              {notice.is_new && (
+                <span className="inline-block px-3 py-1 bg-accent text-accent-foreground text-xs font-semibold rounded-full mb-4">
+                  नवीन
+                </span>
+              )}
+              <div className="flex items-start gap-3 mb-2">
+                <FileText className="text-accent mt-1" size={18} />
+                <h3 className="text-lg font-semibold text-foreground">{notice.title}</h3>
               </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="krantigatha">
-            {krantigatha.length === 0 ? (
-              <p className="text-center text-muted-foreground">सध्या कोणतीही क्रांतिगाथा नाही</p>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {krantigatha.map((notice, index) => (
-                  <KrantigathaCard key={notice.id} notice={notice} index={index} />
-                ))}
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3 ml-7">
+                <span className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  {notice.date}
+                </span>
               </div>
-            )}
-          </TabsContent>
-        </Tabs>
+              <p className="text-muted-foreground text-sm ml-7">{notice.description}</p>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );
