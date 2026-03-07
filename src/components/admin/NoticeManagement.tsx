@@ -96,6 +96,9 @@ const NoticeManagement = () => {
       is_new: notice.is_new ?? true,
       is_visible: notice.is_visible ?? true,
       notice_type: notice.notice_type ?? "notice",
+    });
+    setEditingId(notice.id);
+    setIsAdding(true);
   };
 
   const handleDelete = async (id: string) => {
