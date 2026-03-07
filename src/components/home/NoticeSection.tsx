@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, Calendar, FileText, ExternalLink, BookOpen } from "lucide-react";
+import { Bell, Calendar, FileText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Notice {
   id: string;

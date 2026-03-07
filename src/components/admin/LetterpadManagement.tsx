@@ -251,7 +251,7 @@ ${bodyHTML}
                 {/* Date - top right below header */}
                 <div
                   className="absolute text-right"
-                  style={{ top: "16%", right: "6%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
+                  style={{ top: "17.5%", right: "6%", fontSize: "clamp(6px, 1.4vw, 10px)" }}
                 >
                   <span style={{ color: LABEL_COLOR, fontWeight: 700 }}>दिनांक : </span>
                   <span className="text-foreground">{letterData.date}</span>
