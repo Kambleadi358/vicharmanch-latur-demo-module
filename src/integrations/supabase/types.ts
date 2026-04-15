@@ -389,6 +389,7 @@ export type Database = {
       quiz_responses: {
         Row: {
           category: string
+          dob: string | null
           id: string
           participant_name: string
           score: number | null
@@ -398,6 +399,7 @@ export type Database = {
         }
         Insert: {
           category: string
+          dob?: string | null
           id?: string
           participant_name: string
           score?: number | null
@@ -407,12 +409,61 @@ export type Database = {
         }
         Update: {
           category?: string
+          dob?: string | null
           id?: string
           participant_name?: string
           score?: number | null
           submitted_at?: string
           tab_switches?: number | null
           total_questions?: number | null
+        }
+        Relationships: []
+      }
+      quiz_sessions: {
+        Row: {
+          answers_saved: Json
+          created_at: string
+          current_index: number
+          dob: string
+          duration_seconds: number
+          id: string
+          option_orders: Json
+          participant_name: string
+          question_order: Json
+          start_time: string
+          status: string
+          tab_switches: number
+          updated_at: string
+        }
+        Insert: {
+          answers_saved?: Json
+          created_at?: string
+          current_index?: number
+          dob: string
+          duration_seconds?: number
+          id?: string
+          option_orders?: Json
+          participant_name: string
+          question_order?: Json
+          start_time?: string
+          status?: string
+          tab_switches?: number
+          updated_at?: string
+        }
+        Update: {
+          answers_saved?: Json
+          created_at?: string
+          current_index?: number
+          dob?: string
+          duration_seconds?: number
+          id?: string
+          option_orders?: Json
+          participant_name?: string
+          question_order?: Json
+          start_time?: string
+          status?: string
+          tab_switches?: number
+          updated_at?: string
         }
         Relationships: []
       }
