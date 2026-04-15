@@ -204,7 +204,7 @@ const QuizManagement = () => {
     const questionMap = new Map(questions.map(q => [q.id, q]));
 
     // Create CSV content with answers
-    const baseHeaders = ["क्रमांक", "नाव", "गुण", "एकूण प्रश्न", "टक्केवारी", "टॅब स्विच", "वेळ"];
+    const baseHeaders = ["क्रमांक", "नाव", "जन्मतारीख", "गुण", "एकूण प्रश्न", "टक्केवारी", "टॅब स्विच", "वेळ"];
     const questionHeaders = questions.map((q, idx) => `प्रश्न ${idx + 1}`);
     const correctAnswerHeaders = questions.map((q, idx) => `बरोबर ${idx + 1}`);
     const headers = [...baseHeaders, ...questionHeaders, ...correctAnswerHeaders];
