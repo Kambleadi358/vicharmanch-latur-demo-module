@@ -4,12 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, AlertTriangle, CheckCircle, XCircle, ArrowRight, Send } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle, XCircle, ArrowRight, Send, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import Layout from "@/components/layout/Layout";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 interface Question {
   id: string;
@@ -21,14 +20,49 @@ interface Question {
   correct_answer: string;
 }
 
+interface ShuffledQuestion extends Question {
+  shuffledOptions: { key: string; originalKey: string; value: string }[];
+}
+
+interface QuizSession {
+  id: string;
+  participant_name: string;
+  dob: string;
+  start_time: string;
+  duration_seconds: number;
+  question_order: string[];
+  option_orders: Record<string, string[]>;
+  answers_saved: Record<string, string>;
+  tab_switches: number;
+  status: string;
+  current_index: number;
+}
+
+// Shuffle array with seed for deterministic shuffling
+const shuffleArray = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+const AUTOSAVE_DEBOUNCE = 1500;
+const RETRY_DELAY = 2000;
+const MAX_RETRIES = 3;
+
 const QuizTake = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
 
-  const [participantName, setParticipantName] = useState("");
-  const [hasStarted, setHasStarted] = useState(false);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [participantName] = useState(
+    () => (location.state as any)?.participantName || ""
+  );
+  const [dob] = useState(() => (location.state as any)?.dob || "");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<ShuffledQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [timeLeft, setTimeLeft] = useState(0);
@@ -36,95 +70,390 @@ const QuizTake = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [score, setScore] = useState(0);
-  const [quizDuration, setQuizDuration] = useState(30);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingSaves, setPendingSaves] = useState<Record<string, string>>({});
+  const [isResuming, setIsResuming] = useState(false);
 
   const submittedRef = useRef(false);
+  const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<string>("");
+  const durationRef = useRef(0);
 
-  // Fetch quiz settings - get any active quiz settings
+  // Online/offline detection
   useEffect(() => {
-    const fetchSettings = async () => {
-      const { data, error } = await supabase
-        .from("quiz_settings")
-        .select("duration_minutes, is_active")
-        .eq("is_active", true)
-        .limit(1);
+    const handleOnline = () => {
+      setIsOnline(true);
+      syncPendingSaves();
+    };
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
-      if (error || !data || data.length === 0) {
+  // Redirect if no name/dob
+  useEffect(() => {
+    if (!participantName || !dob) {
+      navigate("/quiz");
+    }
+  }, [participantName, dob, navigate]);
+
+  // Initialize or resume session
+  useEffect(() => {
+    if (!participantName || !dob) return;
+    initializeSession();
+  }, [participantName, dob]);
+
+  const initializeSession = async () => {
+    setIsLoading(true);
+
+    // Check for existing session
+    const { data: existingSession } = await supabase
+      .from("quiz_sessions")
+      .select("*")
+      .eq("participant_name", participantName)
+      .eq("dob", dob)
+      .maybeSingle();
+
+    if (existingSession) {
+      if (existingSession.status === "completed") {
+        // Already submitted
         toast({
-          title: "क्विझ बंद आहे",
-          description: "हा क्विझ सध्या सक्रिय नाही.",
+          title: "क्विझ आधीच पूर्ण झाला",
+          description: "तुम्ही आधीच हा क्विझ दिला आहे.",
           variant: "destructive",
         });
         navigate("/quiz");
         return;
       }
 
-      setQuizDuration(data[0].duration_minutes || 30);
-      setTimeLeft((data[0].duration_minutes || 30) * 60);
-      setIsLoading(false);
-    };
+      // Resume existing session
+      setIsResuming(true);
+      await resumeSession(existingSession as unknown as QuizSession);
+      setIsResuming(false);
+    } else {
+      // Create new session
+      await createNewSession();
+    }
+    setIsLoading(false);
+  };
 
-    fetchSettings();
-  }, [navigate, toast]);
+  const resumeSession = async (session: QuizSession) => {
+    // Calculate remaining time from server
+    const startTime = new Date(session.start_time).getTime();
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const remaining = Math.max(0, session.duration_seconds - elapsed);
 
-  // Fetch ALL questions when quiz starts (no category filter)
-  const startQuiz = async () => {
-    const trimmedName = participantName.trim();
-    
-    if (!trimmedName) {
-      toast({
-        title: "त्रुटी",
-        description: "कृपया तुमचे नाव टाका",
-        variant: "destructive",
-      });
+    if (remaining <= 0) {
+      // Timer expired, auto-submit
+      await autoSubmitExpired(session);
       return;
     }
 
-    // Check if this participant has already taken the quiz
-    const { data: existingResponse, error: checkError } = await supabase
-      .from("quiz_responses")
-      .select("id, submitted_at")
-      .eq("participant_name", trimmedName)
-      .limit(1);
+    startTimeRef.current = session.start_time;
+    durationRef.current = session.duration_seconds;
+    setTimeLeft(remaining);
+    setSessionId(session.id);
+    setTabSwitches(session.tab_switches);
+    setCurrentIndex(session.current_index);
 
-    if (checkError) {
-      toast({
-        title: "त्रुटी",
-        description: "तपासणी करताना त्रुटी आली",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Restore answers
+    const savedAnswers = (session.answers_saved || {}) as Record<string, string>;
+    setAnswers(savedAnswers);
 
-    if (existingResponse && existingResponse.length > 0) {
-      toast({
-        title: "क्विझ आधीच दिला आहे",
-        description: `"${trimmedName}" या नावाने आधीच क्विझ दिला आहे. एकाच नावाने पुन्हा क्विझ देता येत नाही.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Fetch all questions regardless of category
-    const { data, error } = await supabase
+    // Fetch questions and apply saved order
+    const { data: allQuestions } = await supabase
       .from("quiz_questions")
       .select("*");
 
-    if (error || !data || data.length === 0) {
+    if (!allQuestions) return;
+
+    const questionOrder = (session.question_order || []) as string[];
+    const optionOrders = (session.option_orders || {}) as Record<string, string[]>;
+
+    // Reconstruct shuffled questions in saved order
+    const orderedQuestions: ShuffledQuestion[] = questionOrder
+      .map((qId) => {
+        const q = allQuestions.find((aq) => aq.id === qId);
+        if (!q) return null;
+        const optOrder = optionOrders[qId] || ["A", "B", "C", "D"];
+        const optionMap: Record<string, string> = {
+          A: q.option_a,
+          B: q.option_b,
+          C: q.option_c,
+          D: q.option_d,
+        };
+        return {
+          ...q,
+          shuffledOptions: optOrder.map((key, idx) => ({
+            key: String.fromCharCode(65 + idx),
+            originalKey: key,
+            value: optionMap[key],
+          })),
+        } as ShuffledQuestion;
+      })
+      .filter(Boolean) as ShuffledQuestion[];
+
+    setQuestions(orderedQuestions);
+
+    toast({
+      title: "परीक्षा पुन्हा सुरू",
+      description: `शिल्लक वेळ: ${Math.floor(remaining / 60)} मिनिटे ${remaining % 60} सेकंद`,
+    });
+  };
+
+  const autoSubmitExpired = async (session: QuizSession) => {
+    // Fetch questions to calculate score
+    const { data: allQuestions } = await supabase
+      .from("quiz_questions")
+      .select("*");
+
+    if (!allQuestions) {
+      navigate("/quiz");
+      return;
+    }
+
+    const savedAnswers = (session.answers_saved || {}) as Record<string, string>;
+    let correctCount = 0;
+    const questionOrder = (session.question_order || []) as string[];
+    const optionOrders = (session.option_orders || {}) as Record<string, string[]>;
+
+    questionOrder.forEach((qId) => {
+      const q = allQuestions.find((aq) => aq.id === qId);
+      if (!q) return;
+      const userAnswer = savedAnswers[qId];
+      if (!userAnswer) return;
+      // Convert shuffled answer back to original
+      const optOrder = optionOrders[qId] || ["A", "B", "C", "D"];
+      const displayIdx = userAnswer.charCodeAt(0) - 65;
+      const originalKey = optOrder[displayIdx];
+      if (originalKey === q.correct_answer) correctCount++;
+    });
+
+    // Save response
+    const { data: responseData } = await supabase
+      .from("quiz_responses")
+      .insert([{
+        participant_name: session.participant_name,
+        dob: session.dob,
+        category: "general",
+        score: correctCount,
+        total_questions: questionOrder.length,
+        tab_switches: session.tab_switches,
+      }])
+      .select("id")
+      .single();
+
+    if (responseData) {
+      const answerRecords = questionOrder.map((qId) => {
+        const q = allQuestions.find((aq) => aq.id === qId);
+        const userAnswer = savedAnswers[qId] || "";
+        const optOrder = optionOrders[qId] || ["A", "B", "C", "D"];
+        let originalKey = "";
+        if (userAnswer) {
+          const displayIdx = userAnswer.charCodeAt(0) - 65;
+          originalKey = optOrder[displayIdx] || "";
+        }
+        return {
+          response_id: responseData.id,
+          question_id: qId,
+          selected_answer: originalKey,
+          is_correct: q ? originalKey === q.correct_answer : false,
+        };
+      });
+      await supabase.from("quiz_answers").insert(answerRecords);
+    }
+
+    // Mark session complete
+    await supabase
+      .from("quiz_sessions")
+      .update({ status: "completed" })
+      .eq("id", session.id);
+
+    setScore(correctCount);
+    setQuestions(questionOrder.map((qId) => {
+      const q = allQuestions.find((aq) => aq.id === qId);
+      return q as any;
+    }).filter(Boolean));
+    setIsComplete(true);
+  };
+
+  const createNewSession = async () => {
+    // Fetch quiz settings
+    const { data: settings } = await supabase
+      .from("quiz_settings")
+      .select("duration_minutes, is_active")
+      .eq("is_active", true)
+      .limit(1);
+
+    if (!settings || settings.length === 0) {
       toast({
-        title: "त्रुटी",
-        description: "प्रश्न लोड करण्यात त्रुटी किंवा प्रश्न उपलब्ध नाहीत",
+        title: "क्विझ बंद आहे",
+        description: "हा क्विझ सध्या सक्रिय नाही.",
         variant: "destructive",
       });
+      navigate("/quiz");
+      return;
+    }
+
+    const durationMins = settings[0].duration_minutes || 30;
+    const durationSecs = durationMins * 60;
+
+    // Fetch all questions
+    const { data: allQuestions } = await supabase
+      .from("quiz_questions")
+      .select("*");
+
+    if (!allQuestions || allQuestions.length === 0) {
+      toast({
+        title: "त्रुटी",
+        description: "प्रश्न उपलब्ध नाहीत",
+        variant: "destructive",
+      });
+      navigate("/quiz");
       return;
     }
 
     // Shuffle questions
-    const shuffled = [...data].sort(() => Math.random() - 0.5);
-    setQuestions(shuffled);
-    setHasStarted(true);
+    const shuffledQIds = shuffleArray(allQuestions.map((q) => q.id));
+
+    // Shuffle options for each question
+    const optionOrders: Record<string, string[]> = {};
+    allQuestions.forEach((q) => {
+      optionOrders[q.id] = shuffleArray(["A", "B", "C", "D"]);
+    });
+
+    // Create session in DB
+    const now = new Date().toISOString();
+    const { data: sessionData, error } = await supabase
+      .from("quiz_sessions")
+      .insert([{
+        participant_name: participantName,
+        dob,
+        start_time: now,
+        duration_seconds: durationSecs,
+        question_order: shuffledQIds,
+        option_orders: optionOrders,
+        answers_saved: {},
+        tab_switches: 0,
+        status: "active",
+        current_index: 0,
+      }])
+      .select("id")
+      .single();
+
+    if (error || !sessionData) {
+      // Could be duplicate - check
+      if (error?.code === "23505") {
+        toast({
+          title: "क्विझ आधीच दिला आहे",
+          description: "या नावाने व जन्मतारखेने आधीच क्विझ दिला आहे.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "त्रुटी",
+          description: "सत्र तयार करण्यात त्रुटी",
+          variant: "destructive",
+        });
+      }
+      navigate("/quiz");
+      return;
+    }
+
+    startTimeRef.current = now;
+    durationRef.current = durationSecs;
+    setSessionId(sessionData.id);
+    setTimeLeft(durationSecs);
+
+    // Build shuffled questions
+    const shuffledQuestions: ShuffledQuestion[] = shuffledQIds
+      .map((qId) => {
+        const q = allQuestions.find((aq) => aq.id === qId);
+        if (!q) return null;
+        const optOrder = optionOrders[qId];
+        const optionMap: Record<string, string> = {
+          A: q.option_a,
+          B: q.option_b,
+          C: q.option_c,
+          D: q.option_d,
+        };
+        return {
+          ...q,
+          shuffledOptions: optOrder.map((key, idx) => ({
+            key: String.fromCharCode(65 + idx),
+            originalKey: key,
+            value: optionMap[key],
+          })),
+        } as ShuffledQuestion;
+      })
+      .filter(Boolean) as ShuffledQuestion[];
+
+    setQuestions(shuffledQuestions);
   };
+
+  // Sync pending saves when back online
+  const syncPendingSaves = useCallback(async () => {
+    if (!sessionId || Object.keys(pendingSaves).length === 0) return;
+    const merged = { ...answers, ...pendingSaves };
+    await retryUpdate({ answers_saved: merged });
+    setPendingSaves({});
+  }, [sessionId, pendingSaves, answers]);
+
+  // Retry mechanism for DB updates
+  const retryUpdate = async (
+    updateData: Record<string, any>,
+    retries = MAX_RETRIES
+  ): Promise<boolean> => {
+    if (!sessionId) return false;
+    for (let i = 0; i < retries; i++) {
+      const { error } = await supabase
+        .from("quiz_sessions")
+        .update(updateData)
+        .eq("id", sessionId);
+      if (!error) return true;
+      if (i < retries - 1) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAY * (i + 1)));
+      }
+    }
+    return false;
+  };
+
+  // Autosave answers with debounce
+  const autosaveAnswers = useCallback(
+    (newAnswers: Record<string, string>, newIndex: number) => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = setTimeout(async () => {
+        if (!sessionId) return;
+        if (!navigator.onLine) {
+          // Store locally
+          setPendingSaves((prev) => ({ ...prev, ...newAnswers }));
+          // Also store in localStorage as backup
+          localStorage.setItem(
+            `quiz_backup_${sessionId}`,
+            JSON.stringify(newAnswers)
+          );
+          return;
+        }
+        const success = await retryUpdate({
+          answers_saved: newAnswers,
+          current_index: newIndex,
+        });
+        if (!success) {
+          setPendingSaves((prev) => ({ ...prev, ...newAnswers }));
+          localStorage.setItem(
+            `quiz_backup_${sessionId}`,
+            JSON.stringify(newAnswers)
+          );
+        }
+      }, AUTOSAVE_DEBOUNCE);
+    },
+    [sessionId]
+  );
 
   // Submit quiz
   const submitQuiz = useCallback(async () => {
@@ -132,72 +461,102 @@ const QuizTake = () => {
     submittedRef.current = true;
     setIsSubmitting(true);
 
-    // Calculate score
+    // Merge any pending saves
+    const finalAnswers = { ...answers, ...pendingSaves };
+
+    // Calculate score using original keys
     let correctCount = 0;
     questions.forEach((q) => {
-      if (answers[q.id] === q.correct_answer) {
-        correctCount++;
-      }
+      const userAnswer = finalAnswers[q.id];
+      if (!userAnswer) return;
+      // Convert display key to original key
+      const opt = q.shuffledOptions.find((o) => o.key === userAnswer);
+      if (opt && opt.originalKey === q.correct_answer) correctCount++;
     });
 
-    // Insert main response first
-    const { data: responseData, error } = await supabase.from("quiz_responses").insert([
-      {
+    // Insert response
+    const { data: responseData, error } = await supabase
+      .from("quiz_responses")
+      .insert([{
         participant_name: participantName,
+        dob,
         category: "general",
         score: correctCount,
         total_questions: questions.length,
         tab_switches: tabSwitches,
-      },
-    ]).select("id").single();
+      }])
+      .select("id")
+      .single();
 
     if (error || !responseData) {
       toast({
         title: "त्रुटी",
-        description: "प्रतिसाद सबमिट करण्यात त्रुटी",
+        description: "प्रतिसाद सबमिट करण्यात त्रुटी. पुन्हा प्रयत्न करत आहे...",
         variant: "destructive",
       });
+      // Retry
       submittedRef.current = false;
       setIsSubmitting(false);
       return;
     }
 
-    // Insert individual answers
-    const answerRecords = questions.map((q) => ({
-      response_id: responseData.id,
-      question_id: q.id,
-      selected_answer: answers[q.id] || "",
-      is_correct: answers[q.id] === q.correct_answer,
-    }));
+    // Insert individual answers with original keys
+    const answerRecords = questions.map((q) => {
+      const userAnswer = finalAnswers[q.id] || "";
+      let originalKey = "";
+      if (userAnswer) {
+        const opt = q.shuffledOptions.find((o) => o.key === userAnswer);
+        originalKey = opt?.originalKey || "";
+      }
+      return {
+        response_id: responseData.id,
+        question_id: q.id,
+        selected_answer: originalKey,
+        is_correct: originalKey === q.correct_answer,
+      };
+    });
 
     await supabase.from("quiz_answers").insert(answerRecords);
+
+    // Mark session complete
+    if (sessionId) {
+      await supabase
+        .from("quiz_sessions")
+        .update({ status: "completed", answers_saved: finalAnswers })
+        .eq("id", sessionId);
+    }
+
+    // Cleanup
+    if (sessionId) localStorage.removeItem(`quiz_backup_${sessionId}`);
 
     setScore(correctCount);
     setIsComplete(true);
     setIsSubmitting(false);
-  }, [answers, participantName, questions, tabSwitches, toast]);
+  }, [answers, pendingSaves, participantName, dob, questions, tabSwitches, sessionId, toast]);
 
-  // Timer countdown
+  // Server-synced timer (calculates from start_time)
   useEffect(() => {
-    if (!hasStarted || isComplete) return;
+    if (!sessionId || isComplete || questions.length === 0) return;
 
     const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
+      if (startTimeRef.current && durationRef.current) {
+        const startTime = new Date(startTimeRef.current).getTime();
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const remaining = Math.max(0, durationRef.current - elapsed);
+        setTimeLeft(remaining);
+        if (remaining <= 0) {
           clearInterval(interval);
           submitQuiz();
-          return 0;
         }
-        return prev - 1;
-      });
+      }
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [hasStarted, isComplete, submitQuiz]);
+  }, [sessionId, isComplete, questions.length, submitQuiz]);
 
   // Tab switch detection
   useEffect(() => {
-    if (!hasStarted || isComplete) return;
+    if (!sessionId || isComplete || questions.length === 0) return;
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
@@ -208,35 +567,20 @@ const QuizTake = () => {
             description: `तुम्ही टॅब सोडला! (${newCount} वेळा)`,
             variant: "destructive",
           });
+          // Save tab switch count
+          retryUpdate({ tab_switches: newCount });
           return newCount;
         });
       }
     };
 
-    const handleBlur = () => {
-      setTabSwitches((prev) => {
-        const newCount = prev + 1;
-        toast({
-          title: "⚠️ चेतावणी",
-          description: `विंडो फोकस गमावला! (${newCount} वेळा)`,
-          variant: "destructive",
-        });
-        return newCount;
-      });
-    };
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("blur", handleBlur);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [sessionId, isComplete, questions.length, toast]);
 
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("blur", handleBlur);
-    };
-  }, [hasStarted, isComplete, toast]);
-
-  // Prevent context menu and keyboard shortcuts
+  // Prevent copy/paste/context menu
   useEffect(() => {
-    if (!hasStarted || isComplete) return;
+    if (!sessionId || isComplete || questions.length === 0) return;
 
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -247,15 +591,33 @@ const QuizTake = () => {
         e.preventDefault();
       }
     };
+    const handleCopy = (e: ClipboardEvent) => e.preventDefault();
 
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("keydown", handleKeyDown);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handleCopy);
 
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handleCopy);
     };
-  }, [hasStarted, isComplete]);
+  }, [sessionId, isComplete, questions.length]);
+
+  // Save to localStorage on beforeunload
+  useEffect(() => {
+    if (!sessionId) return;
+    const handleBeforeUnload = () => {
+      localStorage.setItem(
+        `quiz_backup_${sessionId}`,
+        JSON.stringify(answers)
+      );
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [sessionId, answers]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -264,23 +626,28 @@ const QuizTake = () => {
   };
 
   const handleAnswerSelect = (questionId: string, answer: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: answer }));
+    const newAnswers = { ...answers, [questionId]: answer };
+    setAnswers(newAnswers);
+    autosaveAnswers(newAnswers, currentIndex);
   };
 
   const currentQuestion = questions[currentIndex];
 
-  if (isLoading) {
+  if (isLoading || isResuming) {
     return (
       <Layout>
-        <div className="min-h-[60vh] flex items-center justify-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+          <RefreshCw className="h-8 w-8 animate-spin text-accent" />
+          <p className="text-muted-foreground">
+            {isResuming ? "परीक्षा पुन्हा सुरू होत आहे..." : "लोड होत आहे..."}
+          </p>
         </div>
       </Layout>
     );
   }
 
   if (isComplete) {
-    const percentage = Math.round((score / questions.length) * 100);
+    const percentage = questions.length > 0 ? Math.round((score / questions.length) * 100) : 0;
     return (
       <Layout>
         <div className="section-container">
@@ -326,54 +693,10 @@ const QuizTake = () => {
     );
   }
 
-  if (!hasStarted) {
-    return (
-      <Layout>
-        <div className="section-container">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="max-w-md mx-auto"
-          >
-            <Card className="shadow-xl">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">प्रश्नमंजुषा</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name">तुमचे नाव *</Label>
-                  <Input
-                    id="name"
-                    value={participantName}
-                    onChange={(e) => setParticipantName(e.target.value)}
-                    placeholder="तुमचे पूर्ण नाव टाका"
-                  />
-                </div>
-
-                <div className="p-4 bg-muted rounded-lg space-y-2 text-sm">
-                  <p className="flex items-center gap-2">
-                    <Clock className="h-4 w-4" />
-                    वेळ: {quizDuration} मिनिटे
-                  </p>
-                  <p className="flex items-center gap-2 text-destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    टॅब सोडल्यास गुण कमी होतील
-                  </p>
-                </div>
-
-                <Button onClick={startQuiz} className="w-full" size="lg">
-                  क्विझ सुरू करा
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </Layout>
-    );
-  }
+  if (!currentQuestion) return null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background select-none">
       {/* Fixed Timer Header */}
       <div className="fixed top-0 left-0 right-0 bg-primary text-primary-foreground z-50 shadow-lg">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -391,12 +714,19 @@ const QuizTake = () => {
             <Clock className="h-5 w-5" />
             {formatTime(timeLeft)}
           </div>
-          {tabSwitches > 0 && (
-            <div className="flex items-center gap-1 text-red-300">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="text-sm">{tabSwitches}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            {!isOnline && (
+              <div className="flex items-center gap-1 text-yellow-300" title="ऑफलाइन - उत्तरे लोकली सेव्ह होतील">
+                <WifiOff className="h-4 w-4" />
+              </div>
+            )}
+            {tabSwitches > 0 && (
+              <div className="flex items-center gap-1 text-red-300">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-sm">{tabSwitches}</span>
+              </div>
+            )}
+          </div>
         </div>
         {/* Progress bar */}
         <div className="h-1 bg-primary-foreground/20">
@@ -434,12 +764,7 @@ const QuizTake = () => {
                     }
                     className="space-y-3"
                   >
-                    {[
-                      { key: "A", value: currentQuestion.option_a },
-                      { key: "B", value: currentQuestion.option_b },
-                      { key: "C", value: currentQuestion.option_c },
-                      { key: "D", value: currentQuestion.option_d },
-                    ].map((option) => (
+                    {currentQuestion.shuffledOptions.map((option) => (
                       <Label
                         key={option.key}
                         htmlFor={`${currentQuestion.id}-${option.key}`}
