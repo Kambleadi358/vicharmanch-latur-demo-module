@@ -68,9 +68,7 @@ const About = () => {
                   fetchPriority="high"
                 />
                 <div className="absolute -bottom-4 -right-4 bg-accent text-accent-foreground px-4 py-3 rounded-lg text-sm leading-relaxed text-center">
-                  <div>बुद्धं शरणं गच्छामि</div>
-                  <div>धम्मं शरणं गच्छामि</div>
-                  <div>संघं शरणं गच्छामि</div>
+                  <div>भारतीय घटनेचे शिल्पकार</div>
                 </div>
               </div>
             </motion.div>
