@@ -31,6 +31,7 @@ interface QuizSettings {
 interface QuizResponse {
   id: string;
   participant_name: string;
+  dob: string | null;
   category: string;
   score: number;
   total_questions: number;
@@ -203,7 +204,7 @@ const QuizManagement = () => {
     const questionMap = new Map(questions.map(q => [q.id, q]));
 
     // Create CSV content with answers
-    const baseHeaders = ["क्रमांक", "नाव", "गुण", "एकूण प्रश्न", "टक्केवारी", "टॅब स्विच", "वेळ"];
+    const baseHeaders = ["क्रमांक", "नाव", "जन्मतारीख", "गुण", "एकूण प्रश्न", "टक्केवारी", "टॅब स्विच", "वेळ"];
     const questionHeaders = questions.map((q, idx) => `प्रश्न ${idx + 1}`);
     const correctAnswerHeaders = questions.map((q, idx) => `बरोबर ${idx + 1}`);
     const headers = [...baseHeaders, ...questionHeaders, ...correctAnswerHeaders];
@@ -227,6 +228,7 @@ const QuizManagement = () => {
       return [
         index + 1,
         r.participant_name,
+        r.dob || '-',
         r.score,
         r.total_questions,
         `${percentage}%`,
@@ -418,6 +420,7 @@ const QuizManagement = () => {
                 <TableRow>
                   <TableHead>क्रमांक</TableHead>
                   <TableHead>नाव</TableHead>
+                  <TableHead>जन्मतारीख</TableHead>
                   <TableHead>गुण</TableHead>
                   <TableHead>टक्केवारी</TableHead>
                   <TableHead>टॅब स्विच</TableHead>
@@ -431,6 +434,7 @@ const QuizManagement = () => {
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{index + 1}</TableCell>
                       <TableCell>{r.participant_name}</TableCell>
+                      <TableCell>{r.dob || '-'}</TableCell>
                       <TableCell>
                         <span className="font-semibold">{r.score}</span>/{r.total_questions}
                       </TableCell>

@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
-import { BookOpen, Award, AlertTriangle, Clock, CheckCircle, Loader2 } from "lucide-react";
+import { BookOpen, Award, AlertTriangle, Clock, CheckCircle, Loader2, Calendar } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const rules = [
   "प्रश्नमंजुषा डॉ. बाबासाहेब आंबेडकरांच्या जीवनावर आधारित आहे",
@@ -12,6 +14,8 @@ const rules = [
   "उत्तर देण्यासाठी निश्चित वेळ असेल",
   "परीक्षा दरम्यान टॅब बदलणे किंवा कॉपी करणे प्रतिबंधित आहे",
   "नियम मोडल्यास प्रशासनास सूचित केले जाईल",
+  "पेज रिफ्रेश केल्यास किंवा टॅब बंद केल्यास परीक्षा पुन्हा सुरू होईल (टाइमर चालू राहतो)",
+  "प्रत्येक उत्तर आपोआप सेव्ह होते",
 ];
 
 const Quiz = () => {
@@ -19,6 +23,7 @@ const Quiz = () => {
   const [quizDuration, setQuizDuration] = useState(30);
   const [isLoading, setIsLoading] = useState(true);
   const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
   const [step, setStep] = useState<"register" | "instructions">("register");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,7 +34,6 @@ const Quiz = () => {
 
   const checkQuizActive = async () => {
     setIsLoading(true);
-    // Check if any quiz is active
     const { data, error } = await supabase
       .from("quiz_settings")
       .select("is_active, duration_minutes")
@@ -52,10 +56,16 @@ const Quiz = () => {
   };
 
   const handleStartQuiz = () => {
-    if (!name) return;
-    // Navigate to quiz with a generic category - all questions will be fetched
-    navigate(`/quiz/general`, { 
-      state: { participantName: name } 
+    if (!name || !dob) {
+      toast({
+        title: "त्रुटी",
+        description: "कृपया नाव आणि जन्मतारीख दोन्ही भरा",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate(`/quiz/general`, {
+      state: { participantName: name.trim(), dob },
     });
   };
 
@@ -120,15 +130,27 @@ const Quiz = () => {
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-foreground font-medium mb-2">
-                      तुमचे नाव *
-                    </label>
-                    <input
+                    <Label className="block text-foreground font-medium mb-2">
+                      तुमचे पूर्ण नाव *
+                    </Label>
+                    <Input
                       type="text"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-lg border border-border bg-background text-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none transition-all"
                       placeholder="पूर्ण नाव लिहा"
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="block text-foreground font-medium mb-2">
+                      <Calendar className="inline h-4 w-4 mr-1" />
+                      जन्मतारीख *
+                    </Label>
+                    <Input
+                      type="date"
+                      value={dob}
+                      onChange={(e) => setDob(e.target.value)}
+                      max={new Date().toISOString().split("T")[0]}
                     />
                   </div>
 
@@ -140,8 +162,8 @@ const Quiz = () => {
                   </div>
 
                   <button
-                    onClick={() => name && setStep("instructions")}
-                    disabled={!name}
+                    onClick={() => name && dob && setStep("instructions")}
+                    disabled={!name || !dob}
                     className="w-full btn-hero disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     पुढे जा
