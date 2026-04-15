@@ -31,6 +31,7 @@ interface QuizSettings {
 interface QuizResponse {
   id: string;
   participant_name: string;
+  dob: string | null;
   category: string;
   score: number;
   total_questions: number;
@@ -418,6 +419,7 @@ const QuizManagement = () => {
                 <TableRow>
                   <TableHead>क्रमांक</TableHead>
                   <TableHead>नाव</TableHead>
+                  <TableHead>जन्मतारीख</TableHead>
                   <TableHead>गुण</TableHead>
                   <TableHead>टक्केवारी</TableHead>
                   <TableHead>टॅब स्विच</TableHead>
