@@ -433,6 +433,7 @@ const QuizManagement = () => {
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{index + 1}</TableCell>
                       <TableCell>{r.participant_name}</TableCell>
+                      <TableCell>{r.dob || '-'}</TableCell>
                       <TableCell>
                         <span className="font-semibold">{r.score}</span>/{r.total_questions}
                       </TableCell>
