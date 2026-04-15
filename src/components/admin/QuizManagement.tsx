@@ -228,6 +228,7 @@ const QuizManagement = () => {
       return [
         index + 1,
         r.participant_name,
+        r.dob || '-',
         r.score,
         r.total_questions,
         `${percentage}%`,
