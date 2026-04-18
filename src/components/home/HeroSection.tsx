@@ -95,10 +95,6 @@ const HeroSection = () => {
                 <Calendar size={20} />
                 कार्यक्रम पहा
               </Link>
-              <Link to="/quiz" className="btn-outline-hero flex items-center gap-2">
-                <BookOpen size={20} />
-                प्रश्नमंजुषा
-              </Link>
               <Link to="/accounts" className="btn-outline-hero flex items-center gap-2">
                 <Wallet size={20} />
                 खाते माहिती

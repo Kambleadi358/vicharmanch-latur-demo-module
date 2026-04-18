@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Key, User, Shield, RefreshCw, Images, Save } from "lucide-react";
+import { Key, User, Shield, Images, Save } from "lucide-react";
 import YearLockManager from "./YearLockManager";
 
 const passwordSchema = z.object({
@@ -27,7 +27,7 @@ type PasswordFormValues = z.infer<typeof passwordSchema>;
 const AdminSettings = () => {
   const { user } = useAuth();
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isResettingQuiz, setIsResettingQuiz] = useState(false);
+  
   const [mediaLink, setMediaLink] = useState("");
   const [isSavingMedia, setIsSavingMedia] = useState(false);
 
@@ -96,43 +96,6 @@ const AdminSettings = () => {
       toast.error("पासवर्ड बदलण्यात त्रुटी आली");
     } finally {
       setIsChangingPassword(false);
-    }
-  };
-
-  const handleResetAllQuizResponses = async () => {
-    if (!confirm("तुम्हाला खात्री आहे का? सर्व क्विझ प्रतिसाद हटवले जातील. ही क्रिया पूर्ववत करता येणार नाही.")) {
-      return;
-    }
-
-    setIsResettingQuiz(true);
-    try {
-      // Delete all quiz answers first (foreign key constraint)
-      const { error: answersError } = await supabase
-        .from("quiz_answers")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-
-      if (answersError) {
-        toast.error("उत्तरे हटवण्यात त्रुटी: " + answersError.message);
-        return;
-      }
-
-      // Delete all quiz responses
-      const { error: responsesError } = await supabase
-        .from("quiz_responses")
-        .delete()
-        .neq("id", "00000000-0000-0000-0000-000000000000");
-
-      if (responsesError) {
-        toast.error("प्रतिसाद हटवण्यात त्रुटी: " + responsesError.message);
-        return;
-      }
-
-      toast.success("सर्व क्विझ प्रतिसाद यशस्वीरित्या हटवले गेले!");
-    } catch (error) {
-      toast.error("प्रतिसाद हटवण्यात त्रुटी आली");
-    } finally {
-      setIsResettingQuiz(false);
     }
   };
 
@@ -217,34 +180,6 @@ const AdminSettings = () => {
               </Button>
             </form>
           </Form>
-        </CardContent>
-      </Card>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <RefreshCw className="h-5 w-5" />
-            जलद क्रिया
-          </CardTitle>
-          <CardDescription>प्रशासकीय क्रिया</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
-              <h4 className="font-medium">सर्व क्विझ प्रतिसाद रीसेट करा</h4>
-              <p className="text-sm text-muted-foreground">
-                सर्व विद्यार्थ्यांचे क्विझ प्रतिसाद आणि उत्तरे हटवा
-              </p>
-            </div>
-            <Button 
-              variant="destructive" 
-              onClick={handleResetAllQuizResponses}
-              disabled={isResettingQuiz}
-            >
-              {isResettingQuiz ? "हटवत आहे..." : "रीसेट करा"}
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
