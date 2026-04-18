@@ -281,8 +281,6 @@ const YearLockManager = () => {
       if (dataFolder) {
         dataFolder.file("programs.json", JSON.stringify(data.programs, null, 2));
         dataFolder.file("winners.json", JSON.stringify(data.winners, null, 2));
-        dataFolder.file("quiz_responses.json", JSON.stringify(data.quizResponses, null, 2));
-        dataFolder.file("quiz_questions.json", JSON.stringify(data.quizQuestions, null, 2));
         dataFolder.file("donations.json", JSON.stringify(data.donations, null, 2));
         dataFolder.file("homes.json", JSON.stringify(data.homes, null, 2));
         dataFolder.file("expenses.json", JSON.stringify(data.expenses, null, 2));
@@ -298,7 +296,6 @@ const YearLockManager = () => {
         stats: {
           totalPrograms: data.programs.length,
           totalWinners: data.winners.length,
-          totalQuizResponses: data.quizResponses.length,
           totalDonations: data.donations.length,
           totalExpenses: data.expenses.length,
           totalNotices: data.notices.length
@@ -321,13 +318,7 @@ const YearLockManager = () => {
 
       // Clear all data - Delete in proper order (child tables first)
       
-      // 1. Delete quiz answers first (references quiz_responses)
-      await supabase.from("quiz_answers").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      
-      // 2. Delete quiz responses
-      await supabase.from("quiz_responses").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      
-      // 3. Delete program winners (references programs)
+      // 1. Delete program winners (references programs)
       await supabase.from("program_winners").delete().neq("id", "00000000-0000-0000-0000-000000000000");
       
       // 4. Delete programs
@@ -359,11 +350,6 @@ const YearLockManager = () => {
         })
         .eq("year", selectedYear);
 
-      // 9. Deactivate all quizzes
-      await supabase
-        .from("quiz_settings")
-        .update({ is_active: false })
-        .neq("id", "00000000-0000-0000-0000-000000000000");
 
       toast.success(`${selectedYear} वर्ष यशस्वीरित्या लॉक झाले! सिस्टम नवीन वर्षासाठी तयार आहे.`);
       
