@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import QuizManagement from "@/components/admin/QuizManagement";
+
 import NoticeManagement from "@/components/admin/NoticeManagement";
 import DonationManagement from "@/components/admin/DonationManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
@@ -13,7 +13,7 @@ import CertificateManagement from "@/components/admin/CertificateManagement";
 import AdminSettings from "@/components/admin/AdminSettings";
 import LetterpadManagement from "@/components/admin/LetterpadManagement";
 import PrizeDistribution from "@/components/admin/PrizeDistribution";
-import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift } from "lucide-react";
+import { Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -76,7 +76,7 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Tabs defaultValue="programs" className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-8 gap-1 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-4 sm:grid-cols-7 gap-1 h-auto p-1">
               <TabsTrigger value="programs" className="gap-1 text-xs sm:text-sm py-2">
                 <CalendarDays className="h-4 w-4" />
                 <span className="hidden xs:inline">कार्यक्रम</span>
@@ -84,10 +84,6 @@ const AdminDashboard = () => {
               <TabsTrigger value="certificates" className="gap-1 text-xs sm:text-sm py-2">
                 <Award className="h-4 w-4" />
                 <span className="hidden xs:inline">प्रमाणपत्र</span>
-              </TabsTrigger>
-              <TabsTrigger value="quiz" className="gap-1 text-xs sm:text-sm py-2">
-                <HelpCircle className="h-4 w-4" />
-                <span className="hidden xs:inline">प्रश्नमंजुषा</span>
               </TabsTrigger>
               <TabsTrigger value="notices" className="gap-1 text-xs sm:text-sm py-2">
                 <Bell className="h-4 w-4" />
@@ -119,22 +115,6 @@ const AdminDashboard = () => {
               <CertificateManagement />
             </TabsContent>
 
-            <TabsContent value="quiz">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <HelpCircle className="h-5 w-5" />
-                    प्रश्नमंजुषा व्यवस्थापन
-                  </CardTitle>
-                  <CardDescription>
-                    प्रश्न जोडा, संपादित करा आणि क्विझ सक्रिय/निष्क्रिय करा
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <QuizManagement />
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="notices">
               <Card>
