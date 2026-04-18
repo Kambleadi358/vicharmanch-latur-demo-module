@@ -36,7 +36,6 @@ const YearLockManager = () => {
   const generateReadableReport = (data: {
     programs: any[];
     winners: any[];
-    quizResponses: any[];
     donations: any[];
     expenses: any[];
     notices: any[];
@@ -114,47 +113,7 @@ const YearLockManager = () => {
     lines.push("");
     lines.push(thinSeparator);
 
-    // Quiz Results Section
-    lines.push("");
-    lines.push("📝 प्रश्नमंजुषा निकाल (Quiz Results)");
-    lines.push(thinSeparator);
-    if (data.quizResponses.length === 0) {
-      lines.push("  कोणतेही प्रश्नमंजुषा प्रतिसाद नाहीत.");
-    } else {
-      // Group by category
-      const responsesByCategory: { [key: string]: any[] } = {};
-      data.quizResponses.forEach(response => {
-        if (!responsesByCategory[response.category]) {
-          responsesByCategory[response.category] = [];
-        }
-        responsesByCategory[response.category].push(response);
-      });
-
-      Object.entries(responsesByCategory).forEach(([category, responses]) => {
-        lines.push("");
-        lines.push(`  📚 गट: ${category}`);
-        lines.push(`     एकूण सहभागी: ${responses.length}`);
-        
-        // Sort by score descending
-        const sorted = responses.sort((a, b) => (b.score || 0) - (a.score || 0));
-        
-        lines.push("     🏆 अव्वल ५:");
-        sorted.slice(0, 5).forEach((r, i) => {
-          lines.push(`        ${i + 1}. ${r.participant_name} - ${r.score || 0}/${r.total_questions || 0} गुण`);
-        });
-        
-        if (sorted.length > 5) {
-          lines.push("");
-          lines.push("     📋 सर्व सहभागी:");
-          sorted.forEach((r, i) => {
-            lines.push(`        ${i + 1}. ${r.participant_name} - ${r.score || 0}/${r.total_questions || 0} गुण (Tab बदल: ${r.tab_switches || 0})`);
-          });
-        }
-      });
-    }
-    lines.push("");
-    lines.push(thinSeparator);
-
+    // Donations Section header follows below
     // Donations Section
     lines.push("");
     lines.push("💰 वर्गणी / देणगी (Donations)");
@@ -285,35 +244,29 @@ const YearLockManager = () => {
       const [
         programsRes,
         winnersRes,
-        quizResponsesRes,
         donationsRes,
         expensesRes,
         noticesRes,
         accountsRes,
         homesRes,
-        quizQuestionsRes
       ] = await Promise.all([
         supabase.from("programs").select("*"),
         supabase.from("program_winners").select("*"),
-        supabase.from("quiz_responses").select("*"),
         supabase.from("home_donations").select("*").eq("year", selectedYear),
         supabase.from("account_expenses").select("*"),
         supabase.from("notices").select("*"),
         supabase.from("yearly_accounts").select("*"),
         supabase.from("homes").select("*"),
-        supabase.from("quiz_questions").select("*")
       ]);
 
       const data = {
         programs: programsRes.data || [],
         winners: winnersRes.data || [],
-        quizResponses: quizResponsesRes.data || [],
         donations: donationsRes.data || [],
         expenses: expensesRes.data || [],
         notices: noticesRes.data || [],
         accounts: accountsRes.data || [],
         homes: homesRes.data || [],
-        quizQuestions: quizQuestionsRes.data || []
       };
 
       // Create ZIP file
