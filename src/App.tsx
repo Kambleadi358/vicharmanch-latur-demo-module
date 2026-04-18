@@ -9,6 +9,9 @@ import Index from "./pages/Index";
 import About from "./pages/About";
 import Ideology from "./pages/Ideology";
 import Programs from "./pages/Programs";
+import Quiz from "./pages/Quiz";
+import QuizTake from "./pages/QuizTake";
+import QuizResult from "./pages/QuizResult";
 import Accounts from "./pages/Accounts";
 import AdminLogin from "./pages/AdminLogin";
 import AdminSignup from "./pages/AdminSignup";
@@ -30,11 +33,13 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/ideology" element={<Ideology />} />
               <Route path="/programs" element={<Programs />} />
+              <Route path="/quiz" element={<Quiz />} />
+              <Route path="/quiz/take" element={<QuizTake />} />
+              <Route path="/quiz/result" element={<QuizResult />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin-signup" element={<AdminSignup />} />
               <Route path="/admin" element={<AdminDashboard />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>
