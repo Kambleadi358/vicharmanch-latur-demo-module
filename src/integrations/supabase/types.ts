@@ -308,6 +308,239 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_answers: {
+        Row: {
+          answered_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          selected_option: string | null
+          session_id: string
+          time_spent_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id: string
+          selected_option?: string | null
+          session_id: string
+          time_spent_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          selected_option?: string | null
+          session_id?: string
+          time_spent_seconds?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answers_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_cheating_logs: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          session_id: string
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          session_id: string
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_cheating_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_config: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_seconds: number
+          id: string
+          publish_answer_key: boolean
+          scheduled_start: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number
+          id?: string
+          publish_answer_key?: boolean
+          scheduled_start?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_seconds?: number
+          id?: string
+          publish_answer_key?: boolean
+          scheduled_start?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer: string
+          created_at: string
+          display_order: number
+          id: string
+          marks: number
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          updated_at: string
+        }
+        Insert: {
+          correct_answer: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          marks?: number
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          updated_at?: string
+        }
+        Update: {
+          correct_answer?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          marks?: number
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          question?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quiz_sessions: {
+        Row: {
+          created_at: string
+          current_index: number
+          dob: string
+          duration_seconds: number
+          end_time: string | null
+          id: string
+          ip_address: string | null
+          option_orders: Json
+          participant_name: string
+          paste_attempts: number
+          question_order: Json
+          risk_level: string
+          risk_reasons: Json
+          score: number
+          start_time: string
+          status: string
+          tab_switches: number
+          time_taken_seconds: number | null
+          total_marks: number
+          total_questions: number
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          current_index?: number
+          dob: string
+          duration_seconds?: number
+          end_time?: string | null
+          id?: string
+          ip_address?: string | null
+          option_orders?: Json
+          participant_name: string
+          paste_attempts?: number
+          question_order?: Json
+          risk_level?: string
+          risk_reasons?: Json
+          score?: number
+          start_time?: string
+          status?: string
+          tab_switches?: number
+          time_taken_seconds?: number | null
+          total_marks?: number
+          total_questions?: number
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          current_index?: number
+          dob?: string
+          duration_seconds?: number
+          end_time?: string | null
+          id?: string
+          ip_address?: string | null
+          option_orders?: Json
+          participant_name?: string
+          paste_attempts?: number
+          question_order?: Json
+          risk_level?: string
+          risk_reasons?: Json
+          score?: number
+          start_time?: string
+          status?: string
+          tab_switches?: number
+          time_taken_seconds?: number | null
+          total_marks?: number
+          total_questions?: number
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
@@ -395,6 +628,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      recalculate_quiz_scores: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
