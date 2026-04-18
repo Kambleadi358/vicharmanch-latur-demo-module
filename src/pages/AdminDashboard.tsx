@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
+import QuizManagement from "@/components/admin/QuizManagement";
 import NoticeManagement from "@/components/admin/NoticeManagement";
 import DonationManagement from "@/components/admin/DonationManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
@@ -13,7 +13,7 @@ import CertificateManagement from "@/components/admin/CertificateManagement";
 import AdminSettings from "@/components/admin/AdminSettings";
 import LetterpadManagement from "@/components/admin/LetterpadManagement";
 import PrizeDistribution from "@/components/admin/PrizeDistribution";
-import { Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift } from "lucide-react";
+import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
