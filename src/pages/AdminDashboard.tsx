@@ -115,6 +115,10 @@ const AdminDashboard = () => {
               <ProgramManagement />
             </TabsContent>
 
+            <TabsContent value="quiz">
+              <QuizManagement />
+            </TabsContent>
+
             <TabsContent value="certificates">
               <CertificateManagement />
             </TabsContent>
