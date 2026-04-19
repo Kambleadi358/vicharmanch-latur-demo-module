@@ -46,6 +46,88 @@ export type Database = {
           },
         ]
       }
+      competition_entries: {
+        Row: {
+          category: string
+          competition_id: string
+          created_at: string
+          entry_code: string
+          id: string
+          image_path: string
+          image_url: string
+          participant_name: string
+        }
+        Insert: {
+          category: string
+          competition_id: string
+          created_at?: string
+          entry_code: string
+          id?: string
+          image_path: string
+          image_url: string
+          participant_name: string
+        }
+        Update: {
+          category?: string
+          competition_id?: string
+          created_at?: string
+          entry_code?: string
+          id?: string
+          image_path?: string
+          image_url?: string
+          participant_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competition_entries_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      competitions: {
+        Row: {
+          created_at: string
+          id: string
+          is_visible: boolean
+          name: string
+          program_id: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          name: string
+          program_id: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          name?: string
+          program_id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitions_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_donations: {
         Row: {
           assigned_amount: number
@@ -119,6 +201,126 @@ export type Database = {
           home_name?: string | null
           home_number?: number
           id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      judge_scores: {
+        Row: {
+          category: string
+          competition_id: string
+          created_at: string
+          entry_id: string
+          id: string
+          is_submitted: boolean
+          judge_id: string
+          marks: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          competition_id: string
+          created_at?: string
+          entry_id: string
+          id?: string
+          is_submitted?: boolean
+          judge_id: string
+          marks: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          competition_id?: string
+          created_at?: string
+          entry_id?: string
+          id?: string
+          is_submitted?: boolean
+          judge_id?: string
+          marks?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "judge_scores_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "judge_scores_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "competition_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "judge_scores_judge_id_fkey"
+            columns: ["judge_id"]
+            isOneToOne: false
+            referencedRelation: "judges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      judge_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          judge_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          judge_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          judge_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "judge_sessions_judge_id_fkey"
+            columns: ["judge_id"]
+            isOneToOne: false
+            referencedRelation: "judges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      judges: {
+        Row: {
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          judge_code: string
+          password_hash: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          judge_code: string
+          password_hash: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          judge_code?: string
+          password_hash?: string
           updated_at?: string
         }
         Relationships: []
@@ -307,6 +509,71 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      public_votes: {
+        Row: {
+          category: string
+          competition_id: string
+          created_at: string
+          device_fingerprint: string
+          first_entry_id: string | null
+          id: string
+          second_entry_id: string | null
+          third_entry_id: string | null
+          voter_phone: string
+        }
+        Insert: {
+          category: string
+          competition_id: string
+          created_at?: string
+          device_fingerprint: string
+          first_entry_id?: string | null
+          id?: string
+          second_entry_id?: string | null
+          third_entry_id?: string | null
+          voter_phone: string
+        }
+        Update: {
+          category?: string
+          competition_id?: string
+          created_at?: string
+          device_fingerprint?: string
+          first_entry_id?: string | null
+          id?: string
+          second_entry_id?: string | null
+          third_entry_id?: string | null
+          voter_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_votes_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_votes_first_entry_id_fkey"
+            columns: ["first_entry_id"]
+            isOneToOne: false
+            referencedRelation: "competition_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_votes_second_entry_id_fkey"
+            columns: ["second_entry_id"]
+            isOneToOne: false
+            referencedRelation: "competition_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_votes_third_entry_id_fkey"
+            columns: ["third_entry_id"]
+            isOneToOne: false
+            referencedRelation: "competition_entries"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       quiz_answers: {
         Row: {
@@ -628,6 +895,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_entry_code: {
+        Args: { _category: string; _competition_id: string }
+        Returns: string
+      }
+      next_judge_code: { Args: never; Returns: string }
       recalculate_quiz_scores: { Args: never; Returns: undefined }
     }
     Enums: {
