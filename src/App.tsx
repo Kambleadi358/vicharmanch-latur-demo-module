@@ -17,6 +17,10 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminSignup from "./pages/AdminSignup";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
+import JudgeLogin from "./pages/JudgeLogin";
+import JudgeDashboard from "./pages/JudgeDashboard";
+import SpardhaList from "./pages/SpardhaList";
+import SpardhaDetail from "./pages/SpardhaDetail";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +44,10 @@ const App = () => (
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/admin-signup" element={<AdminSignup />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/judge-login" element={<JudgeLogin />} />
+              <Route path="/judge" element={<JudgeDashboard />} />
+              <Route path="/spardha" element={<SpardhaList />} />
+              <Route path="/spardha/:id" element={<SpardhaDetail />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

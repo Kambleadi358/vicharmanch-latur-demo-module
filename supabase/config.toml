@@ -11,3 +11,18 @@ verify_jwt = false
 
 [functions.quiz-result]
 verify_jwt = false
+
+[functions.judge-create]
+verify_jwt = true
+
+[functions.judge-login]
+verify_jwt = false
+
+[functions.judge-data]
+verify_jwt = false
+
+[functions.judge-score]
+verify_jwt = false
+
+[functions.public-vote]
+verify_jwt = false
