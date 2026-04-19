@@ -13,7 +13,7 @@ import CertificateManagement from "@/components/admin/CertificateManagement";
 import AdminSettings from "@/components/admin/AdminSettings";
 import LetterpadManagement from "@/components/admin/LetterpadManagement";
 import PrizeDistribution from "@/components/admin/PrizeDistribution";
-import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift } from "lucide-react";
+import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
