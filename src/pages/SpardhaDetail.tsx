@@ -61,6 +61,7 @@ const SpardhaDetail = () => {
   }, [id]);
 
   const isLocked = comp?.status === "LOCKED";
+  const votingEnabled = isLocked;
 
   const showName = (e: any) => isLocked ? e.participant_name : null;
 
@@ -150,11 +151,11 @@ const SpardhaDetail = () => {
                       <p className="text-sm text-muted-foreground">{list.length} नोंदी</p>
                       <Button
                         size="sm"
-                        disabled={voted || list.length < 3 || isLocked}
+                        disabled={voted || list.length < 3 || !votingEnabled}
                         onClick={() => { setPicks({}); setVoteOpen(true); }}
                       >
                         <Vote className="h-4 w-4 mr-1" />
-                        {voted ? "मतदान केले" : "मतदान करा"}
+                        {voted ? "मतदान केले" : votingEnabled ? "मतदान करा" : "Lock नंतर मतदान"}
                       </Button>
                     </div>
 
