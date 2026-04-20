@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,7 @@ import { Link } from "react-router-dom";
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isResetting, setIsResetting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
   const navigate = useNavigate();
@@ -45,6 +47,26 @@ const AdminLogin = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      toast({ title: "ईमेल आवश्यक", description: "पासवर्ड reset साठी आधी ईमेल टाका", variant: "destructive" });
+      return;
+    }
+    setIsResetting(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) {
+        toast({ title: "Reset त्रुटी", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Reset ईमेल पाठवली", description: "ईमेल OTP / reset लिंक तपासा आणि नवीन पासवर्ड सेट करा" });
+      }
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -105,6 +127,12 @@ const AdminLogin = () => {
                     required
                   />
                 </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 text-sm">
+                <button type="button" onClick={handleForgotPassword} disabled={isResetting} className="text-primary hover:underline disabled:opacity-60">
+                  {isResetting ? "पाठवत आहे..." : "पासवर्ड विसरलात?"}
+                </button>
+                <span className="text-muted-foreground">Reset साठी ईमेल verification आवश्यक</span>
               </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "लॉगिन होत आहे..." : "लॉगिन करा"}

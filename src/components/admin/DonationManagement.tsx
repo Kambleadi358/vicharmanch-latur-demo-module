@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Home, IndianRupee, X, Edit2, Save, Search, Filter, Plus, Trash2, Wallet, TrendingDown, TrendingUp, Eye, EyeOff, Download, FileSpreadsheet } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+
 
 interface HomeData {
   id: string;
@@ -837,116 +837,15 @@ const DonationManagement = () => {
         </CardContent>
       </Card>
 
-      {/* Controls */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <Home className="h-5 w-5" />
-              देणगी व्यवस्थापन - {selectedYear}
-            </div>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
-                  <TrendingDown className="h-4 w-4" />
-                  खर्च व्यवस्थापन
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl">
-                <DialogHeader>
-                  <DialogTitle>खर्च व्यवस्थापन - {selectedYear}</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-3 gap-4 p-4 bg-secondary rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground">जमा रक्कम</p>
-                      <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">एकूण खर्च</p>
-                      <p className="text-lg font-bold text-red-600">{formatCurrency(totalExpense)}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">शिल्लक</p>
-                      <p className={`text-lg font-bold ${remainingBalance >= 0 ? "text-primary" : "text-destructive"}`}>
-                        {formatCurrency(remainingBalance)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-medium">खर्च तपशील</h4>
-                    <Button size="sm" onClick={() => setIsAddingExpense(true)} disabled={isAddingExpense}>
-                      <Plus className="h-4 w-4 mr-1" /> खर्च जोडा
-                    </Button>
-                  </div>
-
-                  {isAddingExpense && (
-                    <div className="flex gap-2 items-end p-3 bg-muted rounded-lg">
-                      <div className="flex-1 space-y-1">
-                        <Label className="text-xs">तपशील</Label>
-                        <Input
-                          value={expenseForm.item}
-                          onChange={(e) => setExpenseForm({ ...expenseForm, item: e.target.value })}
-                          placeholder="खर्चाचे तपशील"
-                        />
-                      </div>
-                      <div className="w-32 space-y-1">
-                        <Label className="text-xs">रक्कम</Label>
-                        <Input
-                          type="number"
-                          value={expenseForm.amount}
-                          onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0 })}
-                        />
-                      </div>
-                      <Button size="sm" onClick={handleAddExpense}>
-                        <Save className="h-4 w-4" />
-                      </Button>
-                      <Button size="sm" variant="outline" onClick={() => { setIsAddingExpense(false); setExpenseForm({ item: "", amount: 0 }); }}>
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>तपशील</TableHead>
-                        <TableHead className="text-right">रक्कम</TableHead>
-                        <TableHead className="w-16">क्रिया</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {expenses.map((expense) => (
-                        <TableRow key={expense.id}>
-                          <TableCell>{expense.item}</TableCell>
-                          <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteExpense(expense.id, expense.amount)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                      {expenses.length === 0 && (
-                        <TableRow>
-                          <TableCell colSpan={3} className="text-center text-muted-foreground">
-                            कोणताही खर्च नोंदवलेला नाही
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </DialogContent>
-            </Dialog>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" /> डावी बाजू — जमा व्यवस्थापन - {selectedYear}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <Label>वर्ष:</Label>
@@ -1026,12 +925,11 @@ const DonationManagement = () => {
               </div>
             </div>
           )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Homes Table */}
-      <div className="rounded-lg border overflow-hidden">
-        <Table>
+          <div className="rounded-lg border overflow-auto">
+            <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-16">क्र.</TableHead>
@@ -1158,7 +1056,89 @@ const DonationManagement = () => {
               );
             })}
           </TableBody>
-        </Table>
+            </Table>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <Card className="sticky top-4">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingDown className="h-5 w-5" /> उजवी बाजू — खर्च व्यवस्थापन
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-secondary rounded-lg">
+                <div>
+                  <p className="text-sm text-muted-foreground">जमा रक्कम</p>
+                  <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">एकूण खर्च</p>
+                  <p className="text-lg font-bold text-red-600">{formatCurrency(totalExpense)}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">शिल्लक</p>
+                  <p className={`text-lg font-bold ${remainingBalance >= 0 ? "text-primary" : "text-destructive"}`}>{formatCurrency(remainingBalance)}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <h4 className="font-medium">खर्च तपशील</h4>
+                <Button size="sm" onClick={() => setIsAddingExpense(true)} disabled={isAddingExpense}>
+                  <Plus className="h-4 w-4 mr-1" /> खर्च जोडा
+                </Button>
+              </div>
+
+              {isAddingExpense && (
+                <div className="space-y-3 rounded-lg bg-muted p-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">तपशील</Label>
+                    <Input value={expenseForm.item} onChange={(e) => setExpenseForm({ ...expenseForm, item: e.target.value })} placeholder="खर्चाचे तपशील" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">रक्कम</Label>
+                    <Input type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0 })} />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={handleAddExpense}><Save className="h-4 w-4 mr-1" /> जतन</Button>
+                    <Button size="sm" variant="outline" onClick={() => { setIsAddingExpense(false); setExpenseForm({ item: "", amount: 0 }); }}><X className="h-4 w-4 mr-1" /> रद्द</Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-lg border overflow-auto max-h-[70vh]">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>तपशील</TableHead>
+                      <TableHead className="text-right">रक्कम</TableHead>
+                      <TableHead className="w-16">क्रिया</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {expenses.map((expense) => (
+                      <TableRow key={expense.id}>
+                        <TableCell>{expense.item}</TableCell>
+                        <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>
+                        <TableCell>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id, expense.amount)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {expenses.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-center text-muted-foreground">कोणताही खर्च नोंदवलेला नाही</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

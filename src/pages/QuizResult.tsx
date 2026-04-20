@@ -54,6 +54,9 @@ const QuizResult = () => {
         const res = await fetch(url.toString(), {
           headers: { apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "" },
         });
+        if (!res.ok && res.status === 0) {
+          throw new Error("निकाल सेवा उपलब्ध नाही");
+        }
         const data = await res.json();
         if (!res.ok) {
           setError(data.error || "निकाल मिळाला नाही");
