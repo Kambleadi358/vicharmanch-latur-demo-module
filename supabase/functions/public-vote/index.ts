@@ -3,7 +3,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 Deno.serve(async (req) => {
@@ -36,6 +37,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
+
+    const { data: competition } = await supabase
+      .from("competitions")
+      .select("id, status")
+      .eq("id", competition_id)
+      .maybeSingle();
+    if (!competition) return jsonRes({ error: "स्पर्धा सापडली नाही" }, 404);
+    if (competition.status !== "LOCKED") {
+      return jsonRes({ error: "मतदान फक्त स्पर्धा lock झाल्यानंतरच सुरू होते" }, 409);
+    }
 
     // Pre-check: did this phone OR this device already vote in this category?
     const { data: existing } = await supabase
