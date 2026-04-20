@@ -48,6 +48,7 @@ const CompetitionManagement = () => {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [entryCategory, setEntryCategory] = useState<"chota" | "motha" | "khula">("chota");
   const [entryName, setEntryName] = useState("");
+  const [pendingCapture, setPendingCapture] = useState<{ blob: Blob; previewUrl: string } | null>(null);
 
   // Judge dialog
   const [judgeDialog, setJudgeDialog] = useState(false);
@@ -97,12 +98,17 @@ const CompetitionManagement = () => {
     loadAll();
   };
 
-  // Camera → upload → create entry (async, non-blocking)
-  const handleCaptured = async (blob: Blob, _dataUrl: string) => {
-    if (!selectedComp) { toast.error("स्पर्धा निवडा"); return; }
-    if (!entryName.trim()) { toast.error("सहभागीचे नाव लिहा"); return; }
+  const handleCaptured = async (blob: Blob, dataUrl: string) => {
+    setPendingCapture({ blob, previewUrl: dataUrl });
+    setCameraOpen(false);
+  };
 
-    // Generate next entry code
+  const savePendingEntry = async () => {
+    if (!selectedComp) { toast.error("स्पर्धा निवडा"); return; }
+    if (!pendingCapture) { toast.error("पहिले फोटो घ्या"); return; }
+    if (!entryName.trim()) { toast.error("सहभागीचे नाव लिहा"); return; }
+    if (currentComp?.status === "LOCKED") { toast.error("Lock नंतर नवीन नोंद करता येणार नाही"); return; }
+
     const { data: codeData, error: codeErr } = await supabase
       .rpc("next_entry_code", { _competition_id: selectedComp, _category: entryCategory });
     if (codeErr) { toast.error(codeErr.message); return; }
@@ -111,17 +117,24 @@ const CompetitionManagement = () => {
     const path = `${selectedComp}/${entryCategory}/${entry_code}-${Date.now()}.webp`;
     const { error: upErr } = await supabase.storage
       .from("competition-images")
-      .upload(path, blob, { contentType: "image/webp", upsert: false });
+      .upload(path, pendingCapture.blob, { contentType: "image/webp", upsert: false });
     if (upErr) { toast.error("Upload अयशस्वी: " + upErr.message); return; }
 
     const { data: pub } = supabase.storage.from("competition-images").getPublicUrl(path);
-
     const { error } = await supabase.from("competition_entries").insert({
-      competition_id: selectedComp, entry_code, category: entryCategory,
-      participant_name: entryName.trim(), image_url: pub.publicUrl, image_path: path,
+      competition_id: selectedComp,
+      entry_code,
+      category: entryCategory,
+      participant_name: entryName.trim(),
+      image_url: pub.publicUrl,
+      image_path: path,
     });
     if (error) { toast.error(error.message); return; }
+
     toast.success(`${entry_code} जोडली`);
+    setPendingCapture(null);
+    setEntryName("");
+    setEntryCategory("chota");
     loadCompetitionData(selectedComp);
   };
 
@@ -238,6 +251,37 @@ const CompetitionManagement = () => {
         />
       )}
 
+      <Dialog open={!!pendingCapture} onOpenChange={(open) => !open && setPendingCapture(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>नवीन नोंद पूर्ण करा</DialogTitle>
+            <DialogDescription>आधी फोटो घेतला आहे. आता सहभागीचे नाव आणि गट जतन करा.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {pendingCapture && (
+              <img src={pendingCapture.previewUrl} alt="नवीन नोंद पूर्वावलोकन" className="w-full aspect-square object-cover rounded-lg border" />
+            )}
+            <div className="space-y-2">
+              <Label>सहभागीचे नाव</Label>
+              <Input placeholder="सहभागीचे नाव" value={entryName} onChange={(e) => setEntryName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>गट</Label>
+              <Select value={entryCategory} onValueChange={(v) => setEntryCategory(v as any)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPendingCapture(null)}>रद्द</Button>
+              <Button onClick={savePendingEntry}>नोंद जतन करा</Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Create competition */}
       <Card>
         <CardHeader>
@@ -297,20 +341,16 @@ const CompetitionManagement = () => {
             <Card>
               <CardHeader><CardTitle className="text-base">नवीन नोंद</CardTitle></CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid sm:grid-cols-3 gap-3">
-                  <Select value={entryCategory} onValueChange={(v) => setEntryCategory(v as any)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map((c) => <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Input placeholder="सहभागीचे नाव" value={entryName} onChange={(e) => setEntryName(e.target.value)} />
-                  <Button onClick={() => setCameraOpen(true)} disabled={!entryName.trim() || currentComp?.status === "LOCKED"}>
-                    <Camera className="h-4 w-4 mr-1" /> Camera उघडा
+                <div className="grid sm:grid-cols-[1fr_auto] gap-3">
+                  <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                    क्रम: <b>१) फोटो घ्या</b> → <b>२) सहभागीचे नाव</b> → <b>३) गट निवडा</b> → <b>४) नोंद जतन करा</b>
+                  </div>
+                  <Button onClick={() => setCameraOpen(true)} disabled={!selectedComp || currentComp?.status === "LOCKED"}>
+                    <Camera className="h-4 w-4 mr-1" /> फोटो घ्या
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Camera उघडल्यावर सलग फोटो काढत रहा. प्रत्येक फोटोनंतर नवीन entry क्रमांक auto तयार होतो.
+                  Lock झाल्यानंतर नवीन entry जोडता येणार नाही. मतदान मात्र lock नंतर सुरू राहील.
                 </p>
               </CardContent>
             </Card>
