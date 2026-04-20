@@ -16,6 +16,7 @@ import Accounts from "./pages/Accounts";
 import AdminLogin from "./pages/AdminLogin";
 import AdminSignup from "./pages/AdminSignup";
 import AdminDashboard from "./pages/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import JudgeLogin from "./pages/JudgeLogin";
 import JudgeDashboard from "./pages/JudgeDashboard";
@@ -42,6 +43,7 @@ const App = () => (
               <Route path="/quiz/result" element={<QuizResult />} />
               <Route path="/accounts" element={<Accounts />} />
               <Route path="/admin-login" element={<AdminLogin />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/admin-signup" element={<AdminSignup />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/judge-login" element={<JudgeLogin />} />
