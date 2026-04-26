@@ -1,17 +1,16 @@
-// Judge dashboard: category-wise scoring with autosave, polling, anti-duplicate
+// Judge dashboard: category-wise scoring with autosave, INCREMENTAL polling, anti-duplicate
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, LogOut, Lock, CheckCircle2, AlertCircle } from "lucide-react";
 
-type Comp = { id: string; name: string; status: string };
+type Comp = { id: string; name: string; status: string; updated_at?: string };
 type Entry = { id: string; competition_id: string; entry_code: string; category: string; image_url: string; created_at: string };
-type Score = { id: string; entry_id: string; competition_id: string; category: string; marks: number; is_submitted: boolean };
+type Score = { id: string; entry_id: string; competition_id: string; category: string; marks: number; is_submitted: boolean; updated_at?: string };
 
 const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
   { key: "chota", label: "चोटा गट" },
@@ -19,37 +18,47 @@ const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
   { key: "khula", label: "खुला गट" },
 ];
 
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const ANON = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+
 const JudgeDashboard = () => {
   const nav = useNavigate();
   const [judge, setJudge] = useState<any>(null);
   const [competitions, setCompetitions] = useState<Comp[]>([]);
   const [activeComp, setActiveComp] = useState<string>("");
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [scores, setScores] = useState<Record<string, Score>>({}); // entry_id → score
-  const [draftMarks, setDraftMarks] = useState<Record<string, string>>({}); // entry_id → input value
+  const [scores, setScores] = useState<Record<string, Score>>({});
+  const [draftMarks, setDraftMarks] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<"chota" | "motha" | "khula">("chota");
-  const lastEntryCount = useRef(0);
+
+  // Refs avoid recreating polling interval on every state change
+  const tokenRef = useRef<string | null>(typeof window !== "undefined" ? localStorage.getItem("judge_token") : null);
+  const sinceRef = useRef<string | null>(null);
+  const activeCompRef = useRef<string>("");
+  const lastEntryCountRef = useRef(0);
+  const inflightRef = useRef(false);
   const saveTimers = useRef<Record<string, any>>({});
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("judge_token") : null;
-
   useEffect(() => {
-    if (!token) { nav("/judge-login"); return; }
+    if (!tokenRef.current) { nav("/judge-login"); return; }
     const j = localStorage.getItem("judge_info");
     if (j) setJudge(JSON.parse(j));
-  }, [token, nav]);
+  }, [nav]);
 
-  const fetchData = useCallback(async (silent = false) => {
-    if (!token) return;
-    if (!silent) setLoading(true);
+  useEffect(() => { activeCompRef.current = activeComp; }, [activeComp]);
+
+  const callJudgeData = useCallback(async (silent: boolean) => {
+    const token = tokenRef.current;
+    if (!token || inflightRef.current) return;
+    inflightRef.current = true;
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/judge-data`;
-      const res = await fetch(url, {
-        headers: {
-          "x-judge-token": token,
-          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+      const url = new URL(`${SUPABASE_URL}/functions/v1/judge-data`);
+      if (activeCompRef.current) url.searchParams.set("competition_id", activeCompRef.current);
+      if (silent && sinceRef.current) url.searchParams.set("since", sinceRef.current);
+
+      const res = await fetch(url.toString(), {
+        headers: { "x-judge-token": token, apikey: ANON },
       });
       const data = await res.json();
       if (!res.ok || data.error) {
@@ -58,99 +67,151 @@ const JudgeDashboard = () => {
           nav("/judge-login");
           return;
         }
-        toast.error(data.error || "server त्रुटी");
+        if (!silent) toast.error(data.error || "server त्रुटी");
         return;
       }
+
+      const isFull = !!data.full;
       const comps: Comp[] = data.competitions || [];
-      setCompetitions(comps);
-      if (!activeComp && comps.length > 0) setActiveComp(comps[0].id);
-
-      const allEntries: Entry[] = data.entries || [];
-      const scopedEntries = activeComp
-        ? allEntries.filter((e) => e.competition_id === activeComp)
-        : (comps[0] ? allEntries.filter((e) => e.competition_id === comps[0].id) : []);
-
-      // Detect new entries (polling notification)
-      if (silent && lastEntryCount.current > 0 && scopedEntries.length > lastEntryCount.current) {
-        toast.success(`${scopedEntries.length - lastEntryCount.current} नवीन नोंदी आल्या`);
+      if (isFull) setCompetitions(comps);
+      else if (comps.length) {
+        // merge status updates only
+        setCompetitions((prev) => {
+          const map = new Map(prev.map((c) => [c.id, c]));
+          comps.forEach((c) => map.set(c.id, { ...map.get(c.id), ...c }));
+          return Array.from(map.values());
+        });
       }
-      lastEntryCount.current = scopedEntries.length;
 
-      setEntries(scopedEntries);
+      // Bootstrap activeComp on first load
+      if (!activeCompRef.current && comps.length > 0) {
+        activeCompRef.current = comps[0].id;
+        setActiveComp(comps[0].id);
+      }
 
-      const sMap: Record<string, Score> = {};
-      const dMap: Record<string, string> = {};
-      (data.scores || []).forEach((s: Score) => {
-        sMap[s.entry_id] = s;
-        dMap[s.entry_id] = String(s.marks);
-      });
-      setScores(sMap);
-      setDraftMarks((prev) => ({ ...dMap, ...Object.fromEntries(Object.entries(prev).filter(([k]) => !sMap[k]?.is_submitted)) }));
+      const newEntries: Entry[] = data.entries || [];
+      if (isFull) {
+        const scoped = activeCompRef.current
+          ? newEntries.filter((e) => e.competition_id === activeCompRef.current)
+          : newEntries;
+        setEntries(scoped);
+        lastEntryCountRef.current = scoped.length;
+      } else if (newEntries.length) {
+        setEntries((prev) => {
+          const seen = new Set(prev.map((e) => e.id));
+          const adds = newEntries.filter((e) => !seen.has(e.id) && e.competition_id === activeCompRef.current);
+          if (adds.length === 0) return prev;
+          if (silent) toast.success(`${adds.length} नवीन नोंद आल्या`);
+          const merged = [...prev, ...adds].sort((a, b) => a.created_at.localeCompare(b.created_at));
+          lastEntryCountRef.current = merged.length;
+          return merged;
+        });
+      }
+
+      const newScores: Score[] = data.scores || [];
+      if (isFull) {
+        const sMap: Record<string, Score> = {};
+        const dMap: Record<string, string> = {};
+        newScores.forEach((s) => { sMap[s.entry_id] = s; dMap[s.entry_id] = String(s.marks); });
+        setScores(sMap);
+        setDraftMarks((prev) => {
+          // keep user's unsaved drafts for entries that aren't yet locked
+          const out = { ...dMap };
+          Object.entries(prev).forEach(([k, v]) => { if (!sMap[k]?.is_submitted && v !== undefined) out[k] = v; });
+          return out;
+        });
+      } else if (newScores.length) {
+        setScores((prev) => {
+          const out = { ...prev };
+          newScores.forEach((s) => { out[s.entry_id] = s; });
+          return out;
+        });
+        setDraftMarks((prev) => {
+          const out = { ...prev };
+          newScores.forEach((s) => {
+            if (s.is_submitted || prev[s.entry_id] === undefined) out[s.entry_id] = String(s.marks);
+          });
+          return out;
+        });
+      }
+
+      if (data.server_time) sinceRef.current = data.server_time;
+    } catch {
+      // network blip — next poll will retry
     } finally {
-      if (!silent) setLoading(false);
+      inflightRef.current = false;
     }
-  }, [token, activeComp, nav]);
+  }, [nav]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Polling every 5s for new entries
+  // Initial full load
   useEffect(() => {
-    if (!token) return;
-    const t = setInterval(() => fetchData(true), 5000);
-    return () => clearInterval(t);
-  }, [token, fetchData]);
+    (async () => {
+      setLoading(true);
+      sinceRef.current = null; // force full
+      await callJudgeData(false);
+      setLoading(false);
+    })();
+  }, [callJudgeData]);
+
+  // When competition switches: reset and full-reload
+  useEffect(() => {
+    if (!activeComp) return;
+    sinceRef.current = null;
+    setEntries([]); setScores({}); setDraftMarks({});
+    callJudgeData(false);
+  }, [activeComp, callJudgeData]);
+
+  // Stable 6s polling (incremental)
+  useEffect(() => {
+    const t = setInterval(() => callJudgeData(true), 6000);
+    const onVis = () => { if (document.visibilityState === "visible") callJudgeData(true); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { clearInterval(t); document.removeEventListener("visibilitychange", onVis); };
+  }, [callJudgeData]);
 
   const saveScore = useCallback(async (entryId: string, marksRaw: string) => {
+    const token = tokenRef.current;
     if (!token) return;
     const m = Number(marksRaw);
     if (Number.isNaN(m) || m < 0 || m > 10) return;
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/judge-score`;
-      const res = await fetch(url, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/judge-score`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-judge-token": token,
-          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers: { "Content-Type": "application/json", "x-judge-token": token, apikey: ANON },
         body: JSON.stringify({ action: "save", entry_id: entryId, marks: m }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
-        if (data.error?.includes("submit")) return; // silently ignore
+        if (data.error?.includes("submit")) return;
         toast.error(data.error || "save अयशस्वी");
       }
-    } catch { /* silent */ }
-  }, [token]);
+    } catch { /* silent — autosave will retry on next change */ }
+  }, []);
 
   const onMarksChange = (entryId: string, value: string) => {
     if (scores[entryId]?.is_submitted) return;
     setDraftMarks((p) => ({ ...p, [entryId]: value }));
     if (saveTimers.current[entryId]) clearTimeout(saveTimers.current[entryId]);
-    saveTimers.current[entryId] = setTimeout(() => saveScore(entryId, value), 600);
+    saveTimers.current[entryId] = setTimeout(() => saveScore(entryId, value), 700);
   };
 
   const submitCategory = async (category: string) => {
+    const token = tokenRef.current;
     if (!token || !activeComp) return;
     if (!confirm(`${CATEGORIES.find((c) => c.key === category)?.label} चे सर्व गुण final submit करायचे? यानंतर बदल करता येणार नाही.`)) return;
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/judge-score`;
-      const res = await fetch(url, {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/judge-score`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-judge-token": token,
-          "apikey": import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
+        headers: { "Content-Type": "application/json", "x-judge-token": token, apikey: ANON },
         body: JSON.stringify({ action: "submit_category", competition_id: activeComp, category }),
       });
       const data = await res.json();
       if (!res.ok || data.error) { toast.error(data.error || "submit अयशस्वी"); return; }
       toast.success("Category submit झाली");
-      // Move to next category
       const idx = CATEGORIES.findIndex((c) => c.key === category);
       if (idx < CATEGORIES.length - 1) setActiveCategory(CATEGORIES[idx + 1].key);
-      fetchData();
+      sinceRef.current = null;
+      callJudgeData(false);
     } catch (e: any) { toast.error(e?.message ?? "त्रुटी"); }
   };
 
@@ -182,9 +243,7 @@ const JudgeDashboard = () => {
         ) : (
           <>
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">स्पर्धा निवडा</CardTitle>
-              </CardHeader>
+              <CardHeader className="pb-2"><CardTitle className="text-base">स्पर्धा निवडा</CardTitle></CardHeader>
               <CardContent>
                 <div className="flex flex-wrap gap-2">
                   {competitions.map((c) => (
@@ -249,7 +308,13 @@ const JudgeDashboard = () => {
                           <Card key={e.id} className={submitted ? "border-green-500/50" : ""}>
                             <CardContent className="p-3 space-y-2">
                               <div className="relative aspect-square overflow-hidden rounded-md bg-muted">
-                                <img src={e.image_url} alt={e.entry_code} loading="lazy" className="w-full h-full object-cover" />
+                                <img
+                                  src={e.image_url}
+                                  alt={e.entry_code}
+                                  loading="lazy"
+                                  decoding="async"
+                                  className="w-full h-full object-cover"
+                                />
                                 <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-0.5 rounded text-xs font-bold">
                                   {e.entry_code}
                                 </div>
