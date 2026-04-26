@@ -59,7 +59,11 @@ const QuizResult = () => {
         }
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error || "निकाल मिळाला नाही");
+          if (res.status === 404) {
+            setError("या नाव व जन्मतारखेसाठी निकाल सापडला नाही. कृपया प्रश्नमंजुषा देताना वापरलेले अचूक नाव व जन्मतारीख टाका.");
+          } else {
+            setError(data.error || "निकाल मिळाला नाही");
+          }
         } else {
           setResult(data);
         }
