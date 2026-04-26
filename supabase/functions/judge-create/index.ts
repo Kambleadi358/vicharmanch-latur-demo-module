@@ -41,20 +41,33 @@ Deno.serve(async (req) => {
     const display_name = (body.display_name ?? "").toString().trim();
     if (!display_name) return jsonRes({ error: "display_name आवश्यक" }, 400);
 
-    const { data: codeData, error: codeErr } = await supabase.rpc("next_judge_code");
-    if (codeErr) throw codeErr;
-    const judge_code = codeData as string;
-
     // Generate readable password: J + 6 chars
     const password = generatePassword(8);
     const password_hash = await bcrypt.hash(password, 10);
 
-    const { data: judge, error } = await supabase
-      .from("judges")
-      .insert({ judge_code, display_name, password_hash })
-      .select("id, judge_code, display_name, is_active, created_at")
-      .single();
-    if (error) throw error;
+    // Retry up to 5 times in case next_judge_code returns a duplicate (race condition)
+    let judge: any = null;
+    let lastError: any = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { data: codeData, error: codeErr } = await supabase.rpc("next_judge_code");
+      if (codeErr) throw codeErr;
+      const judge_code = codeData as string;
+
+      const { data, error } = await supabase
+        .from("judges")
+        .insert({ judge_code, display_name, password_hash })
+        .select("id, judge_code, display_name, is_active, created_at")
+        .single();
+
+      if (!error) {
+        judge = data;
+        break;
+      }
+      lastError = error;
+      // 23505 = unique_violation; retry. Otherwise bail out.
+      if ((error as any).code !== "23505") throw error;
+    }
+    if (!judge) throw lastError ?? new Error("judge_code निर्माण करता आले नाही");
 
     return jsonRes({ judge, plain_password: password });
   } catch (e) {
