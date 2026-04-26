@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Instagram, Shield } from "lucide-react";
+import { Menu, X, Instagram, Shield, Gavel, UserPlus } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -78,6 +78,20 @@ const Header = () => {
             >
               <Instagram size={20} />
             </a>
+            <Link
+              to="/register"
+              className="text-primary-foreground/80 hover:text-accent transition-colors"
+              title="सहभागी नोंदणी"
+            >
+              <UserPlus size={20} />
+            </Link>
+            <Link
+              to="/judge-login"
+              className="text-primary-foreground/80 hover:text-accent transition-colors"
+              title="परीक्षक लॉगिन"
+            >
+              <Gavel size={20} />
+            </Link>
             <Link
               to={isAdmin ? "/admin" : "/admin-login"}
               className="text-primary-foreground/80 hover:text-accent transition-colors"
