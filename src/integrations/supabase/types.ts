@@ -361,6 +361,33 @@ export type Database = {
         }
         Relationships: []
       }
+      participants: {
+        Row: {
+          category: string
+          competition_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          competition_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          competition_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prize_allocations: {
         Row: {
           created_at: string
