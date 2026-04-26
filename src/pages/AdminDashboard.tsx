@@ -14,7 +14,8 @@ import AdminSettings from "@/components/admin/AdminSettings";
 import LetterpadManagement from "@/components/admin/LetterpadManagement";
 import PrizeDistribution from "@/components/admin/PrizeDistribution";
 import CompetitionManagement from "@/components/admin/CompetitionManagement";
-import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift, BookOpen, Trophy } from "lucide-react";
+import ParticipantManagement from "@/components/admin/ParticipantManagement";
+import { Shield, LogOut, HelpCircle, Bell, IndianRupee, Home, CalendarDays, Award, Settings, FileText, Gift, BookOpen, Trophy, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const AdminDashboard = () => {
@@ -77,7 +78,7 @@ const AdminDashboard = () => {
       <main className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
           <Tabs defaultValue="programs" className="space-y-4 sm:space-y-6">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-9 gap-1 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-10 gap-1 h-auto p-1">
               <TabsTrigger value="programs" className="gap-1 text-xs sm:text-sm py-2">
                 <CalendarDays className="h-4 w-4" />
                 <span className="hidden xs:inline">कार्यक्रम</span>
@@ -85,6 +86,10 @@ const AdminDashboard = () => {
               <TabsTrigger value="competition" className="gap-1 text-xs sm:text-sm py-2">
                 <Trophy className="h-4 w-4" />
                 <span className="hidden xs:inline">स्पर्धा</span>
+              </TabsTrigger>
+              <TabsTrigger value="participants" className="gap-1 text-xs sm:text-sm py-2">
+                <Users className="h-4 w-4" />
+                <span className="hidden xs:inline">सहभागी</span>
               </TabsTrigger>
               <TabsTrigger value="quiz" className="gap-1 text-xs sm:text-sm py-2">
                 <BookOpen className="h-4 w-4" />
@@ -122,6 +127,10 @@ const AdminDashboard = () => {
 
             <TabsContent value="competition">
               <CompetitionManagement />
+            </TabsContent>
+
+            <TabsContent value="participants">
+              <ParticipantManagement />
             </TabsContent>
 
             <TabsContent value="quiz">
