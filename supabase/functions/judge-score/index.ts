@@ -37,22 +37,25 @@ Deno.serve(async (req) => {
       const m = Number(marks);
       if (Number.isNaN(m) || m < 0 || m > 10) return jsonRes({ error: "0-10 दरम्यान गुण द्या" }, 400);
 
-      // Look up entry meta
-      const { data: entry } = await supabase
-        .from("competition_entries")
-        .select("id, competition_id, category")
-        .eq("id", entry_id)
-        .maybeSingle();
+      // Single round-trip: fetch entry meta + existing score in parallel
+      const [entryRes, existingRes] = await Promise.all([
+        supabase
+          .from("competition_entries")
+          .select("id, competition_id, category")
+          .eq("id", entry_id)
+          .maybeSingle(),
+        supabase
+          .from("judge_scores")
+          .select("is_submitted")
+          .eq("judge_id", judge_id)
+          .eq("entry_id", entry_id)
+          .maybeSingle(),
+      ]);
+      const entry = entryRes.data;
       if (!entry) return jsonRes({ error: "entry not found" }, 404);
-
-      // Reject if existing score is already submitted
-      const { data: existing } = await supabase
-        .from("judge_scores")
-        .select("id, is_submitted")
-        .eq("judge_id", judge_id)
-        .eq("entry_id", entry_id)
-        .maybeSingle();
-      if (existing?.is_submitted) return jsonRes({ error: "हा score आधीच submit झालाय" }, 409);
+      if (existingRes.data?.is_submitted) {
+        return jsonRes({ error: "हा score आधीच submit झालाय" }, 409);
+      }
 
       const { error } = await supabase.from("judge_scores").upsert(
         {
