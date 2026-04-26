@@ -19,18 +19,26 @@ const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
   { key: "khula", label: "खुला गट" },
 ];
 
+// Stable device fingerprint (no DST drift; persisted across sessions)
 const fingerprint = () => {
+  const KEY = "vmanch_dev_fp";
+  let stored = localStorage.getItem(KEY);
+  if (stored) return stored;
   const data = [
     navigator.userAgent,
     navigator.language,
     String(screen.width) + "x" + String(screen.height),
     String(screen.colorDepth),
-    new Date().getTimezoneOffset(),
+    String(screen.availWidth) + "x" + String(screen.availHeight),
     navigator.hardwareConcurrency || "0",
+    (navigator as any).deviceMemory || "0",
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "",
   ].join("|");
   let h = 0;
   for (let i = 0; i < data.length; i++) { h = ((h << 5) - h) + data.charCodeAt(i); h |= 0; }
-  return "fp_" + Math.abs(h).toString(36);
+  stored = "fp_" + Math.abs(h).toString(36) + "_" + crypto.getRandomValues(new Uint32Array(1))[0].toString(36);
+  localStorage.setItem(KEY, stored);
+  return stored;
 };
 
 const SpardhaDetail = () => {
@@ -50,12 +58,22 @@ const SpardhaDetail = () => {
   useEffect(() => {
     (async () => {
       if (!id) return;
-      const [c, e] = await Promise.all([
-        supabase.from("competitions").select("id, name, status, programs(name)").eq("id", id).maybeSingle(),
-        supabase.from("competition_entries").select("*").eq("competition_id", id).order("entry_code"),
-      ]);
-      setComp(c.data);
-      setEntries(e.data ?? []);
+      // First fetch comp to know if LOCKED → only then request participant_name
+      const { data: c } = await supabase
+        .from("competitions")
+        .select("id, name, status, programs(name)")
+        .eq("id", id)
+        .maybeSingle();
+      setComp(c);
+      const cols = c?.status === "LOCKED"
+        ? "id, entry_code, category, image_url, participant_name"
+        : "id, entry_code, category, image_url";
+      const { data: e } = await supabase
+        .from("competition_entries")
+        .select(cols)
+        .eq("competition_id", id)
+        .order("entry_code");
+      setEntries(e ?? []);
       setLoading(false);
     })();
   }, [id]);
