@@ -48,11 +48,13 @@ const Register = () => {
 
   useEffect(() => {
     (async () => {
+      // Show competitions/events as defined in the Programs admin module.
+      // The participants table stores this id in the `competition_id` column.
       const { data } = await supabase
-        .from("competitions")
-        .select("id, name, status, programs(name)")
+        .from("programs")
+        .select("id, name")
         .eq("is_visible", true)
-        .order("created_at", { ascending: false });
+        .order("name", { ascending: true });
       setComps(data ?? []);
       setLoading(false);
     })();
@@ -158,7 +160,6 @@ const Register = () => {
                         {comps.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
                             {c.name}
-                            {(c.programs as any)?.name ? ` — ${(c.programs as any).name}` : ""}
                           </SelectItem>
                         ))}
                       </SelectContent>
