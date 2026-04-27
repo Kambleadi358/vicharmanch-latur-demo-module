@@ -159,8 +159,31 @@ const CompetitionManagement = () => {
   };
   const deleteJudge = async (j: Judge) => {
     if (!confirm(`${j.judge_code} delete?`)) return;
+    await supabase.from("judge_passwords").delete().eq("judge_id", j.id);
     await supabase.from("judges").delete().eq("id", j.id);
     loadAll();
+  };
+
+  const resetJudgePassword = async (j: Judge) => {
+    if (!confirm(`${j.judge_code} साठी नवीन पासवर्ड तयार करायचा? जुना पासवर्ड बंद होईल.`)) return;
+    setResettingJudgeId(j.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("judge-reset-password", {
+        body: { judge_id: j.id },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || "Reset अयशस्वी");
+        return;
+      }
+      const newPwd = (data as any).plain_password as string;
+      setJudgePasswords((prev) => ({ ...prev, [j.id]: newPwd }));
+      setRevealedJudgeId(j.id);
+      toast.success(`नवीन पासवर्ड: ${newPwd}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "त्रुटी");
+    } finally {
+      setResettingJudgeId(null);
+    }
   };
 
   const copyJudgeMessage = (cred: { code: string; password: string }) => {
