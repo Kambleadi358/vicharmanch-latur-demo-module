@@ -102,8 +102,7 @@ const ParticipantManagement = () => {
           <td>${i + 1}</td>
           <td>${escapeHtml(p.name)}</td>
           <td>${categoryLabels[p.category] ?? p.category}</td>
-          <td>${escapeHtml(p.competitions?.name ?? "—")}</td>
-          <td>${escapeHtml(p.competitions?.programs?.name ?? "—")}</td>
+          <td>${escapeHtml(p.competition_name ?? "—")}</td>
           <td>${new Date(p.created_at).toLocaleString("mr-IN")}</td>
         </tr>`
       )
