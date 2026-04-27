@@ -275,24 +275,15 @@ const CompetitionManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Create competition */}
-      <Card>
+      {/* Info banner: competitions auto-sync from Programs */}
+      <Card className="border-accent/30 bg-accent/5">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5" /> स्पर्धा मूल्यांकन</CardTitle>
-          <CardDescription>कार्यक्रमाला जोडून नवीन स्पर्धा तयार करा</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base"><Trophy className="h-5 w-5 text-accent" /> स्पर्धा मूल्यांकन</CardTitle>
+          <CardDescription>
+            <b>कार्यक्रम</b> मॉड्युलमध्ये कार्यक्रम तयार केला की त्याची स्पर्धा <b>आपोआप</b> इथे दिसेल.
+            खाली <b>सक्रिय स्पर्धा</b> मधून स्पर्धा निवडा आणि नोंदी / न्यायाधीश व्यवस्थापित करा.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid sm:grid-cols-3 gap-3">
-            <Select value={newCompProgram} onValueChange={setNewCompProgram}>
-              <SelectTrigger><SelectValue placeholder="कार्यक्रम निवडा" /></SelectTrigger>
-              <SelectContent>
-                {programs.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Input placeholder="स्पर्धेचे नाव" value={newCompName} onChange={(e) => setNewCompName(e.target.value)} />
-            <Button onClick={createCompetition}><Plus className="h-4 w-4 mr-1" /> जोडा</Button>
-          </div>
-        </CardContent>
       </Card>
 
       {/* Switch competition */}
