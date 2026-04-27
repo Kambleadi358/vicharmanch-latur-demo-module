@@ -23,7 +23,7 @@ Deno.serve(async (req) => {
 
     const { data: session } = await supabase
       .from("judge_sessions")
-      .select("judge_id, expires_at, judges(id, judge_code, display_name, is_active)")
+      .select("judge_id, expires_at, judges(id, judge_code, display_name, is_active, competition_id)")
       .eq("token", token)
       .maybeSingle();
 
@@ -39,13 +39,17 @@ Deno.serve(async (req) => {
     const since = sinceParam ? new Date(sinceParam) : null;
     const serverTime = new Date().toISOString();
 
-    // Always send the lean competitions list (cheap, indexed)
+    // If the judge is assigned to a specific competition, restrict everything
+    // to that one. NULL = global judge (sees all competitions).
+    const assignedCompId: string | null = judge.competition_id ?? null;
+
     let compQuery = supabase
       .from("competitions")
       .select("id, name, status, program_id, updated_at")
       .eq("is_visible", true)
       .order("created_at", { ascending: false });
-    if (competition_id) compQuery = compQuery.eq("id", competition_id);
+    if (assignedCompId) compQuery = compQuery.eq("id", assignedCompId);
+    else if (competition_id) compQuery = compQuery.eq("id", competition_id);
     const { data: comps } = await compQuery;
 
     const compIds = (comps ?? []).map((c) => c.id);
