@@ -297,6 +297,7 @@ export type Database = {
       }
       judges: {
         Row: {
+          competition_id: string | null
           created_at: string
           display_name: string
           id: string
@@ -306,6 +307,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          competition_id?: string | null
           created_at?: string
           display_name: string
           id?: string
@@ -315,6 +317,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          competition_id?: string | null
           created_at?: string
           display_name?: string
           id?: string
