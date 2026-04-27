@@ -282,7 +282,7 @@ const QuizManagement = () => {
 
         {/* Questions */}
         <TabsContent value="questions" className="space-y-3">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center gap-2">
             <h3 className="font-semibold">{questions.length} प्रश्न</h3>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => supabase.rpc("recalculate_quiz_scores").then(() => { toast.success("गुण पुनर्गणना"); loadAll(); })}>
