@@ -47,26 +47,28 @@ const ParticipantManagement = () => {
 
   const load = async () => {
     setLoading(true);
-    // No FK between participants.competition_id and programs/competitions, so we
-    // load each table separately and join in JS. competition_id stores the
-    // selected program id (from the Programs module).
-    const [{ data: parts, error: pErr }, { data: progs }] = await Promise.all([
+    // participants.competition_id stores either a competitions.id or (legacy) a programs.id.
+    // Load both, build a unified id→name map so all rows display correctly.
+    const [{ data: parts, error: pErr }, { data: comps }, { data: progs }] = await Promise.all([
       supabase
         .from("participants")
         .select("id, name, category, competition_id, created_at")
         .order("created_at", { ascending: false }),
+      supabase.from("competitions").select("id, name").order("name"),
       supabase.from("programs").select("id, name").order("name"),
     ]);
     if (pErr) {
       toast({ title: "त्रुटी", description: pErr.message, variant: "destructive" });
     }
-    const progMap = new Map((progs ?? []).map((p: any) => [p.id, p.name]));
+    const nameMap = new Map<string, string>();
+    (progs ?? []).forEach((p: any) => nameMap.set(p.id, p.name));
+    (comps ?? []).forEach((c: any) => nameMap.set(c.id, c.name)); // competitions win
     const merged: Participant[] = (parts ?? []).map((p: any) => ({
       ...p,
-      competition_name: progMap.get(p.competition_id) ?? "—",
+      competition_name: nameMap.get(p.competition_id) ?? "—",
     }));
     setItems(merged);
-    setComps((progs ?? []) as any);
+    setComps((comps ?? []) as any);
     setLoading(false);
   };
 
