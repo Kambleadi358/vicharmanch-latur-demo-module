@@ -59,11 +59,26 @@ const JudgeLogin = () => {
           <form onSubmit={submit} className="space-y-4">
             <div>
               <Label>Judge ID</Label>
-              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="J001" autoComplete="username" />
+              <Input
+                value={code}
+                onChange={(e) => setCode(normalizeCode(e.target.value))}
+                placeholder="J001"
+                autoComplete="username"
+                autoCapitalize="characters"
+                spellCheck={false}
+                inputMode="text"
+                className="font-mono uppercase tracking-wider"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                फॉर्मॅट: <b>J</b> + ३ अंक (उदा. <code>J001</code>). अंक <b>शून्य 0</b> आहे, अक्षर <b>O</b> नव्हे.
+              </p>
             </div>
             <div>
               <Label>पासवर्ड</Label>
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+              <p className="text-xs text-muted-foreground mt-1">
+                पासवर्ड ॲडमिनकडून मिळवा. विसरला असाल तर ॲडमिनला नवीन पासवर्ड generate करायला सांगा.
+              </p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
