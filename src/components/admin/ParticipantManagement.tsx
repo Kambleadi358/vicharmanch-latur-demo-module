@@ -139,8 +139,7 @@ const ParticipantManagement = () => {
         <th>क्र.</th>
         <th>सहभागीचे नाव</th>
         <th>गट</th>
-        <th>स्पर्धा</th>
-        <th>कार्यक्रम</th>
+        <th>स्पर्धा / कार्यक्रम</th>
         <th>नोंदणी वेळ</th>
       </tr>
     </thead>
@@ -229,7 +228,7 @@ const ParticipantManagement = () => {
                     <TableCell>{i + 1}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>{categoryLabels[p.category] ?? p.category}</TableCell>
-                    <TableCell>{p.competitions?.name ?? "—"}</TableCell>
+                    <TableCell>{p.competition_name ?? "—"}</TableCell>
                     <TableCell className="text-xs">{new Date(p.created_at).toLocaleString("mr-IN")}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}>
