@@ -85,21 +85,8 @@ const CompetitionManagement = () => {
   useEffect(() => { loadAll(); }, [loadAll]);
   useEffect(() => { if (selectedComp) loadCompetitionData(selectedComp); }, [selectedComp, loadCompetitionData]);
 
-  const createCompetition = async () => {
-    if (!newCompProgram || !newCompName.trim()) {
-      toast.error("कार्यक्रम व नाव आवश्यक");
-      return;
-    }
-    const { data, error } = await supabase
-      .from("competitions")
-      .insert({ program_id: newCompProgram, name: newCompName.trim(), type: "image" })
-      .select().single();
-    if (error) { toast.error(error.message); return; }
-    toast.success("स्पर्धा तयार झाली");
-    setNewCompName(""); setNewCompProgram("");
-    setSelectedComp(data.id);
-    loadAll();
-  };
+  // Competitions are auto-created from Programs (DB trigger). No manual create needed.
+
 
   const handleCaptured = async (blob: Blob, dataUrl: string) => {
     setPendingCapture({ blob, previewUrl: dataUrl });
