@@ -97,18 +97,47 @@ const ParticipantManagement = () => {
   }, [items, filterComp, filterCat, search]);
 
   const handlePrint = () => {
-    const rows = filtered
-      .map(
-        (p, i) => `
-        <tr>
-          <td>${i + 1}</td>
-          <td>${escapeHtml(p.name)}</td>
-          <td>${categoryLabels[p.category] ?? p.category}</td>
-          <td>${escapeHtml(p.competition_name ?? "—")}</td>
-          <td>${new Date(p.created_at).toLocaleString("mr-IN")}</td>
-        </tr>`
-      )
-      .join("");
+    // Group: competition (alphabetical by name) → category (chota → motha → khula) → participants
+    const CAT_ORDER: Record<string, number> = { chota: 0, motha: 1, khula: 2 };
+    const grouped = new Map<string, Map<string, Participant[]>>();
+    filtered.forEach((p) => {
+      const compKey = p.competition_name ?? "—";
+      if (!grouped.has(compKey)) grouped.set(compKey, new Map());
+      const catMap = grouped.get(compKey)!;
+      if (!catMap.has(p.category)) catMap.set(p.category, []);
+      catMap.get(p.category)!.push(p);
+    });
+
+    const sortedComps = Array.from(grouped.keys()).sort((a, b) => a.localeCompare(b, "mr"));
+    let serial = 0;
+    const sections = sortedComps.map((compName) => {
+      const catMap = grouped.get(compName)!;
+      const sortedCats = Array.from(catMap.keys()).sort(
+        (a, b) => (CAT_ORDER[a] ?? 99) - (CAT_ORDER[b] ?? 99)
+      );
+      const catBlocks = sortedCats
+        .map((cat) => {
+          const list = catMap.get(cat)!;
+          const rows = list
+            .map((p) => {
+              serial += 1;
+              return `<tr>
+                <td>${serial}</td>
+                <td>${escapeHtml(p.name)}</td>
+                <td>${new Date(p.created_at).toLocaleDateString("mr-IN")}</td>
+              </tr>`;
+            })
+            .join("");
+          return `
+            <h3 class="cat">${categoryLabels[cat] ?? cat} <span class="count">(${list.length})</span></h3>
+            <table>
+              <thead><tr><th style="width:60px">क्र.</th><th>सहभागीचे नाव</th><th style="width:120px">दिनांक</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>`;
+        })
+        .join("");
+      return `<section class="comp"><h2>📋 ${escapeHtml(compName)}</h2>${catBlocks}</section>`;
+    }).join("");
 
     const html = `<!DOCTYPE html>
 <html lang="mr">
@@ -119,13 +148,17 @@ const ParticipantManagement = () => {
   body { font-family: 'Tiro Devanagari Marathi', 'Noto Sans Devanagari', serif; padding: 24px; color: #1e293b; }
   h1 { text-align: center; margin: 0 0 4px; color: #1e3a8a; }
   .sub { text-align: center; color: #475569; margin-bottom: 16px; font-size: 13px; }
-  .meta { display:flex; justify-content:space-between; font-size:12px; color:#475569; margin-bottom:12px; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
-  th { background: #1e3a8a; color: #fff; }
+  .meta { display:flex; justify-content:space-between; font-size:12px; color:#475569; margin-bottom:16px; padding-bottom:8px; border-bottom:2px solid #1e3a8a; }
+  .comp { margin-bottom: 24px; page-break-inside: avoid; }
+  .comp h2 { background:#1e3a8a; color:#fff; padding:8px 12px; margin:16px 0 8px; border-radius:4px; font-size:16px; }
+  .cat { color:#1e3a8a; margin:12px 0 6px; font-size:14px; border-left:4px solid #f59e0b; padding-left:8px; }
+  .cat .count { color:#64748b; font-weight:normal; font-size:12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom:8px; }
+  th, td { border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; }
+  th { background: #f1f5f9; color:#1e3a8a; }
   tr:nth-child(even) td { background: #f8fafc; }
-  .footer { text-align:center; margin-top: 24px; font-size: 11px; color: #64748b; }
-  @media print { body { padding: 12px; } }
+  .footer { text-align:center; margin-top: 24px; font-size: 11px; color: #64748b; border-top:1px solid #cbd5e1; padding-top:8px; }
+  @media print { body { padding: 12px; } .comp { page-break-inside: avoid; } }
 </style>
 </head>
 <body>
@@ -133,20 +166,10 @@ const ParticipantManagement = () => {
   <p class="sub">डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</p>
   <div class="meta">
     <span>एकूण नोंदी: <strong>${filtered.length}</strong></span>
+    <span>एकूण स्पर्धा: <strong>${sortedComps.length}</strong></span>
     <span>दिनांक: ${new Date().toLocaleString("mr-IN")}</span>
   </div>
-  <table>
-    <thead>
-      <tr>
-        <th>क्र.</th>
-        <th>सहभागीचे नाव</th>
-        <th>गट</th>
-        <th>स्पर्धा / कार्यक्रम</th>
-        <th>नोंदणी वेळ</th>
-      </tr>
-    </thead>
-    <tbody>${rows || `<tr><td colspan="6" style="text-align:center;color:#64748b;padding:20px;">कोणतीही नोंद नाही</td></tr>`}</tbody>
-  </table>
+  ${sections || `<p style="text-align:center;color:#64748b;padding:40px;">कोणतीही नोंद नाही</p>`}
   <p class="footer">— विचारमंच लातूर —</p>
   <script>window.onload = () => { window.print(); };</script>
 </body>
