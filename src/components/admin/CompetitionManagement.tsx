@@ -423,22 +423,48 @@ const CompetitionManagement = () => {
                     const compName = j.competition_id
                       ? competitions.find((c) => c.id === j.competition_id)?.name ?? "—"
                       : "सर्व स्पर्धा";
+                    const storedPwd = judgePasswords[j.id];
+                    const isRevealed = revealedJudgeId === j.id;
                     return (
-                      <div key={j.id} className="flex items-center justify-between border rounded p-2 bg-card">
-                        <div className="min-w-0">
-                          <div className="font-semibold text-sm">{j.judge_code} — {j.display_name}</div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {j.is_active ? "सक्रिय" : "निष्क्रिय"} · स्पर्धा: <b>{compName}</b>
+                      <div key={j.id} className="border rounded p-2 bg-card space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-sm">{j.judge_code} — {j.display_name}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {j.is_active ? "✓ सक्रिय" : "✗ निष्क्रिय"} · स्पर्धा: <b>{compName}</b>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
+                            <Button size="sm" variant="ghost" title={isRevealed ? "लपवा" : "पासवर्ड दाखवा"} onClick={() => setRevealedJudgeId(isRevealed ? null : j.id)}>
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" title="नवीन पासवर्ड" disabled={resettingJudgeId === j.id} onClick={() => resetJudgePassword(j)}>
+                              {resettingJudgeId === j.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                            </Button>
+                            <Button size="sm" variant="ghost" title={j.is_active ? "निष्क्रिय" : "सक्रिय"} onClick={() => toggleJudge(j)}>
+                              {j.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                            <Button size="sm" variant="ghost" title="काढा" onClick={() => deleteJudge(j)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex gap-1 flex-shrink-0">
-                          <Button size="sm" variant="ghost" onClick={() => toggleJudge(j)}>
-                            {j.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => deleteJudge(j)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {isRevealed && (
+                          <div className="rounded bg-muted/50 border p-2 text-sm flex items-center justify-between gap-2 flex-wrap">
+                            {storedPwd ? (
+                              <>
+                                <span className="font-mono">पासवर्ड: <b>{storedPwd}</b></span>
+                                <Button size="sm" variant="outline" onClick={() => copyJudgeMessage({ code: j.judge_code, password: storedPwd })}>
+                                  <Copy className="h-3 w-3 mr-1" /> Copy
+                                </Button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                जुना पासवर्ड संग्रहित नाही. नवीन पासवर्डसाठी 🔄 बटण दाबा.
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
