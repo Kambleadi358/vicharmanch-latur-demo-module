@@ -62,6 +62,12 @@ Deno.serve(async (req) => {
 
       if (!error) {
         judge = data;
+        // Store the plain password so admin can view it again later (admin-only via RLS)
+        await supabase.from("judge_passwords").upsert({
+          judge_id: data.id,
+          plain_password: password,
+          updated_at: new Date().toISOString(),
+        });
         break;
       }
       lastError = error;
