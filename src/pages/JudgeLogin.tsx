@@ -14,16 +14,25 @@ const JudgeLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Normalize: trim, uppercase, replace common O→0 typo (J001 not Joo1)
+  const normalizeCode = (raw: string) =>
+    raw.trim().toUpperCase().replace(/O/g, "0");
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim() || !password) { toast.error("दोन्ही फील्ड भरा"); return; }
+    const normalized = normalizeCode(code);
+    if (!normalized || !password) { toast.error("दोन्ही फील्ड भरा"); return; }
+    if (!/^J\d{3,}$/.test(normalized)) {
+      toast.error("Judge ID 'J' + अंकांचा असावा (उदा. J001). 'O' च्या ऐवजी '0' टाका.");
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("judge-login", {
-        body: { judge_code: code.trim().toUpperCase(), password },
+        body: { judge_code: normalized, password },
       });
       if (error || (data as any)?.error) {
-        toast.error((data as any)?.error || "लॉगिन अयशस्वी");
+        toast.error((data as any)?.error || "लॉगिन अयशस्वी. ID व पासवर्ड तपासा.");
         return;
       }
       const d = data as any;
