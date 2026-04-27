@@ -1,0 +1,77 @@
+// Admin-only: reset a judge's password and return the new plaintext + store it for re-viewing.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+};
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+
+  try {
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) return jsonRes({ error: "unauthorized" }, 401);
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    const userClient = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+    const { data: userData } = await userClient.auth.getUser();
+    if (!userData?.user) return jsonRes({ error: "unauthorized" }, 401);
+
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userData.user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!roleData) return jsonRes({ error: "forbidden" }, 403);
+
+    const body = await req.json().catch(() => ({}));
+    const judge_id = (body.judge_id ?? "").toString().trim();
+    if (!judge_id) return jsonRes({ error: "judge_id आवश्यक" }, 400);
+
+    const password = generatePassword(8);
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const { error: upErr } = await supabase
+      .from("judges")
+      .update({ password_hash, updated_at: new Date().toISOString() })
+      .eq("id", judge_id);
+    if (upErr) throw upErr;
+
+    await supabase.from("judge_passwords").upsert({
+      judge_id,
+      plain_password: password,
+      updated_at: new Date().toISOString(),
+    });
+
+    return jsonRes({ ok: true, plain_password: password });
+  } catch (e) {
+    return jsonRes({ error: String((e as Error).message ?? e) }, 500);
+  }
+});
+
+function jsonRes(d: unknown, status = 200) {
+  return new Response(JSON.stringify(d), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+function generatePassword(len: number) {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let p = "";
+  const a = new Uint8Array(len);
+  crypto.getRandomValues(a);
+  for (let i = 0; i < len; i++) p += chars[a[i] % chars.length];
+  return p;
+}

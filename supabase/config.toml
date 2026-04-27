@@ -24,5 +24,8 @@ verify_jwt = false
 [functions.judge-score]
 verify_jwt = false
 
+[functions.judge-reset-password]
+verify_jwt = true
+
 [functions.public-vote]
 verify_jwt = false
