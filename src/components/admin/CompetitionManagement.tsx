@@ -399,12 +399,32 @@ const CompetitionManagement = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2"><Users className="h-4 w-4" /> न्यायाधीश व्यवस्थापन</CardTitle>
-                <CardDescription>नवीन न्यायाधीश तयार करा. Judge ID व पासवर्ड auto तयार होईल.</CardDescription>
+                <CardDescription>
+                  प्रत्येक स्पर्धेसाठी वेगळे न्यायाधीश तयार करा. Judge ID व पासवर्ड auto तयार होईल.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex gap-2">
-                  <Input placeholder="न्यायाधीशाचे नाव" value={newJudgeName} onChange={(e) => setNewJudgeName(e.target.value)} />
-                  <Button onClick={createJudge}><Plus className="h-4 w-4 mr-1" /> तयार करा</Button>
+                <div className="grid sm:grid-cols-[1fr_1fr_auto] gap-2">
+                  <Input
+                    placeholder="न्यायाधीशाचे नाव"
+                    value={newJudgeName}
+                    onChange={(e) => setNewJudgeName(e.target.value)}
+                  />
+                  <Select
+                    value={newJudgeCompId || (selectedComp || "__all__")}
+                    onValueChange={setNewJudgeCompId}
+                  >
+                    <SelectTrigger><SelectValue placeholder="स्पर्धा निवडा" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__all__">सर्व स्पर्धा (Global)</SelectItem>
+                      {competitions.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={createJudge}>
+                    <Plus className="h-4 w-4 mr-1" /> तयार करा
+                  </Button>
                 </div>
                 {generatedCred && (
                   <div className="border-2 border-accent bg-accent/10 rounded-lg p-4 space-y-2">
@@ -419,22 +439,29 @@ const CompetitionManagement = () => {
                 )}
 
                 <div className="space-y-2 mt-4">
-                  {judges.map((j) => (
-                    <div key={j.id} className="flex items-center justify-between border rounded p-2 bg-card">
-                      <div>
-                        <div className="font-semibold text-sm">{j.judge_code} — {j.display_name}</div>
-                        <div className="text-xs text-muted-foreground">{j.is_active ? "सक्रिय" : "निष्क्रिय"}</div>
+                  {judges.map((j) => {
+                    const compName = j.competition_id
+                      ? competitions.find((c) => c.id === j.competition_id)?.name ?? "—"
+                      : "सर्व स्पर्धा";
+                    return (
+                      <div key={j.id} className="flex items-center justify-between border rounded p-2 bg-card">
+                        <div className="min-w-0">
+                          <div className="font-semibold text-sm">{j.judge_code} — {j.display_name}</div>
+                          <div className="text-xs text-muted-foreground truncate">
+                            {j.is_active ? "सक्रिय" : "निष्क्रिय"} · स्पर्धा: <b>{compName}</b>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button size="sm" variant="ghost" onClick={() => toggleJudge(j)}>
+                            {j.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          <Button size="sm" variant="ghost" onClick={() => deleteJudge(j)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="ghost" onClick={() => toggleJudge(j)}>
-                          {j.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => deleteJudge(j)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                   {judges.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">अजून न्यायाधीश नाहीत</p>}
                 </div>
               </CardContent>
