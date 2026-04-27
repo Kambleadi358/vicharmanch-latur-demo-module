@@ -48,13 +48,13 @@ const Register = () => {
 
   useEffect(() => {
     (async () => {
-      // Show competitions/events as defined in the Programs admin module.
-      // The participants table stores this id in the `competition_id` column.
+      // Competitions are auto-synced 1:1 with Programs (DB trigger).
+      // Showing competitions ensures judges + scoring all share the same id.
       const { data } = await supabase
-        .from("programs")
-        .select("id, name")
+        .from("competitions")
+        .select("id, name, program_id")
         .eq("is_visible", true)
-        .order("name", { ascending: true });
+        .order("created_at", { ascending: false });
       setComps(data ?? []);
       setLoading(false);
     })();

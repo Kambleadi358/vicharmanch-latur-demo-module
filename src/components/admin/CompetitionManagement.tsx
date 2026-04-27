@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  Camera, Plus, Trophy, Users, Lock, Loader2, Trash2, Copy, Eye, EyeOff, Crown,
+  Camera, Plus, Trophy, Users, Lock, Loader2, Trash2, Copy, Eye, EyeOff, Crown, KeyRound, RefreshCw,
 } from "lucide-react";
 import CameraCapture from "@/components/competition/CameraCapture";
 
@@ -40,10 +40,6 @@ const CompetitionManagement = () => {
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Create competition form
-  const [newCompProgram, setNewCompProgram] = useState("");
-  const [newCompName, setNewCompName] = useState("");
-
   // Add entry
   const [cameraOpen, setCameraOpen] = useState(false);
   const [entryCategory, setEntryCategory] = useState<"chota" | "motha" | "khula">("chota");
@@ -51,21 +47,27 @@ const CompetitionManagement = () => {
   const [pendingCapture, setPendingCapture] = useState<{ blob: Blob; previewUrl: string } | null>(null);
 
   // Judge dialog
-  const [judgeDialog, setJudgeDialog] = useState(false);
   const [newJudgeName, setNewJudgeName] = useState("");
   const [newJudgeCompId, setNewJudgeCompId] = useState<string>("__all__");
   const [generatedCred, setGeneratedCred] = useState<{ code: string; password: string } | null>(null);
+  const [judgePasswords, setJudgePasswords] = useState<Record<string, string>>({});
+  const [revealedJudgeId, setRevealedJudgeId] = useState<string | null>(null);
+  const [resettingJudgeId, setResettingJudgeId] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [p, c, j] = await Promise.all([
+    const [p, c, j, pw] = await Promise.all([
       supabase.from("programs").select("id, name").order("created_at", { ascending: false }),
       supabase.from("competitions").select("*").order("created_at", { ascending: false }),
       supabase.from("judges").select("*").order("created_at", { ascending: false }),
+      supabase.from("judge_passwords").select("judge_id, plain_password"),
     ]);
     setPrograms((p.data ?? []) as any);
     setCompetitions((c.data ?? []) as any);
     setJudges((j.data ?? []) as any);
+    const pwMap: Record<string, string> = {};
+    (pw.data ?? []).forEach((row: any) => { pwMap[row.judge_id] = row.plain_password; });
+    setJudgePasswords(pwMap);
     if (!selectedComp && c.data && c.data.length > 0) setSelectedComp(c.data[0].id);
     setLoading(false);
   }, [selectedComp]);
@@ -83,21 +85,8 @@ const CompetitionManagement = () => {
   useEffect(() => { loadAll(); }, [loadAll]);
   useEffect(() => { if (selectedComp) loadCompetitionData(selectedComp); }, [selectedComp, loadCompetitionData]);
 
-  const createCompetition = async () => {
-    if (!newCompProgram || !newCompName.trim()) {
-      toast.error("कार्यक्रम व नाव आवश्यक");
-      return;
-    }
-    const { data, error } = await supabase
-      .from("competitions")
-      .insert({ program_id: newCompProgram, name: newCompName.trim(), type: "image" })
-      .select().single();
-    if (error) { toast.error(error.message); return; }
-    toast.success("स्पर्धा तयार झाली");
-    setNewCompName(""); setNewCompProgram("");
-    setSelectedComp(data.id);
-    loadAll();
-  };
+  // Competitions are auto-created from Programs (DB trigger). No manual create needed.
+
 
   const handleCaptured = async (blob: Blob, dataUrl: string) => {
     setPendingCapture({ blob, previewUrl: dataUrl });
@@ -170,8 +159,31 @@ const CompetitionManagement = () => {
   };
   const deleteJudge = async (j: Judge) => {
     if (!confirm(`${j.judge_code} delete?`)) return;
+    await supabase.from("judge_passwords").delete().eq("judge_id", j.id);
     await supabase.from("judges").delete().eq("id", j.id);
     loadAll();
+  };
+
+  const resetJudgePassword = async (j: Judge) => {
+    if (!confirm(`${j.judge_code} साठी नवीन पासवर्ड तयार करायचा? जुना पासवर्ड बंद होईल.`)) return;
+    setResettingJudgeId(j.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("judge-reset-password", {
+        body: { judge_id: j.id },
+      });
+      if (error || (data as any)?.error) {
+        toast.error((data as any)?.error || "Reset अयशस्वी");
+        return;
+      }
+      const newPwd = (data as any).plain_password as string;
+      setJudgePasswords((prev) => ({ ...prev, [j.id]: newPwd }));
+      setRevealedJudgeId(j.id);
+      toast.success(`नवीन पासवर्ड: ${newPwd}`);
+    } catch (e: any) {
+      toast.error(e?.message ?? "त्रुटी");
+    } finally {
+      setResettingJudgeId(null);
+    }
   };
 
   const copyJudgeMessage = (cred: { code: string; password: string }) => {
@@ -286,24 +298,15 @@ const CompetitionManagement = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Create competition */}
-      <Card>
+      {/* Info banner: competitions auto-sync from Programs */}
+      <Card className="border-accent/30 bg-accent/5">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Trophy className="h-5 w-5" /> स्पर्धा मूल्यांकन</CardTitle>
-          <CardDescription>कार्यक्रमाला जोडून नवीन स्पर्धा तयार करा</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-base"><Trophy className="h-5 w-5 text-accent" /> स्पर्धा मूल्यांकन</CardTitle>
+          <CardDescription>
+            <b>कार्यक्रम</b> मॉड्युलमध्ये कार्यक्रम तयार केला की त्याची स्पर्धा <b>आपोआप</b> इथे दिसेल.
+            खाली <b>सक्रिय स्पर्धा</b> मधून स्पर्धा निवडा आणि नोंदी / न्यायाधीश व्यवस्थापित करा.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid sm:grid-cols-3 gap-3">
-            <Select value={newCompProgram} onValueChange={setNewCompProgram}>
-              <SelectTrigger><SelectValue placeholder="कार्यक्रम निवडा" /></SelectTrigger>
-              <SelectContent>
-                {programs.map((p) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-              </SelectContent>
-            </Select>
-            <Input placeholder="स्पर्धेचे नाव" value={newCompName} onChange={(e) => setNewCompName(e.target.value)} />
-            <Button onClick={createCompetition}><Plus className="h-4 w-4 mr-1" /> जोडा</Button>
-          </div>
-        </CardContent>
       </Card>
 
       {/* Switch competition */}
@@ -443,22 +446,48 @@ const CompetitionManagement = () => {
                     const compName = j.competition_id
                       ? competitions.find((c) => c.id === j.competition_id)?.name ?? "—"
                       : "सर्व स्पर्धा";
+                    const storedPwd = judgePasswords[j.id];
+                    const isRevealed = revealedJudgeId === j.id;
                     return (
-                      <div key={j.id} className="flex items-center justify-between border rounded p-2 bg-card">
-                        <div className="min-w-0">
-                          <div className="font-semibold text-sm">{j.judge_code} — {j.display_name}</div>
-                          <div className="text-xs text-muted-foreground truncate">
-                            {j.is_active ? "सक्रिय" : "निष्क्रिय"} · स्पर्धा: <b>{compName}</b>
+                      <div key={j.id} className="border rounded p-2 bg-card space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="font-semibold text-sm">{j.judge_code} — {j.display_name}</div>
+                            <div className="text-xs text-muted-foreground truncate">
+                              {j.is_active ? "✓ सक्रिय" : "✗ निष्क्रिय"} · स्पर्धा: <b>{compName}</b>
+                            </div>
+                          </div>
+                          <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
+                            <Button size="sm" variant="ghost" title={isRevealed ? "लपवा" : "पासवर्ड दाखवा"} onClick={() => setRevealedJudgeId(isRevealed ? null : j.id)}>
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="ghost" title="नवीन पासवर्ड" disabled={resettingJudgeId === j.id} onClick={() => resetJudgePassword(j)}>
+                              {resettingJudgeId === j.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                            </Button>
+                            <Button size="sm" variant="ghost" title={j.is_active ? "निष्क्रिय" : "सक्रिय"} onClick={() => toggleJudge(j)}>
+                              {j.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </Button>
+                            <Button size="sm" variant="ghost" title="काढा" onClick={() => deleteJudge(j)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex gap-1 flex-shrink-0">
-                          <Button size="sm" variant="ghost" onClick={() => toggleJudge(j)}>
-                            {j.is_active ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => deleteJudge(j)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        {isRevealed && (
+                          <div className="rounded bg-muted/50 border p-2 text-sm flex items-center justify-between gap-2 flex-wrap">
+                            {storedPwd ? (
+                              <>
+                                <span className="font-mono">पासवर्ड: <b>{storedPwd}</b></span>
+                                <Button size="sm" variant="outline" onClick={() => copyJudgeMessage({ code: j.judge_code, password: storedPwd })}>
+                                  <Copy className="h-3 w-3 mr-1" /> Copy
+                                </Button>
+                              </>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">
+                                जुना पासवर्ड संग्रहित नाही. नवीन पासवर्डसाठी 🔄 बटण दाबा.
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

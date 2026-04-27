@@ -1,4 +1,4 @@
-// Admin-only: create judge with auto-generated code + password
+// Admin-only: reset a judge's password and return the new plaintext + store it for re-viewing.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import bcrypt from "https://esm.sh/bcryptjs@2.4.3";
 
@@ -20,7 +20,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Verify caller is admin
     const userClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -38,45 +37,25 @@ Deno.serve(async (req) => {
     if (!roleData) return jsonRes({ error: "forbidden" }, 403);
 
     const body = await req.json().catch(() => ({}));
-    const display_name = (body.display_name ?? "").toString().trim();
-    const competition_id = body.competition_id ? String(body.competition_id) : null;
-    if (!display_name) return jsonRes({ error: "display_name आवश्यक" }, 400);
+    const judge_id = (body.judge_id ?? "").toString().trim();
+    if (!judge_id) return jsonRes({ error: "judge_id आवश्यक" }, 400);
 
-    // Generate readable password: J + 6 chars
     const password = generatePassword(8);
     const password_hash = await bcrypt.hash(password, 10);
 
-    // Retry up to 5 times in case next_judge_code returns a duplicate (race condition)
-    let judge: any = null;
-    let lastError: any = null;
-    for (let attempt = 0; attempt < 5; attempt++) {
-      const { data: codeData, error: codeErr } = await supabase.rpc("next_judge_code");
-      if (codeErr) throw codeErr;
-      const judge_code = codeData as string;
+    const { error: upErr } = await supabase
+      .from("judges")
+      .update({ password_hash, updated_at: new Date().toISOString() })
+      .eq("id", judge_id);
+    if (upErr) throw upErr;
 
-      const { data, error } = await supabase
-        .from("judges")
-        .insert({ judge_code, display_name, password_hash, competition_id })
-        .select("id, judge_code, display_name, is_active, competition_id, created_at")
-        .single();
+    await supabase.from("judge_passwords").upsert({
+      judge_id,
+      plain_password: password,
+      updated_at: new Date().toISOString(),
+    });
 
-      if (!error) {
-        judge = data;
-        // Store the plain password so admin can view it again later (admin-only via RLS)
-        await supabase.from("judge_passwords").upsert({
-          judge_id: data.id,
-          plain_password: password,
-          updated_at: new Date().toISOString(),
-        });
-        break;
-      }
-      lastError = error;
-      // 23505 = unique_violation; retry. Otherwise bail out.
-      if ((error as any).code !== "23505") throw error;
-    }
-    if (!judge) throw lastError ?? new Error("judge_code निर्माण करता आले नाही");
-
-    return jsonRes({ judge, plain_password: password });
+    return jsonRes({ ok: true, plain_password: password });
   } catch (e) {
     return jsonRes({ error: String((e as Error).message ?? e) }, 500);
   }

@@ -14,16 +14,25 @@ const JudgeLogin = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Normalize: trim, uppercase, replace common O→0 typo (J001 not Joo1)
+  const normalizeCode = (raw: string) =>
+    raw.trim().toUpperCase().replace(/O/g, "0");
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code.trim() || !password) { toast.error("दोन्ही फील्ड भरा"); return; }
+    const normalized = normalizeCode(code);
+    if (!normalized || !password) { toast.error("दोन्ही फील्ड भरा"); return; }
+    if (!/^J\d{3,}$/.test(normalized)) {
+      toast.error("Judge ID 'J' + अंकांचा असावा (उदा. J001). 'O' च्या ऐवजी '0' टाका.");
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("judge-login", {
-        body: { judge_code: code.trim().toUpperCase(), password },
+        body: { judge_code: normalized, password },
       });
       if (error || (data as any)?.error) {
-        toast.error((data as any)?.error || "लॉगिन अयशस्वी");
+        toast.error((data as any)?.error || "लॉगिन अयशस्वी. ID व पासवर्ड तपासा.");
         return;
       }
       const d = data as any;
@@ -50,11 +59,26 @@ const JudgeLogin = () => {
           <form onSubmit={submit} className="space-y-4">
             <div>
               <Label>Judge ID</Label>
-              <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="J001" autoComplete="username" />
+              <Input
+                value={code}
+                onChange={(e) => setCode(normalizeCode(e.target.value))}
+                placeholder="J001"
+                autoComplete="username"
+                autoCapitalize="characters"
+                spellCheck={false}
+                inputMode="text"
+                className="font-mono uppercase tracking-wider"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                फॉर्मॅट: <b>J</b> + ३ अंक (उदा. <code>J001</code>). अंक <b>शून्य 0</b> आहे, अक्षर <b>O</b> नव्हे.
+              </p>
             </div>
             <div>
               <Label>पासवर्ड</Label>
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" />
+              <p className="text-xs text-muted-foreground mt-1">
+                पासवर्ड ॲडमिनकडून मिळवा. विसरला असाल तर ॲडमिनला नवीन पासवर्ड generate करायला सांगा.
+              </p>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

@@ -205,6 +205,27 @@ export type Database = {
         }
         Relationships: []
       }
+      judge_passwords: {
+        Row: {
+          created_at: string
+          judge_id: string
+          plain_password: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          judge_id: string
+          plain_password: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          judge_id?: string
+          plain_password?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       judge_scores: {
         Row: {
           category: string
