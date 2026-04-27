@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     const display_name = (body.display_name ?? "").toString().trim();
+    const competition_id = body.competition_id ? String(body.competition_id) : null;
     if (!display_name) return jsonRes({ error: "display_name आवश्यक" }, 400);
 
     // Generate readable password: J + 6 chars
@@ -55,8 +56,8 @@ Deno.serve(async (req) => {
 
       const { data, error } = await supabase
         .from("judges")
-        .insert({ judge_code, display_name, password_hash })
-        .select("id, judge_code, display_name, is_active, created_at")
+        .insert({ judge_code, display_name, password_hash, competition_id })
+        .select("id, judge_code, display_name, is_active, competition_id, created_at")
         .single();
 
       if (!error) {

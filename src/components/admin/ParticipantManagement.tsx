@@ -33,29 +33,40 @@ interface Participant {
   category: string;
   competition_id: string;
   created_at: string;
-  competitions?: { name: string; programs?: { name: string } | null } | null;
+  competition_name?: string;
 }
 
 const ParticipantManagement = () => {
   const { toast } = useToast();
   const [items, setItems] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
-  const [comps, setComps] = useState<any[]>([]);
+  const [comps, setComps] = useState<{ id: string; name: string }[]>([]);
   const [filterComp, setFilterComp] = useState<string>("all");
   const [filterCat, setFilterCat] = useState<string>("all");
   const [search, setSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
-    const [{ data: parts }, { data: cs }] = await Promise.all([
+    // No FK between participants.competition_id and programs/competitions, so we
+    // load each table separately and join in JS. competition_id stores the
+    // selected program id (from the Programs module).
+    const [{ data: parts, error: pErr }, { data: progs }] = await Promise.all([
       supabase
         .from("participants")
-        .select("id, name, category, competition_id, created_at, competitions(name, programs(name))")
+        .select("id, name, category, competition_id, created_at")
         .order("created_at", { ascending: false }),
-      supabase.from("competitions").select("id, name").order("name"),
+      supabase.from("programs").select("id, name").order("name"),
     ]);
-    setItems((parts ?? []) as any);
-    setComps(cs ?? []);
+    if (pErr) {
+      toast({ title: "त्रुटी", description: pErr.message, variant: "destructive" });
+    }
+    const progMap = new Map((progs ?? []).map((p: any) => [p.id, p.name]));
+    const merged: Participant[] = (parts ?? []).map((p: any) => ({
+      ...p,
+      competition_name: progMap.get(p.competition_id) ?? "—",
+    }));
+    setItems(merged);
+    setComps((progs ?? []) as any);
     setLoading(false);
   };
 
@@ -91,8 +102,7 @@ const ParticipantManagement = () => {
           <td>${i + 1}</td>
           <td>${escapeHtml(p.name)}</td>
           <td>${categoryLabels[p.category] ?? p.category}</td>
-          <td>${escapeHtml(p.competitions?.name ?? "—")}</td>
-          <td>${escapeHtml(p.competitions?.programs?.name ?? "—")}</td>
+          <td>${escapeHtml(p.competition_name ?? "—")}</td>
           <td>${new Date(p.created_at).toLocaleString("mr-IN")}</td>
         </tr>`
       )
@@ -129,8 +139,7 @@ const ParticipantManagement = () => {
         <th>क्र.</th>
         <th>सहभागीचे नाव</th>
         <th>गट</th>
-        <th>स्पर्धा</th>
-        <th>कार्यक्रम</th>
+        <th>स्पर्धा / कार्यक्रम</th>
         <th>नोंदणी वेळ</th>
       </tr>
     </thead>
@@ -219,7 +228,7 @@ const ParticipantManagement = () => {
                     <TableCell>{i + 1}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>{categoryLabels[p.category] ?? p.category}</TableCell>
-                    <TableCell>{p.competitions?.name ?? "—"}</TableCell>
+                    <TableCell>{p.competition_name ?? "—"}</TableCell>
                     <TableCell className="text-xs">{new Date(p.created_at).toLocaleString("mr-IN")}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}>

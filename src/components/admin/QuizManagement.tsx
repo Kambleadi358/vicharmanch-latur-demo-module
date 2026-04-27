@@ -272,17 +272,17 @@ const QuizManagement = () => {
       </div>
 
       <Tabs defaultValue="questions">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5">
-          <TabsTrigger value="questions">प्रश्न</TabsTrigger>
-          <TabsTrigger value="ranks">क्रमवारी</TabsTrigger>
-          <TabsTrigger value="responses">प्रतिसाद</TabsTrigger>
-          <TabsTrigger value="analytics">विश्लेषण</TabsTrigger>
-          <TabsTrigger value="cheating">जोखीम</TabsTrigger>
+        <TabsList className="w-full flex flex-wrap gap-1 h-auto justify-start">
+          <TabsTrigger value="questions" className="flex-1 min-w-[80px]">प्रश्न</TabsTrigger>
+          <TabsTrigger value="ranks" className="flex-1 min-w-[80px]">क्रमवारी</TabsTrigger>
+          <TabsTrigger value="responses" className="flex-1 min-w-[80px]">प्रतिसाद</TabsTrigger>
+          <TabsTrigger value="analytics" className="flex-1 min-w-[80px]">विश्लेषण</TabsTrigger>
+          <TabsTrigger value="cheating" className="flex-1 min-w-[80px]">जोखीम</TabsTrigger>
         </TabsList>
 
         {/* Questions */}
         <TabsContent value="questions" className="space-y-3">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center gap-2">
             <h3 className="font-semibold">{questions.length} प्रश्न</h3>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => supabase.rpc("recalculate_quiz_scores").then(() => { toast.success("गुण पुनर्गणना"); loadAll(); })}>
