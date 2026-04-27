@@ -22,7 +22,7 @@ type Entry = {
   id: string; entry_code: string; category: "chota" | "motha" | "khula";
   participant_name: string; image_url: string; image_path: string; created_at: string;
 };
-type Judge = { id: string; judge_code: string; display_name: string; is_active: boolean };
+type Judge = { id: string; judge_code: string; display_name: string; is_active: boolean; competition_id: string | null };
 type Score = { id: string; entry_id: string; judge_id: string; marks: number; is_submitted: boolean; category: string };
 
 const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
@@ -53,6 +53,7 @@ const CompetitionManagement = () => {
   // Judge dialog
   const [judgeDialog, setJudgeDialog] = useState(false);
   const [newJudgeName, setNewJudgeName] = useState("");
+  const [newJudgeCompId, setNewJudgeCompId] = useState<string>("__all__");
   const [generatedCred, setGeneratedCred] = useState<{ code: string; password: string } | null>(null);
 
   const loadAll = useCallback(async () => {
@@ -148,8 +149,10 @@ const CompetitionManagement = () => {
 
   const createJudge = async () => {
     if (!newJudgeName.trim()) { toast.error("नाव आवश्यक"); return; }
+    const competition_id =
+      newJudgeCompId && newJudgeCompId !== "__all__" ? newJudgeCompId : null;
     const { data, error } = await supabase.functions.invoke("judge-create", {
-      body: { display_name: newJudgeName.trim() },
+      body: { display_name: newJudgeName.trim(), competition_id },
     });
     if (error || (data as any)?.error) {
       toast.error((data as any)?.error || "Judge create अयशस्वी");
@@ -157,6 +160,7 @@ const CompetitionManagement = () => {
     }
     setGeneratedCred({ code: (data as any).judge.judge_code, password: (data as any).plain_password });
     setNewJudgeName("");
+    setNewJudgeCompId(selectedComp || "__all__");
     loadAll();
   };
 
