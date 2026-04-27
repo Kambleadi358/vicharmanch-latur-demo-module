@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import {
-  Camera, Plus, Trophy, Users, Lock, Loader2, Trash2, Copy, Eye, EyeOff, Crown,
+  Camera, Plus, Trophy, Users, Lock, Loader2, Trash2, Copy, Eye, EyeOff, Crown, KeyRound, RefreshCw,
 } from "lucide-react";
 import CameraCapture from "@/components/competition/CameraCapture";
 
@@ -40,10 +40,6 @@ const CompetitionManagement = () => {
   const [scores, setScores] = useState<Score[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Create competition form
-  const [newCompProgram, setNewCompProgram] = useState("");
-  const [newCompName, setNewCompName] = useState("");
-
   // Add entry
   const [cameraOpen, setCameraOpen] = useState(false);
   const [entryCategory, setEntryCategory] = useState<"chota" | "motha" | "khula">("chota");
@@ -51,21 +47,27 @@ const CompetitionManagement = () => {
   const [pendingCapture, setPendingCapture] = useState<{ blob: Blob; previewUrl: string } | null>(null);
 
   // Judge dialog
-  const [judgeDialog, setJudgeDialog] = useState(false);
   const [newJudgeName, setNewJudgeName] = useState("");
   const [newJudgeCompId, setNewJudgeCompId] = useState<string>("__all__");
   const [generatedCred, setGeneratedCred] = useState<{ code: string; password: string } | null>(null);
+  const [judgePasswords, setJudgePasswords] = useState<Record<string, string>>({});
+  const [revealedJudgeId, setRevealedJudgeId] = useState<string | null>(null);
+  const [resettingJudgeId, setResettingJudgeId] = useState<string | null>(null);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [p, c, j] = await Promise.all([
+    const [p, c, j, pw] = await Promise.all([
       supabase.from("programs").select("id, name").order("created_at", { ascending: false }),
       supabase.from("competitions").select("*").order("created_at", { ascending: false }),
       supabase.from("judges").select("*").order("created_at", { ascending: false }),
+      supabase.from("judge_passwords").select("judge_id, plain_password"),
     ]);
     setPrograms((p.data ?? []) as any);
     setCompetitions((c.data ?? []) as any);
     setJudges((j.data ?? []) as any);
+    const pwMap: Record<string, string> = {};
+    (pw.data ?? []).forEach((row: any) => { pwMap[row.judge_id] = row.plain_password; });
+    setJudgePasswords(pwMap);
     if (!selectedComp && c.data && c.data.length > 0) setSelectedComp(c.data[0].id);
     setLoading(false);
   }, [selectedComp]);
