@@ -26,7 +26,7 @@ type Judge = { id: string; judge_code: string; display_name: string; is_active: 
 type Score = { id: string; entry_id: string; judge_id: string; marks: number; is_submitted: boolean; category: string };
 
 const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
-  { key: "chota", label: "चोटा गट" },
+  { key: "chota", label: "छोटा गट" },
   { key: "motha", label: "मोठा गट" },
   { key: "khula", label: "खुला गट" },
 ];
