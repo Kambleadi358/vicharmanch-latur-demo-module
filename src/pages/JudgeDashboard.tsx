@@ -13,7 +13,7 @@ type Entry = { id: string; competition_id: string; entry_code: string; category:
 type Score = { id: string; entry_id: string; competition_id: string; category: string; marks: number; is_submitted: boolean; updated_at?: string };
 
 const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
-  { key: "chota", label: "चोटा गट" },
+  { key: "chota", label: "छोटा गट" },
   { key: "motha", label: "मोठा गट" },
   { key: "khula", label: "खुला गट" },
 ];
