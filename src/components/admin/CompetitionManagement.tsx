@@ -570,6 +570,11 @@ const CompetitionManagement = () => {
 
           {/* RESULTS TAB */}
           <TabsContent value="results" className="space-y-4">
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" onClick={printAllResults}>
+                सर्व निकाल छापा (HTML)
+              </Button>
+            </div>
             {CATEGORIES.map(({ key, label }) => {
               const list = rankings[key];
               return (
