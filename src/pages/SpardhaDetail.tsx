@@ -14,7 +14,7 @@ import { Loader2, Download, Trophy, Vote, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
-  { key: "chota", label: "चोटा गट" },
+  { key: "chota", label: "छोटा गट" },
   { key: "motha", label: "मोठा गट" },
   { key: "khula", label: "खुला गट" },
 ];
