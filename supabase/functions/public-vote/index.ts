@@ -58,9 +58,9 @@ Deno.serve(async (req) => {
     });
 
     if (error) {
-      // 23505 = unique_violation
+      // 23505 = unique_violation → user already voted in this program
       if ((error as any).code === "23505" || /duplicate|unique/i.test(error.message)) {
-        return jsonRes({ error: "तुम्ही या category मध्ये आधीच मतदान केले आहे", duplicate: true }, 409);
+        return jsonRes({ error: "तुम्ही या स्पर्धेत आधीच मतदान केले आहे", duplicate: true }, 409);
       }
       throw error;
     }
