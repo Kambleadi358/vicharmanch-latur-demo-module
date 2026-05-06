@@ -26,7 +26,7 @@ type Judge = { id: string; judge_code: string; display_name: string; is_active: 
 type Score = { id: string; entry_id: string; judge_id: string; marks: number; is_submitted: boolean; category: string };
 
 const CATEGORIES: { key: "chota" | "motha" | "khula"; label: string }[] = [
-  { key: "chota", label: "चोटा गट" },
+  { key: "chota", label: "छोटा गट" },
   { key: "motha", label: "मोठा गट" },
   { key: "khula", label: "खुला गट" },
 ];
@@ -245,6 +245,77 @@ const CompetitionManagement = () => {
     if (error) { toast.error(error.message); return; }
     toast.success("विजेते जाहीर झाले");
   };
+
+  const printAllResults = async () => {
+    // Fetch full datasets for ALL competitions, ordered by program name → category
+    const [{ data: comps }, { data: allEntries }, { data: allScores }] = await Promise.all([
+      supabase.from("competitions").select("id, name, program_id, status").order("name"),
+      supabase.from("competition_entries").select("id, competition_id, entry_code, category, participant_name, image_url"),
+      supabase.from("judge_scores").select("entry_id, marks, is_submitted").eq("is_submitted", true),
+    ]);
+    if (!comps || comps.length === 0) { toast.error("कोणतीही स्पर्धा नाही"); return; }
+    const stats = new Map<string, { sum: number; count: number }>();
+    (allScores ?? []).forEach((s: any) => {
+      const v = stats.get(s.entry_id) ?? { sum: 0, count: 0 };
+      v.sum += Number(s.marks); v.count += 1; stats.set(s.entry_id, v);
+    });
+    const CAT_ORDER = ["chota", "motha", "khula"] as const;
+    const CAT_LABEL: Record<string, string> = { chota: "छोटा गट", motha: "मोठा गट", khula: "खुला गट" };
+
+    const sortedComps = [...comps].sort((a: any, b: any) => a.name.localeCompare(b.name, "mr"));
+
+    let html = "";
+    sortedComps.forEach((comp: any) => {
+      const compEntries = (allEntries ?? []).filter((e: any) => e.competition_id === comp.id);
+      if (compEntries.length === 0) return;
+      html += `<section class="comp"><h2>${escapeHtml(comp.name)}</h2>`;
+      CAT_ORDER.forEach((cat) => {
+        const list = compEntries
+          .filter((e: any) => e.category === cat)
+          .map((e: any) => {
+            const s = stats.get(e.id);
+            return { ...e, avg: s ? s.sum / s.count : 0, jcount: s?.count ?? 0 };
+          })
+          .filter((e: any) => e.jcount > 0)
+          .sort((a: any, b: any) => b.avg - a.avg)
+          .slice(0, 3);
+        if (list.length === 0) return;
+        html += `<h3>${CAT_LABEL[cat]}</h3><table><thead><tr><th>क्रमांक</th><th>नोंद</th><th>नाव</th><th>सरासरी गुण</th><th>न्यायाधीश</th></tr></thead><tbody>`;
+        list.forEach((e: any, i: number) => {
+          html += `<tr><td>${i + 1}</td><td>${escapeHtml(e.entry_code)}</td><td>${escapeHtml(e.participant_name)}</td><td>${e.avg.toFixed(2)}</td><td>${e.jcount}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+      });
+      html += `</section>`;
+    });
+
+    const w = window.open("", "_blank", "width=900,height=700");
+    if (!w) { toast.error("Pop-up blocked"); return; }
+    w.document.write(`<!doctype html><html lang="mr"><head><meta charset="utf-8"><title>स्पर्धा निकाल</title>
+      <style>
+        @page { size: A4; margin: 18mm; }
+        body { font-family: 'Tiro Devanagari Marathi', serif; color: #111; }
+        h1 { text-align:center; margin-bottom: 4px; }
+        .sub { text-align:center; color:#555; margin-bottom: 20px; font-size: 13px; }
+        section.comp { page-break-inside: avoid; margin-bottom: 24px; border-top: 2px solid #1b3a6b; padding-top: 8px; }
+        h2 { color:#1b3a6b; margin: 6px 0; }
+        h3 { margin: 10px 0 4px; color:#444; font-size: 15px; }
+        table { width:100%; border-collapse: collapse; margin-bottom: 8px; font-size: 13px; }
+        th, td { border: 1px solid #999; padding: 5px 8px; text-align:left; }
+        th { background: #f1f4f9; }
+        @media print { button { display: none; } }
+      </style></head><body>
+      <h1>भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</h1>
+      <div class="sub">स्पर्धा निकाल अहवाल — ${new Date().toLocaleDateString("mr-IN")}</div>
+      <button onclick="window.print()" style="position:fixed;top:10px;right:10px;padding:8px 14px;">छापा</button>
+      ${html || "<p>कोणतेही submitted गुण नाहीत.</p>"}
+      </body></html>`);
+    w.document.close();
+  };
+
+  function escapeHtml(s: string) {
+    return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+  }
 
   const finalLock = async () => {
     if (!currentComp) return;
@@ -499,6 +570,11 @@ const CompetitionManagement = () => {
 
           {/* RESULTS TAB */}
           <TabsContent value="results" className="space-y-4">
+            <div className="flex justify-end">
+              <Button size="sm" variant="outline" onClick={printAllResults}>
+                सर्व निकाल छापा (HTML)
+              </Button>
+            </div>
             {CATEGORIES.map(({ key, label }) => {
               const list = rankings[key];
               return (
