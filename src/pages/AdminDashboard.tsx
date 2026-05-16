@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import QuizManagement from "@/components/admin/QuizManagement";
 import NoticeManagement from "@/components/admin/NoticeManagement";
 import DonationManagement from "@/components/admin/DonationManagement";
@@ -15,14 +19,14 @@ import LetterpadManagement from "@/components/admin/LetterpadManagement";
 import PrizeDistribution from "@/components/admin/PrizeDistribution";
 import CompetitionManagement from "@/components/admin/CompetitionManagement";
 import ParticipantManagement from "@/components/admin/ParticipantManagement";
+import DashboardHome from "@/components/admin/dashboard/DashboardHome";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
-  FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard,
+  FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 type SectionKey =
-  | "programs" | "competition" | "participants" | "quiz"
+  | "dashboard" | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "donations" | "prizes"
   | "letterpad" | "settings";
 
@@ -34,27 +38,25 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
+  { key: "dashboard",    label: "डॅशबोर्ड",       icon: LayoutDashboard, group: "मुख्यपृष्ठ" },
   { key: "programs",     label: "कार्यक्रम",     icon: CalendarDays, group: "कार्यक्रम व स्पर्धा" },
   { key: "competition",  label: "स्पर्धा मूल्यांकन", icon: Trophy,    group: "कार्यक्रम व स्पर्धा" },
   { key: "participants", label: "सहभागी नोंदणी",  icon: Users,        group: "कार्यक्रम व स्पर्धा" },
   { key: "quiz",         label: "प्रश्नमंजुषा",   icon: BookOpen,     group: "कार्यक्रम व स्पर्धा" },
-
   { key: "certificates", label: "प्रमाणपत्र",     icon: Award,        group: "गौरव व सूचना" },
   { key: "prizes",       label: "बक्षीस",         icon: Gift,         group: "गौरव व सूचना" },
   { key: "notices",      label: "सूचना",          icon: Bell,         group: "गौरव व सूचना" },
-
   { key: "donations",    label: "देणगी व खाते",   icon: IndianRupee,  group: "वित्त व दस्तऐवज" },
   { key: "letterpad",    label: "दस्तऐवज",        icon: FileText,     group: "वित्त व दस्तऐवज" },
-
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
 
-const groupOrder = ["कार्यक्रम व स्पर्धा", "गौरव व सूचना", "वित्त व दस्तऐवज", "इतर"];
+const groupOrder = ["मुख्यपृष्ठ", "कार्यक्रम व स्पर्धा", "गौरव व सूचना", "वित्त व दस्तऐवज", "इतर"];
 
 const Sidebar = ({
   active, onSelect,
 }: { active: SectionKey; onSelect: (k: SectionKey) => void }) => (
-  <nav className="space-y-6 p-4">
+  <nav className="space-y-5 p-4">
     {groupOrder.map((g) => (
       <div key={g}>
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 px-2 font-semibold">
@@ -68,9 +70,9 @@ const Sidebar = ({
               <button
                 key={n.key}
                 onClick={() => onSelect(n.key)}
-                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
+                    ? "bg-gradient-to-r from-primary to-[hsl(217,80%,35%)] text-primary-foreground shadow-md"
                     : "text-foreground/80 hover:bg-muted hover:text-foreground"
                 }`}
               >
@@ -85,49 +87,13 @@ const Sidebar = ({
   </nav>
 );
 
-const renderSection = (k: SectionKey) => {
-  switch (k) {
-    case "programs":     return <ProgramManagement />;
-    case "competition":  return <CompetitionManagement />;
-    case "participants": return <ParticipantManagement />;
-    case "quiz":         return <QuizManagement />;
-    case "certificates": return <CertificateManagement />;
-    case "notices":      return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> सूचना व्यवस्थापन</CardTitle>
-          <CardDescription>मुख्यपृष्ठावरील सूचना व्यवस्थापित करा</CardDescription>
-        </CardHeader>
-        <CardContent><NoticeManagement /></CardContent>
-      </Card>
-    );
-    case "donations":    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><IndianRupee className="h-5 w-5" /> देणगी व खाते व्यवस्थापन</CardTitle>
-          <CardDescription>घरमालकांकडून देणगी जमा करा आणि खर्च व्यवस्थापित करा</CardDescription>
-        </CardHeader>
-        <CardContent><DonationManagement /></CardContent>
-      </Card>
-    );
-    case "prizes":       return <PrizeDistribution />;
-    case "letterpad":    return <LetterpadManagement />;
-    case "settings":     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> सेटिंग्स</CardTitle>
-          <CardDescription>खाते सेटिंग्स आणि प्रशासकीय क्रिया</CardDescription>
-        </CardHeader>
-        <CardContent><AdminSettings /></CardContent>
-      </Card>
-    );
-  }
-};
+// Mobile bottom navigation - 5 most-used
+const BOTTOM_NAV: SectionKey[] = ["dashboard", "donations", "competition", "participants", "notices"];
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading, signOut } = useAuth();
   const navigate = useNavigate();
-  const [active, setActive] = useState<SectionKey>("programs");
+  const [active, setActive] = useState<SectionKey>("dashboard");
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
@@ -137,6 +103,46 @@ const AdminDashboard = () => {
   const handleSignOut = async () => {
     await signOut();
     navigate("/admin-login");
+  };
+
+  const renderSection = (k: SectionKey) => {
+    switch (k) {
+      case "dashboard":    return <DashboardHome onNavigate={setActive} />;
+      case "programs":     return <ProgramManagement />;
+      case "competition":  return <CompetitionManagement />;
+      case "participants": return <ParticipantManagement />;
+      case "quiz":         return <QuizManagement />;
+      case "certificates": return <CertificateManagement />;
+      case "notices":      return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> सूचना व्यवस्थापन</CardTitle>
+            <CardDescription>मुख्यपृष्ठावरील सूचना व्यवस्थापित करा</CardDescription>
+          </CardHeader>
+          <CardContent><NoticeManagement /></CardContent>
+        </Card>
+      );
+      case "donations":    return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><IndianRupee className="h-5 w-5" /> देणगी व खाते व्यवस्थापन</CardTitle>
+            <CardDescription>घरमालकांकडून देणगी जमा करा आणि खर्च व्यवस्थापित करा</CardDescription>
+          </CardHeader>
+          <CardContent><DonationManagement /></CardContent>
+        </Card>
+      );
+      case "prizes":       return <PrizeDistribution />;
+      case "letterpad":    return <LetterpadManagement />;
+      case "settings":     return (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> सेटिंग्स</CardTitle>
+            <CardDescription>खाते सेटिंग्स आणि प्रशासकीय क्रिया</CardDescription>
+          </CardHeader>
+          <CardContent><AdminSettings /></CardContent>
+        </Card>
+      );
+    }
   };
 
   if (isLoading) {
@@ -152,24 +158,19 @@ const AdminDashboard = () => {
   const ActiveIcon = activeMeta.icon;
 
   return (
-    <div className="min-h-screen bg-muted/30 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-muted/40 via-background to-muted/30 flex flex-col">
       {/* Top header */}
-      <header className="bg-primary text-primary-foreground shadow sticky top-0 z-40">
+      <header className="bg-gradient-to-r from-primary via-[hsl(217,80%,30%)] to-[hsl(220,15%,15%)] text-primary-foreground shadow-lg sticky top-0 z-40 backdrop-blur">
         <div className="px-3 sm:px-6 py-3 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            {/* Mobile menu */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
               <SheetTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="lg:hidden text-primary-foreground hover:bg-primary-foreground/10"
-                >
+                <Button variant="ghost" size="icon" className="lg:hidden text-primary-foreground hover:bg-primary-foreground/10">
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-0">
-                <div className="p-4 border-b bg-primary text-primary-foreground">
+                <div className="p-4 border-b bg-gradient-to-r from-primary to-[hsl(217,80%,30%)] text-primary-foreground">
                   <div className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
                     <div>
@@ -178,17 +179,14 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
-                <Sidebar
-                  active={active}
-                  onSelect={(k) => { setActive(k); setMobileOpen(false); }}
-                />
+                <Sidebar active={active} onSelect={(k) => { setActive(k); setMobileOpen(false); }} />
               </SheetContent>
             </Sheet>
 
             <Shield className="h-6 w-6 flex-shrink-0" />
             <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold truncate">Admin Dashboard</h1>
-              <p className="text-[11px] sm:text-xs opacity-80 truncate">प्रशासक पॅनेल — विचारमंच लातूर</p>
+              <h1 className="text-base sm:text-lg font-bold truncate">विचारमंच — Admin</h1>
+              <p className="text-[11px] sm:text-xs opacity-80 truncate">पारदर्शक प्रशासन पॅनेल</p>
             </div>
           </div>
           <div className="flex items-center gap-1">
@@ -198,12 +196,7 @@ const AdminDashboard = () => {
                 <span className="hidden sm:inline ml-2">मुख्यपृष्ठ</span>
               </Button>
             </Link>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSignOut}
-              className="text-primary-foreground hover:bg-primary-foreground/10"
-            >
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-primary-foreground hover:bg-primary-foreground/10">
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline ml-2">लॉगआउट</span>
             </Button>
@@ -213,33 +206,94 @@ const AdminDashboard = () => {
 
       <div className="flex-1 flex">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-r bg-card sticky top-[60px] self-start max-h-[calc(100vh-60px)] overflow-y-auto">
+        <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-r bg-card/80 backdrop-blur sticky top-[60px] self-start max-h-[calc(100vh-60px)] overflow-y-auto">
           <Sidebar active={active} onSelect={setActive} />
         </aside>
 
         {/* Content */}
         <main className="flex-1 min-w-0">
-          <div className="px-3 sm:px-6 py-4 sm:py-6 max-w-7xl mx-auto w-full">
-            {/* Section breadcrumb / title */}
-            <div className="mb-4 sm:mb-6 flex items-center gap-2 text-sm text-muted-foreground">
-              <LayoutDashboard className="h-4 w-4" />
-              <span>{activeMeta.group}</span>
-              <span>/</span>
-              <span className="text-foreground font-semibold flex items-center gap-1.5">
-                <ActiveIcon className="h-4 w-4" /> {activeMeta.label}
-              </span>
-            </div>
+          <div className="px-3 sm:px-6 py-4 sm:py-6 max-w-7xl mx-auto w-full pb-24 lg:pb-6">
+            {/* Breadcrumb (hide on dashboard home) */}
+            {active !== "dashboard" && (
+              <div className="mb-4 sm:mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+                <button onClick={() => setActive("dashboard")} className="hover:text-foreground inline-flex items-center gap-1">
+                  <LayoutDashboard className="h-4 w-4" /> डॅशबोर्ड
+                </button>
+                <span>/</span>
+                <span>{activeMeta.group}</span>
+                <span>/</span>
+                <span className="text-foreground font-semibold flex items-center gap-1.5">
+                  <ActiveIcon className="h-4 w-4" /> {activeMeta.label}
+                </span>
+              </div>
+            )}
 
             <motion.div
               key={active}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.2 }}
             >
               {renderSection(active)}
             </motion.div>
           </div>
         </main>
+      </div>
+
+      {/* Mobile bottom navigation */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-card/95 backdrop-blur-lg border-t shadow-2xl">
+        <div className="grid grid-cols-5 max-w-xl mx-auto">
+          {BOTTOM_NAV.map((k) => {
+            const item = NAV.find((n) => n.key === k)!;
+            const Icon = item.icon;
+            const isActive = active === k;
+            return (
+              <button
+                key={k}
+                onClick={() => setActive(k)}
+                className={`flex flex-col items-center justify-center gap-0.5 py-2.5 transition-colors relative ${
+                  isActive ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                {isActive && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-10 h-0.5 bg-primary rounded-b-full" />
+                )}
+                <Icon className="h-5 w-5" />
+                <span className="text-[10px] font-medium truncate max-w-[60px]">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+
+      {/* Mobile floating action button */}
+      <div className="lg:hidden fixed bottom-20 right-4 z-30">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button size="icon" className="h-14 w-14 rounded-full shadow-2xl bg-gradient-to-br from-accent to-amber-600 hover:scale-105 transition-transform">
+              <Plus className="h-6 w-6" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="top" className="w-52">
+            <DropdownMenuLabel>त्वरित जोडा</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setActive("donations")}>
+              <IndianRupee className="h-4 w-4 mr-2" /> देणगी
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("programs")}>
+              <CalendarDays className="h-4 w-4 mr-2" /> कार्यक्रम
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("competition")}>
+              <Trophy className="h-4 w-4 mr-2" /> स्पर्धा
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("notices")}>
+              <Bell className="h-4 w-4 mr-2" /> सूचना
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("letterpad")}>
+              <FileText className="h-4 w-4 mr-2" /> अहवाल
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
