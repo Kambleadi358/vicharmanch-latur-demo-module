@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Home, IndianRupee, X, Edit2, Save, Search, Filter, Plus, Trash2, Wallet, TrendingDown, TrendingUp, Eye, EyeOff, Download, FileSpreadsheet } from "lucide-react";
+import { Home, IndianRupee, X, Edit2, Save, Search, Filter, Plus, Trash2, Wallet, TrendingDown, TrendingUp, Eye, EyeOff, Download, FileSpreadsheet, Phone, Calendar, FileText, Users } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
@@ -732,414 +733,397 @@ const DonationManagement = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Home className="h-5 w-5 text-muted-foreground" />
-              <div>
-                <p className="text-sm text-muted-foreground">एकूण घरे</p>
-                <p className="text-2xl font-bold">{homes.length}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <IndianRupee className="h-5 w-5 text-blue-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">नियुक्त रक्कम</p>
-                <p className="text-xl font-bold">₹{totalAssigned.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-green-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">जमा रक्कम</p>
-                <p className="text-xl font-bold text-green-600">₹{totalPaid.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="h-5 w-5 text-red-500" />
-              <div>
-                <p className="text-sm text-muted-foreground">एकूण खर्च</p>
-                <p className="text-xl font-bold text-red-600">₹{totalExpense.toLocaleString()}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-primary/10">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-5 w-5 text-primary" />
-              <div>
-                <p className="text-sm text-muted-foreground">शिल्लक रक्कम</p>
-                <p className={`text-xl font-bold ${remainingBalance >= 0 ? "text-primary" : "text-destructive"}`}>
-                  ₹{remainingBalance.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-4 md:space-y-6 pb-24 md:pb-6">
+      {/* === Summary: horizontal scroll on mobile, grid on desktop === */}
+      <div className="-mx-3 sm:mx-0">
+        <div className="flex gap-3 overflow-x-auto px-3 pb-1 sm:grid sm:grid-cols-3 lg:grid-cols-5 sm:overflow-visible sm:px-0 snap-x snap-mandatory">
+          {[
+            { icon: Home, label: "एकूण घरे", value: homes.length.toString(), color: "text-muted-foreground", bg: "" },
+            { icon: IndianRupee, label: "नियुक्त", value: `₹${totalAssigned.toLocaleString()}`, color: "text-blue-600", bg: "" },
+            { icon: TrendingUp, label: "जमा", value: `₹${totalPaid.toLocaleString()}`, color: "text-green-600", bg: "" },
+            { icon: TrendingDown, label: "खर्च", value: `₹${totalExpense.toLocaleString()}`, color: "text-red-600", bg: "" },
+            { icon: Wallet, label: "शिल्लक", value: `₹${remainingBalance.toLocaleString()}`, color: remainingBalance >= 0 ? "text-primary" : "text-destructive", bg: "bg-primary/10 border-primary/20" },
+          ].map((s, i) => (
+            <Card key={i} className={`min-w-[44vw] sm:min-w-0 snap-start ${s.bg}`}>
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-center gap-2">
+                  <s.icon className={`h-4 w-4 sm:h-5 sm:w-5 ${s.color} shrink-0`} />
+                  <div className="min-w-0">
+                    <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{s.label}</p>
+                    <p className={`text-sm sm:text-lg font-bold truncate ${s.color}`}>{s.value}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
-      {/* Visibility Toggle & Report Download */}
-      <Card className={yearlyAccount?.is_visible ? "border-green-500 bg-green-50 dark:bg-green-900/20" : "border-orange-500 bg-orange-50 dark:bg-orange-900/20"}>
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              {yearlyAccount?.is_visible ? (
-                <Eye className="h-5 w-5 text-green-600" />
-              ) : (
-                <EyeOff className="h-5 w-5 text-orange-600" />
-              )}
-              <div>
-                <p className="font-medium">
-                  {yearlyAccount?.is_visible ? "खाते माहिती सार्वजनिक आहे" : "खाते माहिती लपलेली आहे"}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {yearlyAccount?.is_visible 
-                    ? "वापरकर्ते /accounts पेजवर ही माहिती पाहू शकतात" 
-                    : "ही माहिती सार्वजनिक करण्यासाठी टॉगल करा"}
-                </p>
-              </div>
+      {/* === Visibility + Reports bar === */}
+      <Card className={yearlyAccount?.is_visible ? "border-green-500/60" : "border-orange-500/60"}>
+        <CardContent className="p-3 sm:p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              {yearlyAccount?.is_visible ? <Eye className="h-4 w-4 text-green-600 shrink-0" /> : <EyeOff className="h-4 w-4 text-orange-600 shrink-0" />}
+              <p className="text-xs sm:text-sm font-medium truncate">
+                {yearlyAccount?.is_visible ? "सार्वजनिक" : "लपलेले"}
+              </p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" onClick={openSummaryReport} className="gap-2">
-                <FileSpreadsheet className="h-4 w-4" />
-                संपूर्ण अहवाल
-              </Button>
-              <Button variant="outline" onClick={openDonationReport} className="gap-2">
-                <TrendingUp className="h-4 w-4" />
-                जमा अहवाल
-              </Button>
-              <Button variant="outline" onClick={openExpenseReport} className="gap-2">
-                <TrendingDown className="h-4 w-4" />
-                खर्च अहवाल
-              </Button>
-              <Switch
-                checked={yearlyAccount?.is_visible || false}
-                onCheckedChange={toggleAccountVisibility}
-              />
-            </div>
+            <Switch checked={yearlyAccount?.is_visible || false} onCheckedChange={toggleAccountVisibility} />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <Button variant="outline" size="sm" onClick={openSummaryReport} className="gap-1 text-xs h-9 px-2">
+              <FileSpreadsheet className="h-3.5 w-3.5" /> सर्व
+            </Button>
+            <Button variant="outline" size="sm" onClick={openDonationReport} className="gap-1 text-xs h-9 px-2 text-green-700 dark:text-green-400">
+              <TrendingUp className="h-3.5 w-3.5" /> जमा
+            </Button>
+            <Button variant="outline" size="sm" onClick={openExpenseReport} className="gap-1 text-xs h-9 px-2 text-red-700 dark:text-red-400">
+              <TrendingDown className="h-3.5 w-3.5" /> खर्च
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5" /> डावी बाजू — जमा व्यवस्थापन - {selectedYear}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <Label>वर्ष:</Label>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {years.map(year => (
-                    <SelectItem key={year} value={year}>{year}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+      {/* === Year selector === */}
+      <div className="flex items-center gap-2">
+        <Label className="text-sm shrink-0">वर्ष:</Label>
+        <Select value={selectedYear} onValueChange={setSelectedYear}>
+          <SelectTrigger className="h-9 flex-1 sm:w-40 sm:flex-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {years.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
 
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
+      {/* === Tabs: जमा / खर्च === */}
+      <Tabs defaultValue="donations" className="w-full">
+        <TabsList className="grid grid-cols-2 w-full h-11 sticky top-0 z-10 bg-background/95 backdrop-blur">
+          <TabsTrigger value="donations" className="gap-2 text-sm">
+            <TrendingUp className="h-4 w-4" /> जमा ({homes.length})
+          </TabsTrigger>
+          <TabsTrigger value="expenses" className="gap-2 text-sm">
+            <TrendingDown className="h-4 w-4" /> खर्च ({expenses.length})
+          </TabsTrigger>
+        </TabsList>
+
+        {/* ---------- DONATIONS TAB ---------- */}
+        <TabsContent value="donations" className="space-y-3 mt-4">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="relative col-span-2">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="घरमालक शोधा..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-48"
+                className="pl-8 h-10"
               />
             </div>
-
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">सर्व</SelectItem>
-                  <SelectItem value="paid">दिले</SelectItem>
-                  <SelectItem value="partial">अंशतः</SelectItem>
-                  <SelectItem value="pending">बाकी</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-end gap-4 p-4 bg-secondary rounded-lg">
-            <div className="space-y-2">
-              <Label>सर्व घरांना एकत्र देणगी नियुक्त करा</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="रक्कम (₹)"
-                  value={bulkAssignAmount}
-                  onChange={(e) => setBulkAssignAmount(e.target.value)}
-                  className="w-32"
-                />
-                <Button onClick={handleBulkAssign}>सर्वांना नियुक्त करा</Button>
-              </div>
-            </div>
-            <Button onClick={() => setIsAddingHome(true)} className="gap-2" disabled={isAddingHome}>
+            <Select value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+              <SelectTrigger className="h-10">
+                <Filter className="h-3.5 w-3.5 mr-1" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">सर्व</SelectItem>
+                <SelectItem value="paid">दिले</SelectItem>
+                <SelectItem value="partial">अंशतः</SelectItem>
+                <SelectItem value="pending">बाकी</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button onClick={() => setIsAddingHome(true)} disabled={isAddingHome} className="h-10 gap-1">
               <Plus className="h-4 w-4" /> घर जोडा
             </Button>
           </div>
 
-          {isAddingHome && (
-            <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
-              <h4 className="font-medium">नवीन घर जोडा (घर क्र. {getNextHomeNumber()} आपोआप नियुक्त होईल)</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs">घरमालकाचे नाव *</Label>
-                  <Input value={newHomeForm.home_name} onChange={(e) => setNewHomeForm({ ...newHomeForm, home_name: e.target.value })} placeholder="घरमालकाचे नाव" />
-                </div>
-                <div className="space-y-1">
-                  <Label className="text-xs">संपर्क (ऐच्छिक)</Label>
-                  <Input value={newHomeForm.contact_phone} onChange={(e) => setNewHomeForm({ ...newHomeForm, contact_phone: e.target.value })} placeholder="फोन नंबर" />
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleAddHome}>जोडा</Button>
-                <Button size="sm" variant="outline" onClick={() => { setIsAddingHome(false); setNewHomeForm({ home_name: "", contact_phone: "" }); }}>रद्द करा</Button>
-              </div>
-            </div>
-          )}
-            </CardContent>
-          </Card>
+          <div className="flex gap-2 items-center p-3 rounded-lg bg-secondary/50 border">
+            <Input
+              type="number"
+              placeholder="सर्वांना नियुक्त रक्कम ₹"
+              value={bulkAssignAmount}
+              onChange={(e) => setBulkAssignAmount(e.target.value)}
+              className="h-9 flex-1"
+            />
+            <Button size="sm" onClick={handleBulkAssign} className="h-9 shrink-0">नियुक्त</Button>
+          </div>
 
-          <div className="rounded-lg border overflow-auto">
+          {isAddingHome && (
+            <Card className="border-primary/40">
+              <CardContent className="p-3 space-y-2">
+                <p className="text-xs font-medium">नवीन घर (क्र. {getNextHomeNumber()})</p>
+                <Input value={newHomeForm.home_name} onChange={(e) => setNewHomeForm({ ...newHomeForm, home_name: e.target.value })} placeholder="घरमालकाचे नाव *" className="h-9" />
+                <Input value={newHomeForm.contact_phone} onChange={(e) => setNewHomeForm({ ...newHomeForm, contact_phone: e.target.value })} placeholder="फोन (ऐच्छिक)" className="h-9" />
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAddHome} className="flex-1">जोडा</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setIsAddingHome(false); setNewHomeForm({ home_name: "", contact_phone: "" }); }} className="flex-1">रद्द</Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Desktop table */}
+          <div className="hidden md:block rounded-lg border overflow-auto">
             <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-16">क्र.</TableHead>
-              <TableHead>घरमालकाचे नाव</TableHead>
-              <TableHead>संपर्क</TableHead>
-              <TableHead className="text-right">नियुक्त</TableHead>
-              <TableHead className="text-right">दिले</TableHead>
-              <TableHead className="text-right">बाकी</TableHead>
-              <TableHead>तारीख</TableHead>
-              <TableHead>स्थिती</TableHead>
-              <TableHead>क्रिया</TableHead>
-              <TableHead className="w-12"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-14">क्र.</TableHead>
+                  <TableHead>घरमालक</TableHead>
+                  <TableHead>संपर्क</TableHead>
+                  <TableHead className="text-right">नियुक्त</TableHead>
+                  <TableHead className="text-right">दिले</TableHead>
+                  <TableHead className="text-right">बाकी</TableHead>
+                  <TableHead>तारीख</TableHead>
+                  <TableHead>स्थिती</TableHead>
+                  <TableHead>क्रिया</TableHead>
+                  <TableHead className="w-10"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredHomes.map((home) => {
+                  const donation = getDonationForHome(home.id);
+                  const status = getPaymentStatus(donation);
+                  const remaining = donation ? donation.assigned_amount - donation.paid_amount : 0;
+                  const isEditing = editingDonation === donation?.id;
+                  const isEditingName = editingHome === home.id;
+                  return (
+                    <TableRow key={home.id}>
+                      <TableCell className="font-medium">{home.home_number}</TableCell>
+                      <TableCell>
+                        {isEditingName ? (
+                          <div className="flex gap-1">
+                            <Input value={homeNameInput} onChange={(e) => setHomeNameInput(e.target.value)} className="w-40 h-8" />
+                            <Button size="sm" variant="ghost" onClick={() => handleSaveHomeName(home.id)}><Save className="h-4 w-4" /></Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditingHome(null)}><X className="h-4 w-4" /></Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className={home.home_name ? "" : "text-muted-foreground italic"}>{home.home_name || "नाव नाही"}</span>
+                            <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEditHomeName(home)}><Edit2 className="h-3 w-3" /></Button>
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell><span className="text-sm text-muted-foreground">{home.contact_phone || "-"}</span></TableCell>
+                      <TableCell className="text-right">
+                        {isEditing ? (
+                          <Input type="number" value={editForm.assigned_amount} onChange={(e) => setEditForm({ ...editForm, assigned_amount: parseFloat(e.target.value) || 0 })} className="w-24" />
+                        ) : <span>₹{donation?.assigned_amount?.toLocaleString() || 0}</span>}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {isEditing ? (
+                          <Input type="number" value={editForm.paid_amount} onChange={(e) => setEditForm({ ...editForm, paid_amount: parseFloat(e.target.value) || 0 })} className="w-24" />
+                        ) : <span className="text-green-600">₹{donation?.paid_amount?.toLocaleString() || 0}</span>}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {remaining > 0 ? <span className="text-red-600 font-medium">₹{remaining.toLocaleString()}</span> : <span className="text-green-600">₹0</span>}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">{donation?.payment_date ? formatDate(donation.payment_date) : "-"}</TableCell>
+                      <TableCell>
+                        {status === "paid" && <Badge className="bg-green-500">पूर्ण</Badge>}
+                        {status === "partial" && <Badge className="bg-yellow-500">अंशतः</Badge>}
+                        {status === "pending" && <Badge variant="destructive">बाकी</Badge>}
+                        {status === "none" && <Badge variant="outline">नियुक्त नाही</Badge>}
+                      </TableCell>
+                      <TableCell>
+                        {donation ? (
+                          isEditing ? (
+                            <div className="flex gap-1">
+                              <Button size="sm" onClick={handleSaveDonation}><Save className="h-4 w-4" /></Button>
+                              <Button size="sm" variant="outline" onClick={() => setEditingDonation(null)}><X className="h-4 w-4" /></Button>
+                            </div>
+                          ) : <Button size="sm" variant="ghost" onClick={() => handleEditStart(donation)}><Edit2 className="h-4 w-4" /></Button>
+                        ) : <Button size="sm" variant="outline" onClick={() => handleCreateDonation(home.id)}>नियुक्त</Button>}
+                      </TableCell>
+                      <TableCell>
+                        <Button size="sm" variant="ghost" onClick={() => handleDeleteHome(home.id, home.home_number)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-2">
+            {filteredHomes.length === 0 && (
+              <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">कोणतेही घर सापडले नाही</CardContent></Card>
+            )}
             {filteredHomes.map((home) => {
               const donation = getDonationForHome(home.id);
               const status = getPaymentStatus(donation);
               const remaining = donation ? donation.assigned_amount - donation.paid_amount : 0;
               const isEditing = editingDonation === donation?.id;
               const isEditingName = editingHome === home.id;
-
+              const statusColor =
+                status === "paid" ? "border-l-green-500" :
+                status === "partial" ? "border-l-yellow-500" :
+                status === "pending" ? "border-l-red-500" : "border-l-muted";
               return (
-                <TableRow key={home.id}>
-                  <TableCell className="font-medium">{home.home_number}</TableCell>
-                  <TableCell>
-                    {isEditingName ? (
-                      <div className="flex gap-1">
-                        <Input
-                          value={homeNameInput}
-                          onChange={(e) => setHomeNameInput(e.target.value)}
-                          className="w-40 h-8"
-                          placeholder="घरमालकाचे नाव"
-                        />
-                        <Button size="sm" variant="ghost" onClick={() => handleSaveHomeName(home.id)}>
-                          <Save className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => setEditingHome(null)}>
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <span className={home.home_name ? "" : "text-muted-foreground italic"}>
-                          {home.home_name || "नाव नाही"}
+                <Card key={home.id} className={`border-l-4 ${statusColor}`}>
+                  <CardContent className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold shrink-0">
+                          {home.home_number}
                         </span>
-                        <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => handleEditHomeName(home)}>
-                          <Edit2 className="h-3 w-3" />
+                        {isEditingName ? (
+                          <Input value={homeNameInput} onChange={(e) => setHomeNameInput(e.target.value)} className="h-8 text-sm" autoFocus />
+                        ) : (
+                          <p className={`text-sm font-medium truncate ${!home.home_name ? "text-muted-foreground italic" : ""}`}>
+                            {home.home_name || "नाव नाही"}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        {isEditingName ? (
+                          <>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleSaveHomeName(home.id)}><Save className="h-3.5 w-3.5" /></Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingHome(null)}><X className="h-3.5 w-3.5" /></Button>
+                          </>
+                        ) : (
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleEditHomeName(home)}>
+                            <Edit2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDeleteHome(home.id, home.home_number)}>
+                          <Trash2 className="h-3.5 w-3.5 text-destructive" />
                         </Button>
                       </div>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm text-muted-foreground">{home.contact_phone || "-"}</span>
-                  </TableCell>
-                  <TableCell className="text-right">
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="flex items-center gap-1 text-muted-foreground">
+                        <Phone className="h-3 w-3" />
+                        {home.contact_phone || "-"}
+                      </span>
+                      {status === "paid" && <Badge className="bg-green-500 h-5 text-[10px]">पूर्ण</Badge>}
+                      {status === "partial" && <Badge className="bg-yellow-500 h-5 text-[10px]">अंशतः</Badge>}
+                      {status === "pending" && <Badge variant="destructive" className="h-5 text-[10px]">बाकी</Badge>}
+                      {status === "none" && <Badge variant="outline" className="h-5 text-[10px]">नियुक्त नाही</Badge>}
+                    </div>
+
                     {isEditing ? (
-                      <Input
-                        type="number"
-                        value={editForm.assigned_amount}
-                        onChange={(e) => setEditForm({ ...editForm, assigned_amount: parseFloat(e.target.value) || 0 })}
-                        className="w-24"
-                      />
-                    ) : (
-                      <span>₹{donation?.assigned_amount?.toLocaleString() || 0}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {isEditing ? (
-                      <Input
-                        type="number"
-                        value={editForm.paid_amount}
-                        onChange={(e) => setEditForm({ ...editForm, paid_amount: parseFloat(e.target.value) || 0 })}
-                        className="w-24"
-                      />
-                    ) : (
-                      <span className="text-green-600">₹{donation?.paid_amount?.toLocaleString() || 0}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {remaining > 0 ? (
-                      <span className="text-red-600 font-medium">₹{remaining.toLocaleString()}</span>
-                    ) : (
-                      <span className="text-green-600">₹0</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {donation?.payment_date ? formatDate(donation.payment_date) : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {status === "paid" && <Badge className="bg-green-500">पूर्ण</Badge>}
-                    {status === "partial" && <Badge className="bg-yellow-500">अंशतः</Badge>}
-                    {status === "pending" && <Badge variant="destructive">बाकी</Badge>}
-                    {status === "none" && <Badge variant="outline">नियुक्त नाही</Badge>}
-                  </TableCell>
-                  <TableCell>
-                    {donation ? (
-                      isEditing ? (
-                        <div className="flex gap-1">
-                          <Button size="sm" onClick={handleSaveDonation}>
-                            <Save className="h-4 w-4" />
-                          </Button>
-                          <Button size="sm" variant="outline" onClick={() => setEditingDonation(null)}>
-                            <X className="h-4 w-4" />
-                          </Button>
+                      <div className="space-y-2 pt-1">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-[10px] text-muted-foreground">नियुक्त ₹</Label>
+                            <Input type="number" value={editForm.assigned_amount} onChange={(e) => setEditForm({ ...editForm, assigned_amount: parseFloat(e.target.value) || 0 })} className="h-9" />
+                          </div>
+                          <div>
+                            <Label className="text-[10px] text-muted-foreground">दिले ₹</Label>
+                            <Input type="number" value={editForm.paid_amount} onChange={(e) => setEditForm({ ...editForm, paid_amount: parseFloat(e.target.value) || 0 })} className="h-9" />
+                          </div>
                         </div>
-                      ) : (
-                        <Button size="sm" variant="ghost" onClick={() => handleEditStart(donation)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                      )
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveDonation} className="flex-1 h-9"><Save className="h-3.5 w-3.5 mr-1" /> जतन</Button>
+                          <Button size="sm" variant="outline" onClick={() => setEditingDonation(null)} className="flex-1 h-9"><X className="h-3.5 w-3.5 mr-1" /> रद्द</Button>
+                        </div>
+                      </div>
                     ) : (
-                      <Button size="sm" variant="outline" onClick={() => handleCreateDonation(home.id)}>
-                        नियुक्त करा
-                      </Button>
+                      <>
+                        <div className="grid grid-cols-3 gap-2 pt-1">
+                          <div className="rounded-md bg-muted/50 p-2 text-center">
+                            <p className="text-[10px] text-muted-foreground">नियुक्त</p>
+                            <p className="text-xs font-semibold">₹{donation?.assigned_amount?.toLocaleString() || 0}</p>
+                          </div>
+                          <div className="rounded-md bg-green-500/10 p-2 text-center">
+                            <p className="text-[10px] text-muted-foreground">दिले</p>
+                            <p className="text-xs font-semibold text-green-600">₹{donation?.paid_amount?.toLocaleString() || 0}</p>
+                          </div>
+                          <div className={`rounded-md p-2 text-center ${remaining > 0 ? "bg-red-500/10" : "bg-green-500/10"}`}>
+                            <p className="text-[10px] text-muted-foreground">बाकी</p>
+                            <p className={`text-xs font-semibold ${remaining > 0 ? "text-red-600" : "text-green-600"}`}>₹{remaining.toLocaleString()}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {donation?.payment_date ? formatDate(donation.payment_date) : "—"}
+                          </span>
+                          {donation ? (
+                            <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => handleEditStart(donation)}>
+                              <Edit2 className="h-3 w-3 mr-1" /> संपादन
+                            </Button>
+                          ) : (
+                            <Button size="sm" className="h-8 text-xs" onClick={() => handleCreateDonation(home.id)}>नियुक्त करा</Button>
+                          )}
+                        </div>
+                      </>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <Button size="sm" variant="ghost" onClick={() => handleDeleteHome(home.id, home.home_number)} title="घर हटवा">
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                  </CardContent>
+                </Card>
               );
             })}
-          </TableBody>
-            </Table>
           </div>
-        </div>
+        </TabsContent>
 
-        <div className="space-y-6">
-          <Card className="sticky top-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingDown className="h-5 w-5" /> उजवी बाजू — खर्च व्यवस्थापन
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 bg-secondary rounded-lg">
+        {/* ---------- EXPENSES TAB ---------- */}
+        <TabsContent value="expenses" className="space-y-3 mt-4">
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-lg border bg-green-500/5 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">जमा</p>
+              <p className="text-xs sm:text-sm font-bold text-green-600 truncate">{formatCurrency(totalPaid)}</p>
+            </div>
+            <div className="rounded-lg border bg-red-500/5 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">खर्च</p>
+              <p className="text-xs sm:text-sm font-bold text-red-600 truncate">{formatCurrency(totalExpense)}</p>
+            </div>
+            <div className="rounded-lg border bg-primary/5 p-2 text-center">
+              <p className="text-[10px] text-muted-foreground">शिल्लक</p>
+              <p className={`text-xs sm:text-sm font-bold truncate ${remainingBalance >= 0 ? "text-primary" : "text-destructive"}`}>{formatCurrency(remainingBalance)}</p>
+            </div>
+          </div>
+
+          <Button onClick={() => setIsAddingExpense(true)} disabled={isAddingExpense} className="w-full h-10 gap-1">
+            <Plus className="h-4 w-4" /> नवीन खर्च जोडा
+          </Button>
+
+          {isAddingExpense && (
+            <Card className="border-primary/40">
+              <CardContent className="p-3 space-y-2">
                 <div>
-                  <p className="text-sm text-muted-foreground">जमा रक्कम</p>
-                  <p className="text-lg font-bold text-green-600">{formatCurrency(totalPaid)}</p>
+                  <Label className="text-xs">तपशील</Label>
+                  <Input value={expenseForm.item} onChange={(e) => setExpenseForm({ ...expenseForm, item: e.target.value })} placeholder="खर्चाचे तपशील" className="h-9" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">एकूण खर्च</p>
-                  <p className="text-lg font-bold text-red-600">{formatCurrency(totalExpense)}</p>
+                  <Label className="text-xs">रक्कम ₹</Label>
+                  <Input type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0 })} className="h-9" />
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">शिल्लक</p>
-                  <p className={`text-lg font-bold ${remainingBalance >= 0 ? "text-primary" : "text-destructive"}`}>{formatCurrency(remainingBalance)}</p>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAddExpense} className="flex-1"><Save className="h-3.5 w-3.5 mr-1" /> जतन</Button>
+                  <Button size="sm" variant="outline" onClick={() => { setIsAddingExpense(false); setExpenseForm({ item: "", amount: 0 }); }} className="flex-1"><X className="h-3.5 w-3.5 mr-1" /> रद्द</Button>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          )}
 
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">खर्च तपशील</h4>
-                <Button size="sm" onClick={() => setIsAddingExpense(true)} disabled={isAddingExpense}>
-                  <Plus className="h-4 w-4 mr-1" /> खर्च जोडा
-                </Button>
-              </div>
-
-              {isAddingExpense && (
-                <div className="space-y-3 rounded-lg bg-muted p-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">तपशील</Label>
-                    <Input value={expenseForm.item} onChange={(e) => setExpenseForm({ ...expenseForm, item: e.target.value })} placeholder="खर्चाचे तपशील" />
+          <div className="space-y-2">
+            {expenses.length === 0 && (
+              <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">कोणताही खर्च नोंदवलेला नाही</CardContent></Card>
+            )}
+            {expenses.map((expense, idx) => (
+              <Card key={expense.id} className="border-l-4 border-l-red-500/60">
+                <CardContent className="p-3 flex items-center gap-3">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-500/10 text-red-600 text-xs font-bold shrink-0">
+                    {idx + 1}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate">{expense.item}</p>
+                    <p className="text-base font-bold text-red-600">{formatCurrency(expense.amount)}</p>
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">रक्कम</Label>
-                    <Input type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: parseFloat(e.target.value) || 0 })} />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={handleAddExpense}><Save className="h-4 w-4 mr-1" /> जतन</Button>
-                    <Button size="sm" variant="outline" onClick={() => { setIsAddingExpense(false); setExpenseForm({ item: "", amount: 0 }); }}><X className="h-4 w-4 mr-1" /> रद्द</Button>
-                  </div>
-                </div>
-              )}
-
-              <div className="rounded-lg border overflow-auto max-h-[70vh]">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>तपशील</TableHead>
-                      <TableHead className="text-right">रक्कम</TableHead>
-                      <TableHead className="w-16">क्रिया</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {expenses.map((expense) => (
-                      <TableRow key={expense.id}>
-                        <TableCell>{expense.item}</TableCell>
-                        <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>
-                        <TableCell>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id, expense.amount)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {expenses.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={3} className="text-center text-muted-foreground">कोणताही खर्च नोंदवलेला नाही</TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => handleDeleteExpense(expense.id, expense.amount)}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
