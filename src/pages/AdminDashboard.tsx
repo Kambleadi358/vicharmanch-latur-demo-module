@@ -31,10 +31,6 @@ type SectionKey =
   | "certificates" | "notices" | "donations" | "prizes"
   | "letterpad" | "annual" | "settings";
 
-type SectionKey =
-  | "dashboard" | "programs" | "competition" | "participants" | "quiz"
-  | "certificates" | "notices" | "donations" | "prizes"
-  | "letterpad" | "settings";
 
 type NavItem = {
   key: SectionKey;
