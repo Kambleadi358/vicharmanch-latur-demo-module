@@ -53,6 +53,7 @@ const App = () => (
               <Route path="/spardha" element={<SpardhaList />} />
               <Route path="/spardha/:id" element={<SpardhaDetail />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/ahval" element={<Ahval />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>
