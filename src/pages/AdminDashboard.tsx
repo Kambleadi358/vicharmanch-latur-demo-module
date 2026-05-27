@@ -20,10 +20,16 @@ import PrizeDistribution from "@/components/admin/PrizeDistribution";
 import CompetitionManagement from "@/components/admin/CompetitionManagement";
 import ParticipantManagement from "@/components/admin/ParticipantManagement";
 import DashboardHome from "@/components/admin/dashboard/DashboardHome";
+import AnnualReportManagement from "@/components/admin/AnnualReportManagement";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
-  FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus,
+  FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
 } from "lucide-react";
+
+type SectionKey =
+  | "dashboard" | "programs" | "competition" | "participants" | "quiz"
+  | "certificates" | "notices" | "donations" | "prizes"
+  | "letterpad" | "annual" | "settings";
 
 type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
