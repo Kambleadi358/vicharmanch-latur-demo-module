@@ -23,6 +23,7 @@ import JudgeDashboard from "./pages/JudgeDashboard";
 import SpardhaList from "./pages/SpardhaList";
 import SpardhaDetail from "./pages/SpardhaDetail";
 import Register from "./pages/Register";
+import Ahval from "./pages/Ahval";
 
 const queryClient = new QueryClient();
 
