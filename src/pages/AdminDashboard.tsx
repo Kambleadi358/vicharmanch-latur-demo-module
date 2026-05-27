@@ -136,6 +136,7 @@ const AdminDashboard = () => {
       );
       case "prizes":       return <PrizeDistribution />;
       case "letterpad":    return <LetterpadManagement />;
+      case "annual":       return <AnnualReportManagement />
       case "settings":     return (
         <Card>
           <CardHeader>
