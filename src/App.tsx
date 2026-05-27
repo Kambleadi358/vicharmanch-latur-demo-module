@@ -23,6 +23,7 @@ import JudgeDashboard from "./pages/JudgeDashboard";
 import SpardhaList from "./pages/SpardhaList";
 import SpardhaDetail from "./pages/SpardhaDetail";
 import Register from "./pages/Register";
+import Ahval from "./pages/Ahval";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/spardha" element={<SpardhaList />} />
               <Route path="/spardha/:id" element={<SpardhaDetail />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/ahval" element={<Ahval />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>

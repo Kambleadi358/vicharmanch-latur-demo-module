@@ -46,6 +46,45 @@ export type Database = {
           },
         ]
       }
+      annual_reports: {
+        Row: {
+          created_at: string
+          id: string
+          pdf_path: string | null
+          pdf_url: string | null
+          remark: string | null
+          title: string
+          total_expense: number
+          total_jama: number
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          pdf_path?: string | null
+          pdf_url?: string | null
+          remark?: string | null
+          title: string
+          total_expense?: number
+          total_jama?: number
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          pdf_path?: string | null
+          pdf_url?: string | null
+          remark?: string | null
+          title?: string
+          total_expense?: number
+          total_jama?: number
+          updated_at?: string
+          year?: string
+        }
+        Relationships: []
+      }
       competition_entries: {
         Row: {
           category: string

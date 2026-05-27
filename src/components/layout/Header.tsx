@@ -12,6 +12,7 @@ const navLinks = [
   { path: "/programs", label: "कार्यक्रम" },
   { path: "/quiz", label: "प्रश्नमंजुषा" },
   { path: "/accounts", label: "खाते माहिती" },
+  { path: "/ahval", label: "वार्षिक अहवाल" },
 ];
 
 const Header = () => {

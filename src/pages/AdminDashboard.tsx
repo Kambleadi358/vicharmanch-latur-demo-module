@@ -20,15 +20,17 @@ import PrizeDistribution from "@/components/admin/PrizeDistribution";
 import CompetitionManagement from "@/components/admin/CompetitionManagement";
 import ParticipantManagement from "@/components/admin/ParticipantManagement";
 import DashboardHome from "@/components/admin/dashboard/DashboardHome";
+import AnnualReportManagement from "@/components/admin/AnnualReportManagement";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
-  FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus,
+  FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
 } from "lucide-react";
 
 type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "donations" | "prizes"
-  | "letterpad" | "settings";
+  | "letterpad" | "annual" | "settings";
+
 
 type NavItem = {
   key: SectionKey;
@@ -48,6 +50,7 @@ const NAV: NavItem[] = [
   { key: "notices",      label: "सूचना",          icon: Bell,         group: "गौरव व सूचना" },
   { key: "donations",    label: "देणगी व खाते",   icon: IndianRupee,  group: "वित्त व दस्तऐवज" },
   { key: "letterpad",    label: "दस्तऐवज",        icon: FileText,     group: "वित्त व दस्तऐवज" },
+  { key: "annual",       label: "वार्षिक अहवाल",  icon: BookMarked,   group: "वित्त व दस्तऐवज" },
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
 
@@ -133,6 +136,7 @@ const AdminDashboard = () => {
       );
       case "prizes":       return <PrizeDistribution />;
       case "letterpad":    return <LetterpadManagement />;
+      case "annual":       return <AnnualReportManagement />
       case "settings":     return (
         <Card>
           <CardHeader>
