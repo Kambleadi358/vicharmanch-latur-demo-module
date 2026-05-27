@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Loader2, TrendingUp, TrendingDown, Wallet, Download } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, LineChart, Line } from "recharts";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { FileText, Loader2, TrendingUp, TrendingDown, Wallet, Download, Calendar, ArrowRight, X } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
 
 interface AnnualReport {
   id: string;
@@ -20,6 +21,7 @@ interface AnnualReport {
 const Ahval = () => {
   const [reports, setReports] = useState<AnnualReport[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<AnnualReport | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -32,31 +34,32 @@ const Ahval = () => {
     })();
   }, []);
 
-  const chartData = [...reports]
-    .sort((a, b) => a.year.localeCompare(b.year))
-    .map((r) => ({
-      year: r.year,
-      जमा: Number(r.total_jama) || 0,
-      खर्च: Number(r.total_expense) || 0,
-      शिल्लक: (Number(r.total_jama) || 0) - (Number(r.total_expense) || 0),
-    }));
+  const buildChartData = (r: AnnualReport) => {
+    const jama = Number(r.total_jama) || 0;
+    const expense = Number(r.total_expense) || 0;
+    return {
+      bar: [
+        { name: "जमा", value: jama, fill: "hsl(142 70% 45%)" },
+        { name: "खर्च", value: expense, fill: "hsl(0 70% 55%)" },
+        { name: "शिल्लक", value: jama - expense, fill: "hsl(var(--primary))" },
+      ],
+      pie: [
+        { name: "जमा", value: jama },
+        { name: "खर्च", value: expense },
+      ],
+    };
+  };
 
-  const totals = reports.reduce(
-    (acc, r) => {
-      acc.jama += Number(r.total_jama) || 0;
-      acc.expense += Number(r.total_expense) || 0;
-      return acc;
-    },
-    { jama: 0, expense: 0 }
-  );
+  const PIE_COLORS = ["hsl(142 70% 45%)", "hsl(0 70% 55%)"];
 
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-muted/30 via-background to-muted/20 py-10">
         <div className="max-w-6xl mx-auto px-4">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">वार्षिक अहवाल</h1>
-            <p className="text-muted-foreground">भीम जयंती – वर्षनिहाय अहवाल व आर्थिक स्थिती</p>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-10">
+            <h1 className="text-3xl md:text-5xl font-bold text-primary mb-3">वार्षिक अहवाल</h1>
+            <p className="text-muted-foreground">भीम जयंती – वर्षनिहाय अहवाल</p>
+            <p className="text-xs text-muted-foreground mt-1">कार्डवर क्लिक करा संपूर्ण अहवाल पाहण्यासाठी</p>
           </motion.div>
 
           {loading ? (
@@ -64,111 +67,176 @@ const Ahval = () => {
           ) : reports.length === 0 ? (
             <Card><CardContent className="py-12 text-center text-muted-foreground">अद्याप कोणताही अहवाल प्रकाशित केलेला नाही.</CardContent></Card>
           ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-muted-foreground">एकूण जमा</p>
-                        <p className="text-2xl font-bold text-emerald-600">₹{totals.jama.toLocaleString("en-IN")}</p>
-                      </div>
-                      <TrendingUp className="h-8 w-8 text-emerald-600/60" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-rose-500/10 to-rose-500/5 border-rose-500/20">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-muted-foreground">एकूण खर्च</p>
-                        <p className="text-2xl font-bold text-rose-600">₹{totals.expense.toLocaleString("en-IN")}</p>
-                      </div>
-                      <TrendingDown className="h-8 w-8 text-rose-600/60" />
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs text-muted-foreground">शिल्लक</p>
-                        <p className="text-2xl font-bold text-primary">₹{(totals.jama - totals.expense).toLocaleString("en-IN")}</p>
-                      </div>
-                      <Wallet className="h-8 w-8 text-primary/60" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {chartData.length > 0 && (
-                <Card className="mb-8">
-                  <CardHeader><CardTitle>वर्षनिहाय जमा-खर्च तुलना</CardTitle></CardHeader>
-                  <CardContent>
-                    <div className="h-72 w-full">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                          <XAxis dataKey="year" />
-                          <YAxis />
-                          <Tooltip formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
-                          <Legend />
-                          <Bar dataKey="जमा" fill="hsl(142 70% 45%)" radius={[4,4,0,0]} />
-                          <Bar dataKey="खर्च" fill="hsl(0 70% 55%)" radius={[4,4,0,0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                    <div className="h-56 w-full mt-6">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                          <XAxis dataKey="year" />
-                          <YAxis />
-                          <Tooltip formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
-                          <Legend />
-                          <Line type="monotone" dataKey="शिल्लक" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 4 }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              <div className="space-y-4">
-                {reports.map((r, i) => (
-                  <motion.div key={r.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                    <Card className="hover:shadow-lg transition-shadow">
-                      <CardContent className="p-5">
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h2 className="text-xl font-bold text-primary">{r.title}</h2>
-                            <div className="flex flex-wrap gap-4 mt-2 text-sm">
-                              <span className="text-emerald-600">जमा: <strong>₹{Number(r.total_jama).toLocaleString("en-IN")}</strong></span>
-                              <span className="text-rose-600">खर्च: <strong>₹{Number(r.total_expense).toLocaleString("en-IN")}</strong></span>
-                              <span className="text-primary">शिल्लक: <strong>₹{(Number(r.total_jama) - Number(r.total_expense)).toLocaleString("en-IN")}</strong></span>
-                            </div>
-                            {r.remark && <p className="text-sm text-muted-foreground mt-2">{r.remark}</p>}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {reports.map((r, i) => {
+                const shillak = (Number(r.total_jama) || 0) - (Number(r.total_expense) || 0);
+                return (
+                  <motion.div
+                    key={r.id}
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08, type: "spring", stiffness: 100 }}
+                    whileHover={{ y: -6, scale: 1.02 }}
+                    className="cursor-pointer"
+                    onClick={() => setSelected(r)}
+                  >
+                    <Card className="relative overflow-hidden border-2 hover:border-primary/50 hover:shadow-2xl transition-all duration-300 h-full bg-gradient-to-br from-card via-card to-primary/5">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -translate-y-10 translate-x-10" />
+                      <div className="absolute bottom-0 left-0 w-24 h-24 bg-accent/10 rounded-full blur-2xl translate-y-8 -translate-x-8" />
+                      <CardContent className="p-6 relative">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold">
+                            <Calendar className="h-3 w-3" />
+                            {r.year}
                           </div>
                           {r.pdf_url && (
-                            <div className="flex gap-2">
-                              <a href={r.pdf_url} target="_blank" rel="noreferrer">
-                                <Button variant="outline"><FileText className="h-4 w-4 mr-2" />पाहा</Button>
-                              </a>
-                              <a href={r.pdf_url} download>
-                                <Button><Download className="h-4 w-4 mr-2" />डाउनलोड</Button>
-                              </a>
+                            <div className="flex items-center gap-1 text-xs text-emerald-600">
+                              <FileText className="h-3 w-3" /> PDF
                             </div>
                           )}
+                        </div>
+                        <h2 className="text-2xl font-bold text-foreground mb-4 leading-tight">{r.title}</h2>
+                        <div className="space-y-2 mb-5">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">जमा</span>
+                            <span className="font-bold text-emerald-600">₹{Number(r.total_jama).toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">खर्च</span>
+                            <span className="font-bold text-rose-600">₹{Number(r.total_expense).toLocaleString("en-IN")}</span>
+                          </div>
+                          <div className="h-px bg-border" />
+                          <div className="flex justify-between text-sm">
+                            <span className="font-semibold">शिल्लक</span>
+                            <span className="font-bold text-primary">₹{shillak.toLocaleString("en-IN")}</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t">
+                          <span className="text-xs text-muted-foreground">तपशील पाहा</span>
+                          <ArrowRight className="h-4 w-4 text-primary group-hover:translate-x-1 transition-transform" />
                         </div>
                       </CardContent>
                     </Card>
                   </motion.div>
-                ))}
-              </div>
-            </>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
+
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          {selected && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl text-primary">{selected.title}</DialogTitle>
+              </DialogHeader>
+
+              <AnimatePresence>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-5"
+                >
+                  <div className="grid grid-cols-3 gap-3">
+                    <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/20">
+                      <CardContent className="p-4">
+                        <TrendingUp className="h-5 w-5 text-emerald-600 mb-2" />
+                        <p className="text-xs text-muted-foreground">जमा</p>
+                        <p className="text-lg font-bold text-emerald-600">₹{Number(selected.total_jama).toLocaleString("en-IN")}</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-rose-500/10 to-rose-500/5 border-rose-500/20">
+                      <CardContent className="p-4">
+                        <TrendingDown className="h-5 w-5 text-rose-600 mb-2" />
+                        <p className="text-xs text-muted-foreground">खर्च</p>
+                        <p className="text-lg font-bold text-rose-600">₹{Number(selected.total_expense).toLocaleString("en-IN")}</p>
+                      </CardContent>
+                    </Card>
+                    <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+                      <CardContent className="p-4">
+                        <Wallet className="h-5 w-5 text-primary mb-2" />
+                        <p className="text-xs text-muted-foreground">शिल्लक</p>
+                        <p className="text-lg font-bold text-primary">₹{(Number(selected.total_jama) - Number(selected.total_expense)).toLocaleString("en-IN")}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2"><CardTitle className="text-base">तुलना</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="h-56">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={buildChartData(selected).bar}>
+                              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                              <XAxis dataKey="name" />
+                              <YAxis />
+                              <Tooltip formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
+                              <Bar dataKey="value" radius={[6, 6, 0, 0]} />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2"><CardTitle className="text-base">जमा vs खर्च</CardTitle></CardHeader>
+                      <CardContent>
+                        <div className="h-56">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie data={buildChartData(selected).pie} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={70} label>
+                                {buildChartData(selected).pie.map((_, idx) => (
+                                  <Cell key={idx} fill={PIE_COLORS[idx]} />
+                                ))}
+                              </Pie>
+                              <Tooltip formatter={(v: number) => `₹${v.toLocaleString("en-IN")}`} />
+                              <Legend />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {selected.remark && (
+                    <Card>
+                      <CardContent className="p-4">
+                        <p className="text-xs text-muted-foreground mb-1">शेरा</p>
+                        <p className="text-sm">{selected.remark}</p>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {selected.pdf_url && (
+                    <>
+                      <div className="flex flex-wrap gap-2">
+                        <a href={selected.pdf_url} target="_blank" rel="noreferrer" className="flex-1">
+                          <Button variant="outline" className="w-full"><FileText className="h-4 w-4 mr-2" />नवीन टॅबमध्ये उघडा</Button>
+                        </a>
+                        <a href={selected.pdf_url} download className="flex-1">
+                          <Button className="w-full"><Download className="h-4 w-4 mr-2" />डाउनलोड करा</Button>
+                        </a>
+                      </div>
+                      <Card className="overflow-hidden">
+                        <CardHeader className="pb-2"><CardTitle className="text-base">PDF पूर्वावलोकन</CardTitle></CardHeader>
+                        <CardContent className="p-0">
+                          <iframe
+                            src={selected.pdf_url}
+                            title={selected.title}
+                            className="w-full h-[500px] border-0"
+                          />
+                        </CardContent>
+                      </Card>
+                    </>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
