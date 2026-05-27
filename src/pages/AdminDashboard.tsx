@@ -50,6 +50,7 @@ const NAV: NavItem[] = [
   { key: "notices",      label: "सूचना",          icon: Bell,         group: "गौरव व सूचना" },
   { key: "donations",    label: "देणगी व खाते",   icon: IndianRupee,  group: "वित्त व दस्तऐवज" },
   { key: "letterpad",    label: "दस्तऐवज",        icon: FileText,     group: "वित्त व दस्तऐवज" },
+  { key: "annual",       label: "वार्षिक अहवाल",  icon: BookMarked,   group: "वित्त व दस्तऐवज" },
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
 
