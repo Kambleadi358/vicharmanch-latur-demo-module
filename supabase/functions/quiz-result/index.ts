@@ -27,11 +27,14 @@ Deno.serve(async (req) => {
       const { data } = await supabase.from("quiz_sessions").select("*").eq("id", session_id).maybeSingle();
       session = data;
     } else if (name && dob) {
+      // Case-insensitive + trim-tolerant name match; latest session wins
       const { data } = await supabase
         .from("quiz_sessions")
         .select("*")
-        .eq("participant_name", name.trim())
+        .ilike("participant_name", name.trim())
         .eq("dob", dob)
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       session = data;
     }
