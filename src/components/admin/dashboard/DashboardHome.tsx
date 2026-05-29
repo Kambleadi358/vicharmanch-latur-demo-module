@@ -14,6 +14,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   CartesianGrid, BarChart, Bar, Legend,
 } from "recharts";
+import ashokStambh from "@/assets/ashok-stambh.png";
 
 type SectionKey =
   | "programs" | "competition" | "participants" | "quiz"
