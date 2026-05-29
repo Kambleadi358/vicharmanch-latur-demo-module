@@ -25,31 +25,44 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const { data: session } = await supabase
+    // Atomic submit lock: flip in_progress → finalizing in a single conditional UPDATE.
+    // If the row was already submitted/auto_submitted (or another concurrent call won the race),
+    // this update affects 0 rows and we return the existing result idempotently.
+    const { data: locked, error: lockErr } = await supabase
       .from("quiz_sessions")
-      .select("*")
+      .update({ status: "finalizing" })
       .eq("id", session_id)
+      .eq("status", "in_progress")
+      .select("*")
       .maybeSingle();
-    if (!session) {
-      return new Response(JSON.stringify({ error: "Session not found" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (lockErr) throw lockErr;
 
-    if (session.status !== "in_progress") {
-      // already submitted — return existing
+    let session = locked;
+    if (!session) {
+      // Either no such session, or someone else already finalized — return the current state.
+      const { data: existing } = await supabase
+        .from("quiz_sessions")
+        .select("*")
+        .eq("id", session_id)
+        .maybeSingle();
+      if (!existing) {
+        return new Response(JSON.stringify({ error: "Session not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(
         JSON.stringify({
           ok: true,
-          score: session.score,
-          total_marks: session.total_marks,
-          total_questions: session.total_questions,
+          score: existing.score,
+          total_marks: existing.total_marks,
+          total_questions: existing.total_questions,
           already_submitted: true,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
       );
     }
+
 
     // Compute totals
     const { data: questions } = await supabase.from("quiz_questions").select("id, marks, correct_answer");
