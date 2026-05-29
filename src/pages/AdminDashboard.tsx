@@ -91,7 +91,7 @@ const Sidebar = ({
 );
 
 // Mobile bottom navigation - 5 most-used
-const BOTTOM_NAV: SectionKey[] = ["dashboard", "donations", "competition", "participants", "notices"];
+const BOTTOM_NAV: SectionKey[] = ["dashboard", "donations", "competition", "notices", "settings"];
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading, signOut } = useAuth();
@@ -295,6 +295,12 @@ const AdminDashboard = () => {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setActive("letterpad")}>
               <FileText className="h-4 w-4 mr-2" /> अहवाल
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("participants")}>
+              <Users className="h-4 w-4 mr-2" /> सहभागी
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("settings")}>
+              <Settings className="h-4 w-4 mr-2" /> सेटिंग्स
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

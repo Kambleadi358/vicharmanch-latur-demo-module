@@ -14,6 +14,7 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   CartesianGrid, BarChart, Bar, Legend,
 } from "recharts";
+import ashokStambh from "@/assets/ashok-stambh.png";
 
 type SectionKey =
   | "programs" | "competition" | "participants" | "quiz"
@@ -253,26 +254,29 @@ const DashboardHome = ({ onNavigate }: Props) => {
         className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary via-[hsl(217,80%,30%)] to-[hsl(220,15%,15%)] text-primary-foreground p-5 sm:p-7 shadow-xl"
       >
         <div className="absolute -right-10 -top-10 w-56 h-56 rounded-full bg-accent/20 blur-3xl" />
-        <div className="absolute right-4 top-4 opacity-10">
-          <svg viewBox="0 0 24 24" className="w-32 h-32 sm:w-40 sm:h-40" fill="currentColor">
-            <circle cx="12" cy="8" r="4" />
-            <path d="M6 22c0-3.3 2.7-6 6-6s6 2.7 6 6" />
-          </svg>
-        </div>
-        <div className="relative">
-          <div className="flex items-center gap-2 text-xs sm:text-sm opacity-90">
+        <img
+          src={ashokStambh}
+          alt="अशोक स्तंभ"
+          loading="lazy"
+          width={160}
+          height={160}
+          className="absolute right-3 top-3 sm:right-6 sm:top-6 w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 object-contain opacity-90 drop-shadow-lg pointer-events-none select-none"
+        />
+        <div className="relative pr-24 sm:pr-32">
+          <div className="flex items-center gap-2 text-xs sm:text-sm opacity-90 flex-wrap">
             <Sparkles className="h-4 w-4" />
             <span>{now.toLocaleDateString("mr-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</span>
             <span className="opacity-60">•</span>
             <span>{now.toLocaleTimeString("mr-IN", { hour: "2-digit", minute: "2-digit" })}</span>
           </div>
           <h1 className="mt-2 text-2xl sm:text-3xl font-bold leading-tight">
-            नमस्कार, प्रशासक 🙏
+            नमस्कार, प्रशासक
           </h1>
           <p className="mt-1 text-sm sm:text-base opacity-90 max-w-2xl">{quote}</p>
           <p className="mt-3 text-[11px] sm:text-xs opacity-70 italic">विचारकेंद्रित, पारदर्शक, सर्वांसाठी</p>
         </div>
       </motion.div>
+
 
       {/* Quick stats */}
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
