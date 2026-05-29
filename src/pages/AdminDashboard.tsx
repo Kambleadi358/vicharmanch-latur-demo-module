@@ -296,6 +296,12 @@ const AdminDashboard = () => {
             <DropdownMenuItem onClick={() => setActive("letterpad")}>
               <FileText className="h-4 w-4 mr-2" /> अहवाल
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("participants")}>
+              <Users className="h-4 w-4 mr-2" /> सहभागी
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("settings")}>
+              <Settings className="h-4 w-4 mr-2" /> सेटिंग्स
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
