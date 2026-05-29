@@ -91,7 +91,7 @@ const Sidebar = ({
 );
 
 // Mobile bottom navigation - 5 most-used
-const BOTTOM_NAV: SectionKey[] = ["dashboard", "donations", "competition", "participants", "notices"];
+const BOTTOM_NAV: SectionKey[] = ["dashboard", "donations", "competition", "notices", "settings"];
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading, signOut } = useAuth();
