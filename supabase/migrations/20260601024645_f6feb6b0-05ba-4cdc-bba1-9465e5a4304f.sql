@@ -1,0 +1,1 @@
+ALTER VIEW public.household_donation_summary SET (security_invoker = true);
