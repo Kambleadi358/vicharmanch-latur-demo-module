@@ -167,6 +167,57 @@ export type Database = {
           },
         ]
       }
+      donation_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          household_id: string
+          id: string
+          payment_date: string
+          payment_mode: Database["public"]["Enums"]["payment_mode"]
+          remark: string | null
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          household_id: string
+          id?: string
+          payment_date?: string
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          remark?: string | null
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          household_id?: string
+          id?: string
+          payment_date?: string
+          payment_mode?: Database["public"]["Enums"]["payment_mode"]
+          remark?: string | null
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "donation_payments_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_donation_summary"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "donation_payments_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_donations: {
         Row: {
           assigned_amount: number
@@ -240,6 +291,135 @@ export type Database = {
           home_name?: string | null
           home_number?: number
           id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      household_members: {
+        Row: {
+          created_at: string
+          education_level: Database["public"]["Enums"]["education_level"]
+          gender: Database["public"]["Enums"]["gender_type"]
+          household_id: string
+          id: string
+          is_head: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          education_level?: Database["public"]["Enums"]["education_level"]
+          gender: Database["public"]["Enums"]["gender_type"]
+          household_id: string
+          id?: string
+          is_head?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          education_level?: Database["public"]["Enums"]["education_level"]
+          gender?: Database["public"]["Enums"]["gender_type"]
+          household_id?: string
+          id?: string
+          is_head?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_donation_summary"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "household_members_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      household_year_assignments: {
+        Row: {
+          assigned_amount: number
+          created_at: string
+          household_id: string
+          id: string
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          assigned_amount?: number
+          created_at?: string
+          household_id: string
+          id?: string
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          assigned_amount?: number
+          created_at?: string
+          household_id?: string
+          id?: string
+          updated_at?: string
+          year?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "household_year_assignments_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "household_donation_summary"
+            referencedColumns: ["household_id"]
+          },
+          {
+            foreignKeyName: "household_year_assignments_household_id_fkey"
+            columns: ["household_id"]
+            isOneToOne: false
+            referencedRelation: "households"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      households: {
+        Row: {
+          active_year: string
+          address: string | null
+          created_at: string
+          head_gender: Database["public"]["Enums"]["gender_type"]
+          head_name: string
+          house_code: number
+          id: string
+          mobile: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active_year?: string
+          address?: string | null
+          created_at?: string
+          head_gender: Database["public"]["Enums"]["gender_type"]
+          head_name: string
+          house_code?: number
+          id?: string
+          mobile: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active_year?: string
+          address?: string | null
+          created_at?: string
+          head_gender?: Database["public"]["Enums"]["gender_type"]
+          head_name?: string
+          house_code?: number
+          id?: string
+          mobile?: string
+          notes?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -975,7 +1155,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      household_donation_summary: {
+        Row: {
+          assigned_amount: number | null
+          head_name: string | null
+          house_code: number | null
+          household_id: string | null
+          mobile: string | null
+          paid_amount: number | null
+          remaining_amount: number | null
+          status: string | null
+          year: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -990,10 +1183,31 @@ export type Database = {
         Returns: string
       }
       next_judge_code: { Args: never; Returns: string }
+      promote_education_levels: { Args: never; Returns: number }
       recalculate_quiz_scores: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "admin" | "user"
+      education_level:
+        | "school_not_eligible"
+        | "balwadi"
+        | "class_1"
+        | "class_2"
+        | "class_3"
+        | "class_4"
+        | "class_5"
+        | "class_6"
+        | "class_7"
+        | "class_8"
+        | "class_9"
+        | "class_10"
+        | "class_11"
+        | "class_12"
+        | "diploma"
+        | "degree"
+        | "other"
+      gender_type: "male" | "female" | "other"
+      payment_mode: "cash" | "online"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1122,6 +1336,27 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      education_level: [
+        "school_not_eligible",
+        "balwadi",
+        "class_1",
+        "class_2",
+        "class_3",
+        "class_4",
+        "class_5",
+        "class_6",
+        "class_7",
+        "class_8",
+        "class_9",
+        "class_10",
+        "class_11",
+        "class_12",
+        "diploma",
+        "degree",
+        "other",
+      ],
+      gender_type: ["male", "female", "other"],
+      payment_mode: ["cash", "online"],
     },
   },
 } as const

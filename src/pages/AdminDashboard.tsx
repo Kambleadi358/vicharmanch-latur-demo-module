@@ -12,6 +12,8 @@ import {
 import QuizManagement from "@/components/admin/QuizManagement";
 import NoticeManagement from "@/components/admin/NoticeManagement";
 import DonationManagement from "@/components/admin/DonationManagement";
+import DonationLedgerManagement from "@/components/admin/DonationLedgerManagement";
+import SamajNondaniManagement from "@/components/admin/SamajNondaniManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
 import CertificateManagement from "@/components/admin/CertificateManagement";
 import AdminSettings from "@/components/admin/AdminSettings";
@@ -24,6 +26,7 @@ import AnnualReportManagement from "@/components/admin/AnnualReportManagement";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
   FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
+  UsersRound, BookText,
 } from "lucide-react";
 
 type SectionKey =
