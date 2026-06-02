@@ -288,6 +288,12 @@ const AdminDashboard = () => {
           <DropdownMenuContent align="end" side="top" className="w-52">
             <DropdownMenuLabel>त्वरित जोडा</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setActive("registry")}>
+              <UsersRound className="h-4 w-4 mr-2" /> समाज नोंदणी
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActive("ledger")}>
+              <BookText className="h-4 w-4 mr-2" /> देणगी खातावही
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setActive("donations")}>
               <IndianRupee className="h-4 w-4 mr-2" /> देणगी
             </DropdownMenuItem>
