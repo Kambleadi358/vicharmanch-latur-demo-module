@@ -15,11 +15,12 @@ import {
   CartesianGrid, BarChart, Bar, Legend,
 } from "recharts";
 import ashokStambh from "@/assets/ashok-stambh.png";
+import CommunityIntelligencePanel from "./CommunityIntelligencePanel";
 
 type SectionKey =
   | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "donations" | "prizes"
-  | "letterpad" | "settings" | "dashboard";
+  | "letterpad" | "settings" | "dashboard" | "registry" | "ledger";
 
 interface Props {
   onNavigate: (k: SectionKey) => void;
@@ -393,70 +394,11 @@ const DashboardHome = ({ onNavigate }: Props) => {
         </Card>
       </div>
 
-      {/* Calendar + activity + notifications */}
+      {/* Community Intelligence Panel + Notifications */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Calendar */}
-        <Card className="lg:col-span-2 border-0 shadow-md">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <CardTitle className="text-base flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-primary" /> संविधान व बौद्ध दिनदर्शिका
-              </CardTitle>
-              <div className="flex items-center gap-1">
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1))}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm font-semibold min-w-[120px] text-center">
-                  {cursor.toLocaleDateString("mr-IN", { month: "long", year: "numeric" })}
-                </span>
-                <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1))}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-1 text-center text-[10px] sm:text-xs text-muted-foreground mb-1 font-semibold">
-              {["र", "सो", "मं", "बु", "गु", "शु", "श"].map((d) => <div key={d} className="py-1">{d}</div>)}
-            </div>
-            <div className="grid grid-cols-7 gap-1">
-              {monthDays.map((c, i) => {
-                const isToday =
-                  c.day === now.getDate() &&
-                  cursor.getMonth() === now.getMonth() &&
-                  cursor.getFullYear() === now.getFullYear();
-                return (
-                  <button
-                    key={i}
-                    disabled={!c.day || c.events.length === 0}
-                    onClick={() => c.events[0] && setSelectedEvent(c.events[0])}
-                    className={`aspect-square flex flex-col items-center justify-center rounded-lg text-xs sm:text-sm relative transition-colors
-                      ${!c.day ? "" : "bg-muted/40 hover:bg-muted"}
-                      ${isToday ? "ring-2 ring-primary font-bold" : ""}
-                      ${c.events.length ? "cursor-pointer font-semibold" : ""}
-                    `}
-                  >
-                    {c.day && <span>{c.day}</span>}
-                    {c.events.length > 0 && (
-                      <div className="absolute bottom-1 flex gap-0.5">
-                        {c.events.slice(0, 3).map((e, idx) => (
-                          <span key={idx} className={`h-1.5 w-1.5 rounded-full ${TYPE_STYLE[e.type].dot}`} />
-                        ))}
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
-              {(["buddhist", "constitution", "reformer"] as const).map((t) => (
-                <span key={t} className={`px-2 py-1 rounded-full inline-flex items-center gap-1.5 ${TYPE_STYLE[t].chip}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${TYPE_STYLE[t].dot}`} /> {TYPE_STYLE[t].label}
-                </span>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-2">
+          <CommunityIntelligencePanel />
+        </div>
 
         {/* Notifications */}
         <Card className="border-0 shadow-md">
