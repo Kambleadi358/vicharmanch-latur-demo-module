@@ -32,7 +32,7 @@ import {
 type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "donations" | "prizes"
-  | "letterpad" | "annual" | "settings";
+  | "letterpad" | "annual" | "settings" | "registry" | "ledger";
 
 
 type NavItem = {
@@ -44,6 +44,8 @@ type NavItem = {
 
 const NAV: NavItem[] = [
   { key: "dashboard",    label: "डॅशबोर्ड",       icon: LayoutDashboard, group: "मुख्यपृष्ठ" },
+  { key: "registry",     label: "समाज नोंदणी",    icon: UsersRound,   group: "समाज" },
+  { key: "ledger",       label: "देणगी खातावही",  icon: BookText,     group: "समाज" },
   { key: "programs",     label: "कार्यक्रम",     icon: CalendarDays, group: "कार्यक्रम व स्पर्धा" },
   { key: "competition",  label: "स्पर्धा मूल्यांकन", icon: Trophy,    group: "कार्यक्रम व स्पर्धा" },
   { key: "participants", label: "सहभागी नोंदणी",  icon: Users,        group: "कार्यक्रम व स्पर्धा" },
@@ -57,7 +59,7 @@ const NAV: NavItem[] = [
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
 
-const groupOrder = ["मुख्यपृष्ठ", "कार्यक्रम व स्पर्धा", "गौरव व सूचना", "वित्त व दस्तऐवज", "इतर"];
+const groupOrder = ["मुख्यपृष्ठ", "समाज", "कार्यक्रम व स्पर्धा", "गौरव व सूचना", "वित्त व दस्तऐवज", "इतर"];
 
 const Sidebar = ({
   active, onSelect,
@@ -114,6 +116,8 @@ const AdminDashboard = () => {
   const renderSection = (k: SectionKey) => {
     switch (k) {
       case "dashboard":    return <DashboardHome onNavigate={setActive} />;
+      case "registry":     return <SamajNondaniManagement />;
+      case "ledger":       return <DonationLedgerManagement />;
       case "programs":     return <ProgramManagement />;
       case "competition":  return <CompetitionManagement />;
       case "participants": return <ParticipantManagement />;
