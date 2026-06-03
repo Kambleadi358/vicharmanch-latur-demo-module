@@ -60,6 +60,10 @@ const Register = () => {
     })();
   }, []);
 
+  const [songFile, setSongFile] = useState<File | null>(null);
+  const selectedComp = comps.find((c) => c.id === competitionId);
+  const isDance = (selectedComp?.name ?? "").includes("नृत्य");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const parsed = schema.safeParse({ name, category, competition_id: competitionId });
@@ -68,17 +72,33 @@ const Register = () => {
       toast({ title: "चूक", description: firstError, variant: "destructive" });
       return;
     }
+    if (songFile && songFile.size > 15 * 1024 * 1024) {
+      toast({ title: "फाइल मोठी आहे", description: "गाण्याची फाइल १५ MB पेक्षा कमी हवी", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
-    const { error } = await supabase.from("participants").insert({
+    const { data: inserted, error } = await supabase.from("participants").insert({
       name: parsed.data.name,
       category: parsed.data.category,
       competition_id: parsed.data.competition_id,
-    });
-    setSubmitting(false);
+    }).select().single();
     if (error) {
+      setSubmitting(false);
       toast({ title: "नोंदणी अयशस्वी", description: error.message, variant: "destructive" });
       return;
     }
+    if (isDance && songFile && inserted) {
+      const ext = songFile.name.split(".").pop() || "mp3";
+      const path = `${inserted.id}.${ext}`;
+      const up = await supabase.storage.from("participation-songs").upload(path, songFile, { upsert: true });
+      if (!up.error) {
+        await supabase.from("participation_songs").insert({
+          participant_id: inserted.id, file_path: path,
+          original_filename: songFile.name, mime: songFile.type, size_bytes: songFile.size,
+        });
+      }
+    }
+    setSubmitting(false);
     setDone(true);
     toast({ title: "नोंदणी यशस्वी!", description: "आपली सहभागी नोंदणी यशस्वीरित्या पूर्ण झाली." });
   };
@@ -165,6 +185,14 @@ const Register = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {isDance && (
+                    <div className="space-y-2 rounded-lg border border-accent/40 bg-accent/5 p-3">
+                      <Label htmlFor="song" className="text-sm">गाण्याची फाइल (MP3/M4A/WAV, १५ MB पर्यंत)</Label>
+                      <Input id="song" type="file" accept="audio/*" onChange={(e) => setSongFile(e.target.files?.[0] ?? null)} />
+                      <p className="text-[10px] text-muted-foreground">नृत्य स्पर्धेसाठी आपले गाणे अपलोड करा. ऐच्छिक.</p>
+                    </div>
+                  )}
 
                   <Button type="submit" className="w-full" disabled={submitting}>
                     {submitting ? (

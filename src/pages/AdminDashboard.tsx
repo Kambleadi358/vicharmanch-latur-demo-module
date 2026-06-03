@@ -16,23 +16,27 @@ import DonationLedgerManagement from "@/components/admin/DonationLedgerManagemen
 import SamajNondaniManagement from "@/components/admin/SamajNondaniManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
 import CertificateManagement from "@/components/admin/CertificateManagement";
-import AdminSettings from "@/components/admin/AdminSettings";
+import SettingsCenter from "@/components/admin/SettingsCenter";
 import LetterpadManagement from "@/components/admin/LetterpadManagement";
 import PrizeDistribution from "@/components/admin/PrizeDistribution";
 import CompetitionManagement from "@/components/admin/CompetitionManagement";
 import ParticipantManagement from "@/components/admin/ParticipantManagement";
 import DashboardHome from "@/components/admin/dashboard/DashboardHome";
 import AnnualReportManagement from "@/components/admin/AnnualReportManagement";
+import SuggestionManagement from "@/components/admin/SuggestionManagement";
+import ActivityLogManagement from "@/components/admin/ActivityLogManagement";
+import ParticipationAnalytics from "@/components/admin/ParticipationAnalytics";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
   FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
-  UsersRound, BookText,
+  UsersRound, BookText, MessageSquare, Activity, BarChart3,
 } from "lucide-react";
 
 type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "donations" | "prizes"
-  | "letterpad" | "annual" | "settings" | "registry" | "ledger";
+  | "letterpad" | "annual" | "settings" | "registry" | "ledger"
+  | "suggestions" | "activity" | "analytics";
 
 
 type NavItem = {
@@ -46,9 +50,11 @@ const NAV: NavItem[] = [
   { key: "dashboard",    label: "डॅशबोर्ड",       icon: LayoutDashboard, group: "मुख्यपृष्ठ" },
   { key: "registry",     label: "समाज नोंदणी",    icon: UsersRound,   group: "समाज" },
   { key: "ledger",       label: "देणगी खातावही",  icon: BookText,     group: "समाज" },
+  { key: "suggestions",  label: "सुझाव पेटी",     icon: MessageSquare, group: "समाज" },
   { key: "programs",     label: "कार्यक्रम",     icon: CalendarDays, group: "कार्यक्रम व स्पर्धा" },
   { key: "competition",  label: "स्पर्धा मूल्यांकन", icon: Trophy,    group: "कार्यक्रम व स्पर्धा" },
   { key: "participants", label: "सहभागी नोंदणी",  icon: Users,        group: "कार्यक्रम व स्पर्धा" },
+  { key: "analytics",    label: "सहभाग विश्लेषण", icon: BarChart3,    group: "कार्यक्रम व स्पर्धा" },
   { key: "quiz",         label: "प्रश्नमंजुषा",   icon: BookOpen,     group: "कार्यक्रम व स्पर्धा" },
   { key: "certificates", label: "प्रमाणपत्र",     icon: Award,        group: "गौरव व सूचना" },
   { key: "prizes",       label: "बक्षीस",         icon: Gift,         group: "गौरव व सूचना" },
@@ -56,6 +62,7 @@ const NAV: NavItem[] = [
   { key: "donations",    label: "देणगी व खाते",   icon: IndianRupee,  group: "वित्त व दस्तऐवज" },
   { key: "letterpad",    label: "दस्तऐवज",        icon: FileText,     group: "वित्त व दस्तऐवज" },
   { key: "annual",       label: "वार्षिक अहवाल",  icon: BookMarked,   group: "वित्त व दस्तऐवज" },
+  { key: "activity",     label: "क्रियाकलाप नोंदी", icon: Activity,   group: "इतर" },
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
 
@@ -118,9 +125,11 @@ const AdminDashboard = () => {
       case "dashboard":    return <DashboardHome onNavigate={setActive} />;
       case "registry":     return <SamajNondaniManagement />;
       case "ledger":       return <DonationLedgerManagement />;
+      case "suggestions":  return <SuggestionManagement />;
       case "programs":     return <ProgramManagement />;
       case "competition":  return <CompetitionManagement />;
       case "participants": return <ParticipantManagement />;
+      case "analytics":    return <ParticipationAnalytics />;
       case "quiz":         return <QuizManagement />;
       case "certificates": return <CertificateManagement />;
       case "notices":      return (
@@ -143,16 +152,9 @@ const AdminDashboard = () => {
       );
       case "prizes":       return <PrizeDistribution />;
       case "letterpad":    return <LetterpadManagement />;
-      case "annual":       return <AnnualReportManagement />
-      case "settings":     return (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5" /> सेटिंग्स</CardTitle>
-            <CardDescription>खाते सेटिंग्स आणि प्रशासकीय क्रिया</CardDescription>
-          </CardHeader>
-          <CardContent><AdminSettings /></CardContent>
-        </Card>
-      );
+      case "annual":       return <AnnualReportManagement />;
+      case "activity":     return <ActivityLogManagement />;
+      case "settings":     return <SettingsCenter />;
     }
   };
 

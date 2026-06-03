@@ -18,22 +18,28 @@ export type Database = {
         Row: {
           account_id: string
           amount: number
+          archived_year: string | null
           created_at: string
           id: string
+          is_archived: boolean
           item: string
         }
         Insert: {
           account_id: string
           amount: number
+          archived_year?: string | null
           created_at?: string
           id?: string
+          is_archived?: boolean
           item: string
         }
         Update: {
           account_id?: string
           amount?: number
+          archived_year?: string | null
           created_at?: string
           id?: string
+          is_archived?: boolean
           item?: string
         }
         Relationships: [
@@ -45,6 +51,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      admin_activity_logs: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_user_id: string | null
+          archived_year: string | null
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip: string | null
+          is_archived: boolean
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          archived_year?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: string | null
+          is_archived?: boolean
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_user_id?: string | null
+          archived_year?: string | null
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip?: string | null
+          is_archived?: boolean
+          user_agent?: string | null
+        }
+        Relationships: []
       }
       annual_reports: {
         Row: {
@@ -85,8 +136,75 @@ export type Database = {
         }
         Relationships: []
       }
+      app_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          section: string
+          updated_at: string
+          value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          section: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          section?: string
+          updated_at?: string
+          value?: Json | null
+        }
+        Relationships: []
+      }
+      archives: {
+        Row: {
+          archive_date: string
+          created_at: string
+          created_by: string | null
+          created_by_email: string | null
+          id: string
+          pdf_path: string | null
+          remark: string
+          summary: Json
+          year: string
+          zip_path: string | null
+        }
+        Insert: {
+          archive_date?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          id?: string
+          pdf_path?: string | null
+          remark: string
+          summary?: Json
+          year: string
+          zip_path?: string | null
+        }
+        Update: {
+          archive_date?: string
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string | null
+          id?: string
+          pdf_path?: string | null
+          remark?: string
+          summary?: Json
+          year?: string
+          zip_path?: string | null
+        }
+        Relationships: []
+      }
       competition_entries: {
         Row: {
+          archived_year: string | null
           category: string
           competition_id: string
           created_at: string
@@ -94,9 +212,11 @@ export type Database = {
           id: string
           image_path: string
           image_url: string
+          is_archived: boolean
           participant_name: string
         }
         Insert: {
+          archived_year?: string | null
           category: string
           competition_id: string
           created_at?: string
@@ -104,9 +224,11 @@ export type Database = {
           id?: string
           image_path: string
           image_url: string
+          is_archived?: boolean
           participant_name: string
         }
         Update: {
+          archived_year?: string | null
           category?: string
           competition_id?: string
           created_at?: string
@@ -114,6 +236,7 @@ export type Database = {
           id?: string
           image_path?: string
           image_url?: string
+          is_archived?: boolean
           participant_name?: string
         }
         Relationships: [
@@ -170,9 +293,11 @@ export type Database = {
       donation_payments: {
         Row: {
           amount: number
+          archived_year: string | null
           created_at: string
           household_id: string
           id: string
+          is_archived: boolean
           payment_date: string
           payment_mode: Database["public"]["Enums"]["payment_mode"]
           remark: string | null
@@ -181,9 +306,11 @@ export type Database = {
         }
         Insert: {
           amount: number
+          archived_year?: string | null
           created_at?: string
           household_id: string
           id?: string
+          is_archived?: boolean
           payment_date?: string
           payment_mode?: Database["public"]["Enums"]["payment_mode"]
           remark?: string | null
@@ -192,9 +319,11 @@ export type Database = {
         }
         Update: {
           amount?: number
+          archived_year?: string | null
           created_at?: string
           household_id?: string
           id?: string
+          is_archived?: boolean
           payment_date?: string
           payment_mode?: Database["public"]["Enums"]["payment_mode"]
           remark?: string | null
@@ -297,31 +426,37 @@ export type Database = {
       }
       household_members: {
         Row: {
+          archived_year: string | null
           created_at: string
           education_level: Database["public"]["Enums"]["education_level"]
           gender: Database["public"]["Enums"]["gender_type"]
           household_id: string
           id: string
+          is_archived: boolean
           is_head: boolean
           name: string
           updated_at: string
         }
         Insert: {
+          archived_year?: string | null
           created_at?: string
           education_level?: Database["public"]["Enums"]["education_level"]
           gender: Database["public"]["Enums"]["gender_type"]
           household_id: string
           id?: string
+          is_archived?: boolean
           is_head?: boolean
           name: string
           updated_at?: string
         }
         Update: {
+          archived_year?: string | null
           created_at?: string
           education_level?: Database["public"]["Enums"]["education_level"]
           gender?: Database["public"]["Enums"]["gender_type"]
           household_id?: string
           id?: string
+          is_archived?: boolean
           is_head?: boolean
           name?: string
           updated_at?: string
@@ -389,11 +524,13 @@ export type Database = {
         Row: {
           active_year: string
           address: string | null
+          archived_year: string | null
           created_at: string
           head_gender: Database["public"]["Enums"]["gender_type"]
           head_name: string
           house_code: number
           id: string
+          is_archived: boolean
           mobile: string
           notes: string | null
           updated_at: string
@@ -401,11 +538,13 @@ export type Database = {
         Insert: {
           active_year?: string
           address?: string | null
+          archived_year?: string | null
           created_at?: string
           head_gender: Database["public"]["Enums"]["gender_type"]
           head_name: string
           house_code?: number
           id?: string
+          is_archived?: boolean
           mobile: string
           notes?: string | null
           updated_at?: string
@@ -413,11 +552,13 @@ export type Database = {
         Update: {
           active_year?: string
           address?: string | null
+          archived_year?: string | null
           created_at?: string
           head_gender?: Database["public"]["Enums"]["gender_type"]
           head_name?: string
           house_code?: number
           id?: string
+          is_archived?: boolean
           mobile?: string
           notes?: string | null
           updated_at?: string
@@ -570,10 +711,12 @@ export type Database = {
       }
       notices: {
         Row: {
+          archived_year: string | null
           created_at: string
           date: string
           description: string | null
           id: string
+          is_archived: boolean
           is_new: boolean | null
           is_visible: boolean | null
           notice_type: string
@@ -581,10 +724,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_year?: string | null
           created_at?: string
           date: string
           description?: string | null
           id?: string
+          is_archived?: boolean
           is_new?: boolean | null
           is_visible?: boolean | null
           notice_type?: string
@@ -592,10 +737,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_year?: string | null
           created_at?: string
           date?: string
           description?: string | null
           id?: string
+          is_archived?: boolean
           is_new?: boolean | null
           is_visible?: boolean | null
           notice_type?: string
@@ -606,54 +753,102 @@ export type Database = {
       }
       participants: {
         Row: {
+          archived_year: string | null
           category: string
           competition_id: string
           created_at: string
           id: string
+          is_archived: boolean
           name: string
           updated_at: string
         }
         Insert: {
+          archived_year?: string | null
           category: string
           competition_id: string
           created_at?: string
           id?: string
+          is_archived?: boolean
           name: string
           updated_at?: string
         }
         Update: {
+          archived_year?: string | null
           category?: string
           competition_id?: string
           created_at?: string
           id?: string
+          is_archived?: boolean
           name?: string
           updated_at?: string
         }
         Relationships: []
       }
+      participation_songs: {
+        Row: {
+          archived_year: string | null
+          created_at: string
+          file_path: string
+          id: string
+          is_archived: boolean
+          mime: string | null
+          original_filename: string
+          participant_id: string
+          size_bytes: number | null
+        }
+        Insert: {
+          archived_year?: string | null
+          created_at?: string
+          file_path: string
+          id?: string
+          is_archived?: boolean
+          mime?: string | null
+          original_filename: string
+          participant_id: string
+          size_bytes?: number | null
+        }
+        Update: {
+          archived_year?: string | null
+          created_at?: string
+          file_path?: string
+          id?: string
+          is_archived?: boolean
+          mime?: string | null
+          original_filename?: string
+          participant_id?: string
+          size_bytes?: number | null
+        }
+        Relationships: []
+      }
       prize_allocations: {
         Row: {
+          archived_year: string | null
           created_at: string
           group_name: string
           id: string
+          is_archived: boolean
           prize_item_id: string
           program_id: string
           rank: string
           winner_name: string
         }
         Insert: {
+          archived_year?: string | null
           created_at?: string
           group_name: string
           id?: string
+          is_archived?: boolean
           prize_item_id: string
           program_id: string
           rank: string
           winner_name: string
         }
         Update: {
+          archived_year?: string | null
           created_at?: string
           group_name?: string
           id?: string
+          is_archived?: boolean
           prize_item_id?: string
           program_id?: string
           rank?: string
@@ -743,10 +938,12 @@ export type Database = {
       }
       programs: {
         Row: {
+          archived_year: string | null
           created_at: string
           date: string
           description: string | null
           id: string
+          is_archived: boolean
           is_visible: boolean | null
           location: string | null
           name: string
@@ -755,10 +952,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_year?: string | null
           created_at?: string
           date: string
           description?: string | null
           id?: string
+          is_archived?: boolean
           is_visible?: boolean | null
           location?: string | null
           name: string
@@ -767,10 +966,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_year?: string | null
           created_at?: string
           date?: string
           description?: string | null
           id?: string
+          is_archived?: boolean
           is_visible?: boolean | null
           location?: string | null
           name?: string
@@ -1005,6 +1206,7 @@ export type Database = {
       }
       quiz_sessions: {
         Row: {
+          archived_year: string | null
           created_at: string
           current_index: number
           dob: string
@@ -1012,6 +1214,7 @@ export type Database = {
           end_time: string | null
           id: string
           ip_address: string | null
+          is_archived: boolean
           option_orders: Json
           participant_name: string
           paste_attempts: number
@@ -1029,6 +1232,7 @@ export type Database = {
           user_agent: string | null
         }
         Insert: {
+          archived_year?: string | null
           created_at?: string
           current_index?: number
           dob: string
@@ -1036,6 +1240,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           ip_address?: string | null
+          is_archived?: boolean
           option_orders?: Json
           participant_name: string
           paste_attempts?: number
@@ -1053,6 +1258,7 @@ export type Database = {
           user_agent?: string | null
         }
         Update: {
+          archived_year?: string | null
           created_at?: string
           current_index?: number
           dob?: string
@@ -1060,6 +1266,7 @@ export type Database = {
           end_time?: string | null
           id?: string
           ip_address?: string | null
+          is_archived?: boolean
           option_orders?: Json
           participant_name?: string
           paste_attempts?: number
@@ -1098,6 +1305,54 @@ export type Database = {
           id?: string
           setting_key?: string
           setting_value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      suggestions: {
+        Row: {
+          admin_response: string | null
+          archived_year: string | null
+          category: Database["public"]["Enums"]["suggestion_category"]
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_archived: boolean
+          message: string
+          mobile: string | null
+          name: string
+          resolved_at: string | null
+          status: Database["public"]["Enums"]["suggestion_status"]
+          updated_at: string
+        }
+        Insert: {
+          admin_response?: string | null
+          archived_year?: string | null
+          category?: Database["public"]["Enums"]["suggestion_category"]
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_archived?: boolean
+          message: string
+          mobile?: string | null
+          name: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["suggestion_status"]
+          updated_at?: string
+        }
+        Update: {
+          admin_response?: string | null
+          archived_year?: string | null
+          category?: Database["public"]["Enums"]["suggestion_category"]
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean
+          is_archived?: boolean
+          message?: string
+          mobile?: string | null
+          name?: string
+          resolved_at?: string | null
+          status?: Database["public"]["Enums"]["suggestion_status"]
           updated_at?: string
         }
         Relationships: []
@@ -1208,6 +1463,8 @@ export type Database = {
         | "other"
       gender_type: "male" | "female" | "other"
       payment_mode: "cash" | "online"
+      suggestion_category: "suggestion" | "complaint" | "feedback" | "other"
+      suggestion_status: "new" | "accepted" | "rejected" | "resolved"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1357,6 +1614,8 @@ export const Constants = {
       ],
       gender_type: ["male", "female", "other"],
       payment_mode: ["cash", "online"],
+      suggestion_category: ["suggestion", "complaint", "feedback", "other"],
+      suggestion_status: ["new", "accepted", "rejected", "resolved"],
     },
   },
 } as const
