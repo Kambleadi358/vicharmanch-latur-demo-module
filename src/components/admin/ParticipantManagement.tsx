@@ -261,9 +261,33 @@ const ParticipantManagement = () => {
                     <TableCell>{p.competition_name ?? "—"}</TableCell>
                     <TableCell className="text-xs">{new Date(p.created_at).toLocaleString("mr-IN")}</TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}>
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
+                      <div className="inline-flex gap-1">
+                        {p.song_path && (
+                          <Button variant="ghost" size="sm" onClick={async () => {
+                            const { data, error } = await supabase.storage.from("participation-songs")
+                              .createSignedUrl(p.song_path!, 60);
+                            if (error || !data) { toast({ title: "त्रुटी", description: error?.message ?? "URL मिळाला नाही", variant: "destructive" }); return; }
+                            try {
+                              const resp = await fetch(data.signedUrl);
+                              const blob = await resp.blob();
+                              const ext = (p.song_path!.split(".").pop() || "mp3").toLowerCase();
+                              const safe = p.name.replace(/[\\/:*?"<>|]/g, "_").trim();
+                              const a = document.createElement("a");
+                              a.href = URL.createObjectURL(blob);
+                              a.download = `${safe}.${ext}`;
+                              document.body.appendChild(a); a.click(); a.remove();
+                              URL.revokeObjectURL(a.href);
+                            } catch (e: any) {
+                              toast({ title: "डाउनलोड त्रुटी", description: e.message, variant: "destructive" });
+                            }
+                          }}>
+                            <Download className="h-4 w-4 text-primary" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(p.id)}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
