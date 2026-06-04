@@ -17,8 +17,9 @@ import {
 import { toast } from "sonner";
 import {
   Search, IndianRupee, Plus, Phone, Trash2, Loader2, MessageCircle,
-  Copy, Printer, History, CheckCircle2, Clock, AlertCircle,
+  Copy, Printer, History, CheckCircle2, Clock, AlertCircle, Users2, MessageSquare,
 } from "lucide-react";
+import { logAdminAction } from "@/lib/activityLog";
 
 type PaymentMode = "cash" | "online";
 const MODE_LABEL: Record<PaymentMode, string> = { cash: "रोख", online: "ऑनलाइन" };
@@ -107,6 +108,26 @@ const DonationLedgerManagement = () => {
     unassigned: { c: "bg-muted text-muted-foreground", icon: AlertCircle, label: "अनिर्धारित" },
   } as const;
 
+  // Bulk-assign same amount to ALL households for the selected year (single click)
+  const [bulkAmount, setBulkAmount] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const doBulkAssign = async () => {
+    const num = Number(bulkAmount);
+    if (!num || num <= 0) { toast.error("वैध रक्कम टाका"); return; }
+    if (!confirm(`सर्व ${households.length} घरांना ${fmtINR(num)} नियुक्त करायचे? (विद्यमान नोंदी अपडेट होतील)`)) return;
+    setBulkBusy(true);
+    const rows = households.map((h) => ({ household_id: h.id, year, assigned_amount: num }));
+    const { error } = await supabase.from("household_year_assignments").upsert(rows, { onConflict: "household_id,year" });
+    setBulkBusy(false);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(`${households.length} घरांना ${fmtINR(num)} नियुक्त केले`);
+      logAdminAction("bulk_assign_donation", "household_year_assignments", undefined, { year, amount: num, count: households.length });
+      setBulkAmount("");
+      loadAll();
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Summary */}
@@ -126,6 +147,21 @@ const DonationLedgerManagement = () => {
           </Card>
         ))}
       </div>
+
+      {/* Bulk assign card */}
+      <Card className="border-0 shadow-md">
+        <CardContent className="p-3 flex items-end gap-2 flex-wrap">
+          <div className="flex-1 min-w-[180px]">
+            <Label className="text-xs flex items-center gap-1.5 mb-1"><Users2 className="h-3 w-3" /> सर्वांना समान देणगी नियुक्त करा ({year})</Label>
+            <Input type="number" inputMode="numeric" min={0} placeholder="उदा. 100"
+              value={bulkAmount} onChange={(e) => setBulkAmount(e.target.value)} className="h-9" />
+          </div>
+          <Button onClick={doBulkAssign} disabled={bulkBusy || !bulkAmount}>
+            {bulkBusy && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} सर्वांना नियुक्त
+          </Button>
+        </CardContent>
+      </Card>
+
 
       <Card className="border-0 shadow-md">
         <CardHeader className="pb-3">
@@ -296,6 +332,7 @@ const LedgerDialog = ({ household, year, allPayments, assignment, onClose, onCha
 
   const msg = status === "completed" ? completedMsg : pendingMsg;
   const waLink = `https://wa.me/91${household.mobile}?text=${encodeURIComponent(msg)}`;
+  const smsLink = `sms:+91${household.mobile}?body=${encodeURIComponent(msg)}`;
 
   const copyMsg = async () => {
     await navigator.clipboard.writeText(msg);
