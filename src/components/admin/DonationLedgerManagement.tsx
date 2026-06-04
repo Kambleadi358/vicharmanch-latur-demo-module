@@ -296,13 +296,21 @@ const LedgerDialog = ({ household, year, allPayments, assignment, onClose, onCha
       .upsert({ household_id: household.id, year, assigned_amount: num }, { onConflict: "household_id,year" });
     setSavingAssigned(false);
     if (error) toast.error("त्रुटी: " + error.message);
-    else { toast.success("नियुक्त रक्कम जतन"); onChanged(); }
+    else {
+      toast.success("नियुक्त रक्कम जतन");
+      logAdminAction("assign_donation", "household_year_assignments", household.id, { year, amount: num });
+      onChanged();
+    }
   };
 
   const deletePayment = async (p: Payment) => {
     const { error } = await supabase.from("donation_payments").delete().eq("id", p.id);
     if (error) toast.error("त्रुटी: " + error.message);
-    else { toast.success("नोंद हटवली"); onChanged(); }
+    else {
+      toast.success("नोंद हटवली");
+      logAdminAction("delete_donation_payment", "donation_payments", p.id, { amount: p.amount, year: p.year });
+      onChanged();
+    }
     setConfirmDel(null);
   };
 
