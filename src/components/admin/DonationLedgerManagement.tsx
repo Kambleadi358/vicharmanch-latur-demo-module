@@ -521,7 +521,11 @@ const AddPaymentDialog = ({ household, year, onClose, onSaved }: {
     });
     setSaving(false);
     if (error) toast.error("त्रुटी: " + error.message);
-    else { toast.success("देणगी नोंद जतन"); onSaved(); }
+    else {
+      toast.success("देणगी नोंद जतन");
+      logAdminAction("create_donation_payment", "donation_payments", undefined, { household_id: household.id, year, amount: num, mode });
+      onSaved();
+    }
   };
 
   return (
