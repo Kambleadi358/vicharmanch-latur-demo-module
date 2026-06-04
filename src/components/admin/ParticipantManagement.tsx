@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Printer, Trash2, Users, Search } from "lucide-react";
+import { Loader2, Printer, Trash2, Users, Search, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const categoryLabels: Record<string, string> = {
@@ -34,6 +34,8 @@ interface Participant {
   competition_id: string;
   created_at: string;
   competition_name?: string;
+  song_path?: string | null;
+  song_original?: string | null;
 }
 
 const ParticipantManagement = () => {
@@ -47,25 +49,28 @@ const ParticipantManagement = () => {
 
   const load = async () => {
     setLoading(true);
-    // participants.competition_id stores either a competitions.id or (legacy) a programs.id.
-    // Load both, build a unified id→name map so all rows display correctly.
-    const [{ data: parts, error: pErr }, { data: comps }, { data: progs }] = await Promise.all([
+    const [{ data: parts, error: pErr }, { data: comps }, { data: progs }, { data: songs }] = await Promise.all([
       supabase
         .from("participants")
         .select("id, name, category, competition_id, created_at")
         .order("created_at", { ascending: false }),
       supabase.from("competitions").select("id, name").order("name"),
       supabase.from("programs").select("id, name").order("name"),
+      supabase.from("participation_songs").select("participant_id, file_path, original_filename"),
     ]);
     if (pErr) {
       toast({ title: "त्रुटी", description: pErr.message, variant: "destructive" });
     }
     const nameMap = new Map<string, string>();
     (progs ?? []).forEach((p: any) => nameMap.set(p.id, p.name));
-    (comps ?? []).forEach((c: any) => nameMap.set(c.id, c.name)); // competitions win
+    (comps ?? []).forEach((c: any) => nameMap.set(c.id, c.name));
+    const songMap = new Map<string, { path: string; original: string | null }>();
+    (songs ?? []).forEach((s: any) => songMap.set(s.participant_id, { path: s.file_path, original: s.original_filename }));
     const merged: Participant[] = (parts ?? []).map((p: any) => ({
       ...p,
       competition_name: nameMap.get(p.competition_id) ?? "—",
+      song_path: songMap.get(p.id)?.path ?? null,
+      song_original: songMap.get(p.id)?.original ?? null,
     }));
     setItems(merged);
     setComps((comps ?? []) as any);
