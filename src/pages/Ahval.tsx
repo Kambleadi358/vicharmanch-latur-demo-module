@@ -18,18 +18,25 @@ interface AnnualReport {
   total_expense: number;
 }
 
+interface ArchiveRow {
+  id: string; year: string; archive_date: string; remark: string;
+  summary: any;
+}
+
 const Ahval = () => {
   const [reports, setReports] = useState<AnnualReport[]>([]);
+  const [archives, setArchives] = useState<ArchiveRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<AnnualReport | null>(null);
 
   useEffect(() => {
     (async () => {
-      const { data } = await supabase
-        .from("annual_reports")
-        .select("*")
-        .order("year", { ascending: false });
-      setReports((data as AnnualReport[]) || []);
+      const [{ data: r }, { data: a }] = await Promise.all([
+        supabase.from("annual_reports").select("*").order("year", { ascending: false }),
+        supabase.from("archives").select("id, year, archive_date, remark, summary").order("year", { ascending: false }),
+      ]);
+      setReports((r as AnnualReport[]) || []);
+      setArchives((a as any) || []);
       setLoading(false);
     })();
   }, []);
@@ -123,6 +130,42 @@ const Ahval = () => {
             </div>
           )}
         </div>
+
+        {/* Historical archives */}
+        {archives.length > 0 && (
+          <div className="max-w-6xl mx-auto px-4 mt-16">
+            <motion.h2 initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+              className="text-2xl md:text-3xl font-bold text-primary mb-6 text-center">
+              ऐतिहासिक अभिलेखागार
+            </motion.h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {archives.map((a) => {
+                const s = a.summary || {};
+                const jama = Number(s.totals?.donations ?? s.donations ?? 0);
+                const kharch = Number(s.totals?.expenses ?? s.expenses ?? 0);
+                const shillak = jama - kharch;
+                return (
+                  <Card key={a.id} className="border-2 border-primary/10 hover:border-primary/40 transition-colors">
+                    <CardContent className="p-5 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">वर्ष {a.year}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(a.archive_date).toLocaleDateString("mr-IN")}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>जमा <b className="block text-emerald-600">₹{jama.toLocaleString("en-IN")}</b></div>
+                        <div>खर्च <b className="block text-rose-600">₹{kharch.toLocaleString("en-IN")}</b></div>
+                        <div>शिल्लक <b className="block text-primary">₹{shillak.toLocaleString("en-IN")}</b></div>
+                        <div>सहभागी <b className="block">{s.totals?.participants ?? s.participants ?? 0}</b></div>
+                        <div>कार्यक्रम <b className="block">{s.totals?.programs ?? s.programs ?? 0}</b></div>
+                      </div>
+                      {a.remark && <p className="text-[11px] text-muted-foreground border-t pt-2 mt-2">{a.remark}</p>}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>

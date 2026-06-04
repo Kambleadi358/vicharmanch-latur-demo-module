@@ -26,6 +26,8 @@ import AnnualReportManagement from "@/components/admin/AnnualReportManagement";
 import SuggestionManagement from "@/components/admin/SuggestionManagement";
 import ActivityLogManagement from "@/components/admin/ActivityLogManagement";
 import ParticipationAnalytics from "@/components/admin/ParticipationAnalytics";
+import FailedSearchManagement from "@/components/admin/FailedSearchManagement";
+import ConnectionStatus from "@/components/ConnectionStatus";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
   FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
@@ -36,7 +38,7 @@ type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "donations" | "prizes"
   | "letterpad" | "annual" | "settings" | "registry" | "ledger"
-  | "suggestions" | "activity" | "analytics";
+  | "suggestions" | "activity" | "analytics" | "missing";
 
 
 type NavItem = {
@@ -51,6 +53,7 @@ const NAV: NavItem[] = [
   { key: "registry",     label: "समाज नोंदणी",    icon: UsersRound,   group: "समाज" },
   { key: "ledger",       label: "देणगी खातावही",  icon: BookText,     group: "समाज" },
   { key: "suggestions",  label: "सुझाव पेटी",     icon: MessageSquare, group: "समाज" },
+  { key: "missing",      label: "उपलब्ध नसलेली नावे", icon: UsersRound, group: "समाज" },
   { key: "programs",     label: "कार्यक्रम",     icon: CalendarDays, group: "कार्यक्रम व स्पर्धा" },
   { key: "competition",  label: "स्पर्धा मूल्यांकन", icon: Trophy,    group: "कार्यक्रम व स्पर्धा" },
   { key: "participants", label: "सहभागी नोंदणी",  icon: Users,        group: "कार्यक्रम व स्पर्धा" },
@@ -155,6 +158,7 @@ const AdminDashboard = () => {
       case "annual":       return <AnnualReportManagement />;
       case "activity":     return <ActivityLogManagement />;
       case "settings":     return <SettingsCenter />;
+      case "missing":      return <FailedSearchManagement />;
     }
   };
 
@@ -203,6 +207,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <ConnectionStatus className="mr-1 hidden sm:inline-flex" />
             <Link to="/">
               <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10">
                 <Home className="h-4 w-4" />

@@ -347,6 +347,41 @@ export type Database = {
           },
         ]
       }
+      failed_participation_searches: {
+        Row: {
+          competition_id: string | null
+          competition_name: string | null
+          created_at: string
+          entered_name: string
+          id: string
+          user_agent: string | null
+        }
+        Insert: {
+          competition_id?: string | null
+          competition_name?: string | null
+          created_at?: string
+          entered_name: string
+          id?: string
+          user_agent?: string | null
+        }
+        Update: {
+          competition_id?: string | null
+          competition_name?: string | null
+          created_at?: string
+          entered_name?: string
+          id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "failed_participation_searches_competition_id_fkey"
+            columns: ["competition_id"]
+            isOneToOne: false
+            referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       home_donations: {
         Row: {
           assigned_amount: number
@@ -757,6 +792,7 @@ export type Database = {
           category: string
           competition_id: string
           created_at: string
+          household_member_id: string | null
           id: string
           is_archived: boolean
           name: string
@@ -767,6 +803,7 @@ export type Database = {
           category: string
           competition_id: string
           created_at?: string
+          household_member_id?: string | null
           id?: string
           is_archived?: boolean
           name: string
@@ -777,12 +814,21 @@ export type Database = {
           category?: string
           competition_id?: string
           created_at?: string
+          household_member_id?: string | null
           id?: string
           is_archived?: boolean
           name?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "participants_household_member_id_fkey"
+            columns: ["household_member_id"]
+            isOneToOne: false
+            referencedRelation: "household_members"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       participation_songs: {
         Row: {
