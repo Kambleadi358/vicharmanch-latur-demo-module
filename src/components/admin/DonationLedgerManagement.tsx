@@ -440,9 +440,14 @@ const LedgerDialog = ({ household, year, allPayments, assignment, onClose, onCha
                 <Label className="text-xs font-semibold">
                   {status === "completed" ? "धन्यवाद संदेश" : "स्मरण संदेश"}
                 </Label>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                   <Button size="sm" variant="outline" onClick={copyMsg}>
                     <Copy className="h-3.5 w-3.5 mr-1" /> कॉपी
+                  </Button>
+                  <Button size="sm" asChild variant="outline">
+                    <a href={smsLink}>
+                      <MessageSquare className="h-3.5 w-3.5 mr-1" /> SMS
+                    </a>
                   </Button>
                   <Button size="sm" asChild className="bg-green-600 hover:bg-green-700 text-white">
                     <a href={waLink} target="_blank" rel="noopener noreferrer">
