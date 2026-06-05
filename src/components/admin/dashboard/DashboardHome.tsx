@@ -19,7 +19,7 @@ import CommunityIntelligencePanel from "./CommunityIntelligencePanel";
 
 type SectionKey =
   | "programs" | "competition" | "participants" | "quiz"
-  | "certificates" | "notices" | "donations" | "prizes"
+  | "certificates" | "notices" | "prizes"
   | "letterpad" | "settings" | "dashboard" | "registry" | "ledger";
 
 interface Props {
@@ -226,8 +226,8 @@ const DashboardHome = ({ onNavigate }: Props) => {
   ];
 
   const quickActions: { label: string; icon: any; section: SectionKey; tint: string }[] = [
-    { label: "देणगी जोडा",  icon: IndianRupee, section: "donations",    tint: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
-    { label: "खर्च जोडा",   icon: TrendingDown,section: "donations",    tint: "bg-rose-500/10 text-rose-700 dark:text-rose-300" },
+    { label: "देणगी जोडा",  icon: IndianRupee, section: "ledger",       tint: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300" },
+    { label: "खर्च जोडा",   icon: TrendingDown,section: "ledger",       tint: "bg-rose-500/10 text-rose-700 dark:text-rose-300" },
     { label: "स्पर्धा",     icon: Trophy,      section: "competition",  tint: "bg-violet-500/10 text-violet-700 dark:text-violet-300" },
     { label: "अहवाल",       icon: FileText,    section: "letterpad",    tint: "bg-blue-500/10 text-blue-700 dark:text-blue-300" },
     { label: "निकाल",       icon: Award,       section: "competition",  tint: "bg-amber-500/10 text-amber-700 dark:text-amber-300" },

@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import QuizManagement from "@/components/admin/QuizManagement";
 import NoticeManagement from "@/components/admin/NoticeManagement";
-import DonationManagement from "@/components/admin/DonationManagement";
-import DonationLedgerManagement from "@/components/admin/DonationLedgerManagement";
+import LedgerWorkspace from "@/components/admin/LedgerWorkspace";
+import VoteResults from "@/components/admin/VoteResults";
 import SamajNondaniManagement from "@/components/admin/SamajNondaniManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
 import CertificateManagement from "@/components/admin/CertificateManagement";
@@ -36,9 +36,9 @@ import {
 
 type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
-  | "certificates" | "notices" | "donations" | "prizes"
+  | "certificates" | "notices" | "prizes"
   | "letterpad" | "annual" | "settings" | "registry" | "ledger"
-  | "suggestions" | "activity" | "analytics" | "missing";
+  | "suggestions" | "activity" | "analytics" | "missing" | "votes";
 
 
 type NavItem = {
@@ -57,12 +57,12 @@ const NAV: NavItem[] = [
   { key: "programs",     label: "कार्यक्रम",     icon: CalendarDays, group: "कार्यक्रम व स्पर्धा" },
   { key: "competition",  label: "स्पर्धा मूल्यांकन", icon: Trophy,    group: "कार्यक्रम व स्पर्धा" },
   { key: "participants", label: "सहभागी नोंदणी",  icon: Users,        group: "कार्यक्रम व स्पर्धा" },
+  { key: "votes",        label: "मतदान निकाल",    icon: BarChart3,    group: "कार्यक्रम व स्पर्धा" },
   { key: "analytics",    label: "सहभाग विश्लेषण", icon: BarChart3,    group: "कार्यक्रम व स्पर्धा" },
   { key: "quiz",         label: "प्रश्नमंजुषा",   icon: BookOpen,     group: "कार्यक्रम व स्पर्धा" },
   { key: "certificates", label: "प्रमाणपत्र",     icon: Award,        group: "गौरव व सूचना" },
   { key: "prizes",       label: "बक्षीस",         icon: Gift,         group: "गौरव व सूचना" },
   { key: "notices",      label: "सूचना",          icon: Bell,         group: "गौरव व सूचना" },
-  { key: "donations",    label: "देणगी व खाते",   icon: IndianRupee,  group: "वित्त व दस्तऐवज" },
   { key: "letterpad",    label: "दस्तऐवज",        icon: FileText,     group: "वित्त व दस्तऐवज" },
   { key: "annual",       label: "वार्षिक अहवाल",  icon: BookMarked,   group: "वित्त व दस्तऐवज" },
   { key: "activity",     label: "क्रियाकलाप नोंदी", icon: Activity,   group: "इतर" },
@@ -106,7 +106,7 @@ const Sidebar = ({
 );
 
 // Mobile bottom navigation - 5 most-used
-const BOTTOM_NAV: SectionKey[] = ["dashboard", "donations", "competition", "notices", "settings"];
+const BOTTOM_NAV: SectionKey[] = ["dashboard", "ledger", "competition", "notices", "settings"];
 
 const AdminDashboard = () => {
   const { user, isAdmin, isLoading, signOut } = useAuth();
@@ -127,11 +127,12 @@ const AdminDashboard = () => {
     switch (k) {
       case "dashboard":    return <DashboardHome onNavigate={setActive} />;
       case "registry":     return <SamajNondaniManagement />;
-      case "ledger":       return <DonationLedgerManagement />;
+      case "ledger":       return <LedgerWorkspace />;
       case "suggestions":  return <SuggestionManagement />;
       case "programs":     return <ProgramManagement />;
       case "competition":  return <CompetitionManagement />;
       case "participants": return <ParticipantManagement />;
+      case "votes":        return <VoteResults />;
       case "analytics":    return <ParticipationAnalytics />;
       case "quiz":         return <QuizManagement />;
       case "certificates": return <CertificateManagement />;
@@ -142,15 +143,6 @@ const AdminDashboard = () => {
             <CardDescription>मुख्यपृष्ठावरील सूचना व्यवस्थापित करा</CardDescription>
           </CardHeader>
           <CardContent><NoticeManagement /></CardContent>
-        </Card>
-      );
-      case "donations":    return (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2"><IndianRupee className="h-5 w-5" /> देणगी व खाते व्यवस्थापन</CardTitle>
-            <CardDescription>घरमालकांकडून देणगी जमा करा आणि खर्च व्यवस्थापित करा</CardDescription>
-          </CardHeader>
-          <CardContent><DonationManagement /></CardContent>
         </Card>
       );
       case "prizes":       return <PrizeDistribution />;
@@ -300,9 +292,6 @@ const AdminDashboard = () => {
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setActive("ledger")}>
               <BookText className="h-4 w-4 mr-2" /> देणगी खातावही
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setActive("donations")}>
-              <IndianRupee className="h-4 w-4 mr-2" /> देणगी
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setActive("programs")}>
               <CalendarDays className="h-4 w-4 mr-2" /> कार्यक्रम
