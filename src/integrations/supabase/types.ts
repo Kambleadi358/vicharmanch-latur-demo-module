@@ -744,6 +744,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ledger_expenses: {
+        Row: {
+          amount: number
+          archived_year: string | null
+          created_at: string
+          id: string
+          is_archived: boolean
+          title: string
+          updated_at: string
+          year: string
+        }
+        Insert: {
+          amount?: number
+          archived_year?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          title: string
+          updated_at?: string
+          year: string
+        }
+        Update: {
+          amount?: number
+          archived_year?: string | null
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          title?: string
+          updated_at?: string
+          year?: string
+        }
+        Relationships: []
+      }
       notices: {
         Row: {
           archived_year: string | null
