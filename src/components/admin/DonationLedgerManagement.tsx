@@ -209,6 +209,8 @@ const DonationLedgerManagement = () => {
   function escapeHtml(s: string) {
     return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
   }
+
+  return (
     <div className="space-y-4">
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
