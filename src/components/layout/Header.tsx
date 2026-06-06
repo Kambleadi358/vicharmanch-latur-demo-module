@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Instagram, Shield, Gavel, UserPlus } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 import { useAuth } from "@/contexts/AuthContext";
+import ConnectionStatus from "@/components/ConnectionStatus";
 
 const navLinks = [
   { path: "/", label: "मुख्य पृष्ठ" },

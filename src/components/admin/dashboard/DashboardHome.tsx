@@ -84,20 +84,22 @@ const DashboardHome = ({ onNavigate }: Props) => {
 
   useEffect(() => {
     (async () => {
-      // Donations
-      const { data: donations } = await supabase
-        .from("home_donations")
-        .select("assigned_amount, paid_amount, payment_date, homes(name)")
-        .order("created_at", { ascending: false });
-
-      const totalAssigned = (donations || []).reduce((s: number, r: any) => s + Number(r.assigned_amount || 0), 0);
-      const totalPaid = (donations || []).reduce((s: number, r: any) => s + Number(r.paid_amount || 0), 0);
+      // Donations (new ledger)
+      const [{ data: assigns }, { data: pays }, { data: hh }] = await Promise.all([
+        supabase.from("household_year_assignments").select("household_id, year, assigned_amount"),
+        supabase.from("donation_payments").select("household_id, year, amount, payment_date, created_at"),
+        supabase.from("households").select("id, head_name"),
+      ]);
+      const hhMap = new Map<string, string>();
+      (hh || []).forEach((h: any) => hhMap.set(h.id, h.head_name));
+      const totalAssigned = (assigns || []).reduce((s: number, r: any) => s + Number(r.assigned_amount || 0), 0);
+      const totalPaid = (pays || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
       const pending = Math.max(0, totalAssigned - totalPaid);
 
-      // Expenses
+      // Expenses (new ledger)
       const { data: expenses } = await supabase
-        .from("account_expenses")
-        .select("amount, item, created_at")
+        .from("ledger_expenses")
+        .select("amount, title, created_at")
         .order("created_at", { ascending: false });
       const totalExp = (expenses || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
 
@@ -129,11 +131,12 @@ const DashboardHome = ({ onNavigate }: Props) => {
           donation: 0, expense: 0,
         });
       }
-      (donations || []).forEach((r: any) => {
-        if (!r.payment_date) return;
-        const k = new Date(r.payment_date).toISOString().slice(0, 10);
+      (pays || []).forEach((r: any) => {
+        const src = r.payment_date || r.created_at;
+        if (!src) return;
+        const k = new Date(src).toISOString().slice(0, 10);
         const row = days.find((x) => x.key === k);
-        if (row) row.donation += Number(r.paid_amount || 0);
+        if (row) row.donation += Number(r.amount || 0);
       });
       (expenses || []).forEach((r: any) => {
         const k = new Date(r.created_at).toISOString().slice(0, 10);
@@ -159,16 +162,18 @@ const DashboardHome = ({ onNavigate }: Props) => {
 
       // Recent activity
       const recentRows: any[] = [];
-      (donations || []).slice(0, 3).forEach((r: any) => {
-        if (Number(r.paid_amount) > 0) {
+      (pays || [])
+        .slice()
+        .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 3)
+        .forEach((r: any) => {
           recentRows.push({
             icon: IndianRupee,
-            title: `देणगी — ${r.homes?.name || "घर"}`,
-            meta: fmtINR(Number(r.paid_amount)),
-            time: r.payment_date ? new Date(r.payment_date).toLocaleDateString("mr-IN") : "",
+            title: `देणगी — ${hhMap.get(r.household_id) || "घर"}`,
+            meta: fmtINR(Number(r.amount)),
+            time: r.payment_date ? new Date(r.payment_date).toLocaleDateString("mr-IN") : new Date(r.created_at).toLocaleDateString("mr-IN"),
           });
-        }
-      });
+        });
       (parts || []).slice(0, 3).forEach((p: any) => {
         recentRows.push({
           icon: Users,
@@ -180,7 +185,7 @@ const DashboardHome = ({ onNavigate }: Props) => {
       (expenses || []).slice(0, 2).forEach((r: any) => {
         recentRows.push({
           icon: TrendingDown,
-          title: `खर्च — ${r.item}`,
+          title: `खर्च — ${r.title}`,
           meta: fmtINR(Number(r.amount)),
           time: new Date(r.created_at).toLocaleDateString("mr-IN"),
         });
