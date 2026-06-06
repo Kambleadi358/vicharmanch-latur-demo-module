@@ -268,6 +268,9 @@ const DonationLedgerManagement = () => {
                   <SelectItem value="completed">पूर्ण</SelectItem>
                 </SelectContent>
               </Select>
+              <Button variant="outline" size="sm" onClick={exportPDF} className="h-9">
+                <FileDown className="h-4 w-4 mr-1" /> PDF अहवाल
+              </Button>
             </div>
           </div>
           <div className="relative mt-2">
