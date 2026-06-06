@@ -72,7 +72,8 @@ const Header = () => {
           </nav>
 
           {/* Social & Admin & Mobile Toggle */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <ConnectionStatus compact className="hidden sm:inline-flex" />
             <a
               href="https://instagram.com/dr.ambedkar_vicharmanch"
               target="_blank"
