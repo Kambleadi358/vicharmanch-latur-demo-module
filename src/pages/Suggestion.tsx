@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Home, MessageSquarePlus, Loader2, CheckCircle2 } from "lucide-react";
 import { z } from "zod";
@@ -17,52 +16,30 @@ const schema = z.object({
   mobile: z.string().trim().max(15).optional().or(z.literal("")),
   category: z.enum(["suggestion", "complaint", "feedback", "other"]),
   message: z.string().trim().min(5, "संदेश किमान ५ अक्षरांचा हवा").max(2000),
-  is_anonymous: z.boolean(),
 });
-
-const CAT_LABEL = {
-  suggestion: "सुझाव",
-  complaint: "तक्रार",
-  feedback: "अभिप्राय",
-  other: "इतर",
-};
 
 const Suggestion = () => {
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [category, setCategory] = useState<"suggestion" | "complaint" | "feedback" | "other">("suggestion");
   const [message, setMessage] = useState("");
-  const [anon, setAnon] = useState(false);
-  const [allowAnon, setAllowAnon] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
-    supabase
-      .from("app_settings")
-      .select("value")
-      .eq("section", "event")
-      .eq("key", "suggestions_anonymous_enabled")
-      .maybeSingle()
-      .then(({ data }) => {
-        if (data?.value === false) setAllowAnon(false);
-      });
-  }, []);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = schema.safeParse({ name, mobile, category, message, is_anonymous: anon });
+    const parsed = schema.safeParse({ name, mobile, category, message });
     if (!parsed.success) {
       toast.error(parsed.error.issues[0]?.message ?? "वैध माहिती भरा");
       return;
     }
     setSubmitting(true);
     const { error } = await supabase.from("suggestions").insert({
-      name: anon ? "अनामिक" : parsed.data.name,
-      mobile: anon ? null : (parsed.data.mobile || null),
+      name: parsed.data.name,
+      mobile: parsed.data.mobile || null,
       category: parsed.data.category,
       message: parsed.data.message,
-      is_anonymous: anon,
+      is_anonymous: false,
     });
     setSubmitting(false);
     if (error) {
@@ -98,7 +75,7 @@ const Suggestion = () => {
               <p className="text-sm text-muted-foreground">
                 आपला संदेश विचारमंचापर्यंत पोचला आहे. आम्ही लवकरच त्यावर विचार करू.
               </p>
-              <Button onClick={() => { setSubmitted(false); setName(""); setMobile(""); setMessage(""); setCategory("suggestion"); setAnon(false); }}>
+              <Button onClick={() => { setSubmitted(false); setName(""); setMobile(""); setMessage(""); setCategory("suggestion"); }}>
                 आणखी एक संदेश पाठवा
               </Button>
             </CardContent>
@@ -115,12 +92,12 @@ const Suggestion = () => {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-xs">नाव {!anon && "*"}</Label>
-                    <Input value={name} onChange={(e) => setName(e.target.value)} disabled={anon} placeholder="आपले नाव" maxLength={100} />
+                    <Label className="text-xs">नाव *</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="आपले नाव" maxLength={100} />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs">मोबाईल (वैकल्पिक)</Label>
-                    <Input value={mobile} onChange={(e) => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))} disabled={anon} placeholder="९८XXXXXXXX" inputMode="numeric" />
+                    <Input value={mobile} onChange={(e) => setMobile(e.target.value.replace(/\D/g, "").slice(0, 10))} placeholder="९८XXXXXXXX" inputMode="numeric" />
                   </div>
                 </div>
 
@@ -142,16 +119,6 @@ const Suggestion = () => {
                   <Textarea rows={5} maxLength={2000} value={message} onChange={(e) => setMessage(e.target.value)} placeholder="आपला संदेश सविस्तर लिहा..." />
                   <p className="text-[10px] text-muted-foreground text-right">{message.length}/2000</p>
                 </div>
-
-                {allowAnon && (
-                  <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/30">
-                    <div>
-                      <Label className="text-xs font-semibold">अनामिक पाठवा</Label>
-                      <p className="text-[10px] text-muted-foreground">आपले नाव व मोबाईल लपवले जातील</p>
-                    </div>
-                    <Switch checked={anon} onCheckedChange={setAnon} />
-                  </div>
-                )}
 
                 <Button type="submit" disabled={submitting} className="w-full" size="lg">
                   {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} पाठवा
