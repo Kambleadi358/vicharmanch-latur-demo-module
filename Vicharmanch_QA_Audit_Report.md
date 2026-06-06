@@ -32,3 +32,16 @@ _Last updated: 2026-06-04_
 
 ## Capacity Estimate
 - 500 concurrent public viewers, 50 concurrent admin writes — comfortable on current Supabase tier (free DB pool, Edge cached).
+
+## 2026-06-06 Patch
+
+| Fix | Status |
+|---|---|
+| Public vote visibility on `/spardha/:id` (per-category ranked table + total points) | ✅ |
+| Vote uniqueness now scoped to `(competition, category)` — voters can vote in multiple competitions & multiple categories, once per pair | ✅ |
+| Suggestion box: anonymous mode removed (UI + admin view) | ✅ |
+| Dashboard home stats refactored to read from `donation_payments` + `household_year_assignments` + `ledger_expenses` (no more legacy `home_donations`/`account_expenses`) | ✅ |
+| Household delete: `donation_payments` FK changed to `ON DELETE CASCADE` (members + assignments already cascaded) | ✅ |
+| Donation Ledger PDF report: full printable A4, community header + logo, totals + per-household table, status colors | ✅ |
+| Connection Health chip added to public `Header` (always visible on every public page; sm+ screens) | ✅ |
+

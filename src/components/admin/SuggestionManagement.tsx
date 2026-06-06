@@ -119,12 +119,12 @@ const SuggestionManagement = () => {
               {filtered.map((s) => (
                 <button key={s.id} onClick={() => setDetail(s)} className="w-full text-left py-3 hover:bg-muted/40 -mx-2 px-2 rounded-lg transition-colors">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
-                    <span className="font-semibold text-sm">{s.is_anonymous ? "🕶 अनामिक" : s.name}</span>
+                    <span className="font-semibold text-sm">{s.name}</span>
                     <Badge variant="outline" className="text-[10px]">{CAT_LABEL[s.category]}</Badge>
                     <span className={`text-[10px] px-2 py-0.5 rounded-full ${STATUS_STYLE[s.status]}`}>{STATUS_LABEL[s.status]}</span>
                     <span className="text-[10px] text-muted-foreground ml-auto">{new Date(s.created_at).toLocaleDateString("mr-IN")}</span>
                   </div>
-                  {!s.is_anonymous && s.mobile && (
+                  {s.mobile && (
                     <p className="text-[11px] text-muted-foreground inline-flex items-center gap-1"><Phone className="h-3 w-3" />{s.mobile}</p>
                   )}
                   <p className="text-sm text-foreground/90 line-clamp-2 mt-1">{s.message}</p>
@@ -162,7 +162,7 @@ const SuggestionDetailDialog = ({ suggestion, onClose, onChanged }: {
     onClose();
   };
 
-  const draftMsg = `नमस्कार ${suggestion.is_anonymous ? "" : suggestion.name},\n\nआपण पाठवलेल्या संदेशाबद्दल धन्यवाद. ${response || "आम्ही आपल्या सूचनेवर विचार केला असून योग्य कार्यवाही करण्यात आली आहे."}\n\nधन्यवाद.\nभारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच\nबौद्ध नगर, लातूर`;
+  const draftMsg = `नमस्कार ${suggestion.name},\n\nआपण पाठवलेल्या संदेशाबद्दल धन्यवाद. ${response || "आम्ही आपल्या सूचनेवर विचार केला असून योग्य कार्यवाही करण्यात आली आहे."}\n\nधन्यवाद.\nभारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच\nबौद्ध नगर, लातूर`;
   const waLink = suggestion.mobile ? `https://wa.me/91${suggestion.mobile}?text=${encodeURIComponent(draftMsg)}` : null;
 
   return (
@@ -175,9 +175,9 @@ const SuggestionDetailDialog = ({ suggestion, onClose, onChanged }: {
         </DialogHeader>
         <div className="space-y-3 text-sm">
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div><b>पाठवणारा:</b> {suggestion.is_anonymous ? "अनामिक" : suggestion.name}</div>
+            <div><b>पाठवणारा:</b> {suggestion.name}</div>
             <div><b>प्रकार:</b> {CAT_LABEL[suggestion.category]}</div>
-            {!suggestion.is_anonymous && suggestion.mobile && <div className="col-span-2"><b>मोबाईल:</b> {suggestion.mobile}</div>}
+            {suggestion.mobile && <div className="col-span-2"><b>मोबाईल:</b> {suggestion.mobile}</div>}
             <div className="col-span-2"><b>दिनांक:</b> {new Date(suggestion.created_at).toLocaleString("mr-IN")}</div>
           </div>
           <div className="rounded-lg border bg-muted/30 p-3 whitespace-pre-wrap">{suggestion.message}</div>

@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Instagram, Shield, Gavel, UserPlus } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 import { useAuth } from "@/contexts/AuthContext";
+import ConnectionStatus from "@/components/ConnectionStatus";
 
 const navLinks = [
   { path: "/", label: "मुख्य पृष्ठ" },
@@ -71,7 +72,8 @@ const Header = () => {
           </nav>
 
           {/* Social & Admin & Mobile Toggle */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <ConnectionStatus compact className="hidden sm:inline-flex" />
             <a
               href="https://instagram.com/dr.ambedkar_vicharmanch"
               target="_blank"
