@@ -48,6 +48,7 @@ const SpardhaDetail = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<"chota" | "motha" | "khula">("chota");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [votes, setVotes] = useState<any[]>([]);
 
   // Voting state per category
   const [voteOpen, setVoteOpen] = useState(false);
@@ -74,6 +75,11 @@ const SpardhaDetail = () => {
         .eq("competition_id", id)
         .order("entry_code");
       setEntries(e ?? []);
+      const { data: v } = await supabase
+        .from("public_votes")
+        .select("category, first_entry_id, second_entry_id, third_entry_id")
+        .eq("competition_id", id);
+      setVotes(v ?? []);
       setLoading(false);
     })();
   }, [id]);
