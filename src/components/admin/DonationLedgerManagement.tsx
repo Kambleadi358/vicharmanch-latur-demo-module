@@ -129,7 +129,86 @@ const DonationLedgerManagement = () => {
     }
   };
 
-  return (
+  const exportPDF = () => {
+    const rows = enriched
+      .slice()
+      .sort((a, b) => a.house_code - b.house_code);
+    const tg = totals;
+    const today = new Date().toLocaleDateString("mr-IN", { day: "numeric", month: "long", year: "numeric" });
+    const html = `<!doctype html><html lang="mr"><head><meta charset="utf-8"><title>देणगी खातावही ${year}</title>
+<style>
+  @page { size: A4; margin: 12mm; }
+  *{box-sizing:border-box}
+  body{font-family:'Noto Sans Devanagari','Tiro Devanagari Marathi',system-ui,sans-serif;color:#0f172a;margin:0;padding:0}
+  .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px double #0c2340;padding-bottom:10px;margin-bottom:12px}
+  .hdr img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #c9a84c}
+  .hdr h1{margin:0;font-size:16px;color:#0c2340}
+  .hdr h2{margin:2px 0 0;font-size:12px;color:#64748b;font-weight:500}
+  .meta{display:flex;justify-content:space-between;margin:8px 0 12px;font-size:11px;color:#475569}
+  .totals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+  .t{border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px}
+  .t b{display:block;font-size:10px;color:#64748b;font-weight:500}
+  .t span{font-size:14px;font-weight:700;color:#0c2340}
+  table{width:100%;border-collapse:collapse;font-size:10.5px}
+  th,td{border:1px solid #cbd5e1;padding:5px 6px;text-align:left}
+  th{background:#0c2340;color:#fff;font-weight:600}
+  tr:nth-child(even) td{background:#f8fafc}
+  .right{text-align:right}
+  .ok{color:#059669;font-weight:600}
+  .warn{color:#d97706;font-weight:600}
+  .pend{color:#dc2626;font-weight:600}
+  .ft{margin-top:14px;border-top:1px solid #cbd5e1;padding-top:8px;font-size:10px;color:#64748b;text-align:center}
+  @media print { button { display:none } }
+</style></head><body>
+  <div class="hdr">
+    <img src="${logo}" alt="logo"/>
+    <div>
+      <h1>भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</h1>
+      <h2>बौद्ध नगर, लातूर · समता | स्वातंत्र्य | बंधुता | न्याय</h2>
+    </div>
+  </div>
+  <div class="meta">
+    <div><b>अहवाल:</b> देणगी खातावही — वर्ष ${year}</div>
+    <div><b>दिनांक:</b> ${today}</div>
+  </div>
+  <div class="totals">
+    <div class="t"><b>एकूण घरे</b><span>${enriched.length}</span></div>
+    <div class="t"><b>नियुक्त रक्कम</b><span>${fmtINR(tg.assigned)}</span></div>
+    <div class="t"><b>जमा रक्कम</b><span>${fmtINR(tg.paid)}</span></div>
+    <div class="t"><b>शिल्लक रक्कम</b><span>${fmtINR(tg.remaining)}</span></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>घर क्र.</th><th>नाव</th><th>मोबाईल</th>
+      <th class="right">नियुक्त</th><th class="right">जमा</th><th class="right">शिल्लक</th><th>स्थिती</th>
+    </tr></thead>
+    <tbody>
+      ${rows.map((h) => `<tr>
+        <td>#${h.house_code}</td>
+        <td>${escapeHtml(h.head_name)}</td>
+        <td>${escapeHtml(h.mobile)}</td>
+        <td class="right">${fmtINR(h.assigned)}</td>
+        <td class="right">${fmtINR(h.paid)}</td>
+        <td class="right">${fmtINR(h.remaining)}</td>
+        <td class="${h.status === "completed" ? "ok" : h.status === "partial" ? "warn" : "pend"}">${
+          h.status === "completed" ? "पूर्ण" : h.status === "partial" ? "अर्धवट" : h.status === "pending" ? "प्रलंबित" : "अनिर्धारित"
+        }</td>
+      </tr>`).join("")}
+    </tbody>
+  </table>
+  <div class="ft">हा अहवाल विचारमंच प्रणालीद्वारे स्वयं-निर्मित — पारदर्शकता, सातत्य, ऐतिहासिक जतन</div>
+  <script>window.onload=()=>{setTimeout(()=>window.print(),300)}</script>
+</body></html>`;
+    const w = window.open("", "_blank");
+    if (!w) { toast.error("Pop-up blocked"); return; }
+    w.document.open(); w.document.write(html); w.document.close();
+    logAdminAction("export_donation_ledger_pdf", "donation_payments", undefined, { year, rows: rows.length });
+  };
+
+  // basic HTML escaper
+  function escapeHtml(s: string) {
+    return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+  }
     <div className="space-y-4">
       {/* Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
