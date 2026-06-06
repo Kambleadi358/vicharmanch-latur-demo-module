@@ -17,9 +17,10 @@ import {
 import { toast } from "sonner";
 import {
   Search, IndianRupee, Plus, Phone, Trash2, Loader2, MessageCircle,
-  Copy, Printer, History, CheckCircle2, Clock, AlertCircle, Users2, MessageSquare,
+  Copy, Printer, History, CheckCircle2, Clock, AlertCircle, Users2, MessageSquare, FileDown,
 } from "lucide-react";
 import { logAdminAction } from "@/lib/activityLog";
+import logo from "@/assets/vicharmanch-logo.jpeg";
 
 type PaymentMode = "cash" | "online";
 const MODE_LABEL: Record<PaymentMode, string> = { cash: "रोख", online: "ऑनलाइन" };
