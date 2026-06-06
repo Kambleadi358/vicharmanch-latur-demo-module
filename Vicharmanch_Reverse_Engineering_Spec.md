@@ -70,3 +70,20 @@ _Last updated: 2026-06-04_
 
 ## V2 Completion: ~85%
 Pending: legacy donation module merge into ledger, full activity-log coverage on programs/expenses, real SMS gateway.
+
+## 2026-06-06 Schema Patch
+
+- `donation_payments.household_id` FK → `households.id` ON DELETE CASCADE
+- `public_votes` unique indexes replaced:
+  - `public_votes_one_per_cat_fp (competition_id, category, device_fingerprint)`
+  - `public_votes_one_per_cat_phone (competition_id, category, voter_phone)`
+- `public_votes` RLS: anon SELECT enabled for live public results
+
+## Dashboard Data Sources (current)
+- Donations: `donation_payments` + `household_year_assignments`
+- Expenses: `ledger_expenses`
+- Legacy `home_donations`/`account_expenses` are no longer read by the dashboard or public Accounts page.
+
+## PDF Reports
+- Donation Ledger: client-side, opens printable window with community header (logo + Marathi name), totals grid, full ledger table. No server, no extra deps.
+
