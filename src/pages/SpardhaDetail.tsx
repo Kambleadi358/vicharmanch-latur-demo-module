@@ -169,10 +169,27 @@ const SpardhaDetail = () => {
               {CATEGORIES.map((c) => {
                 const list = entries.filter((e) => e.category === c.key);
                 const voted = hasVoted(c.key);
+                // Build vote tallies for this category
+                const catVotes = votes.filter((v: any) => v.category === c.key);
+                const tally = new Map<string, { first: number; second: number; third: number }>();
+                list.forEach((e) => tally.set(e.id, { first: 0, second: 0, third: 0 }));
+                catVotes.forEach((v: any) => {
+                  if (v.first_entry_id && tally.has(v.first_entry_id)) tally.get(v.first_entry_id)!.first++;
+                  if (v.second_entry_id && tally.has(v.second_entry_id)) tally.get(v.second_entry_id)!.second++;
+                  if (v.third_entry_id && tally.has(v.third_entry_id)) tally.get(v.third_entry_id)!.third++;
+                });
+                const ranked = list
+                  .map((e) => {
+                    const t = tally.get(e.id) || { first: 0, second: 0, third: 0 };
+                    const points = t.first * 3 + t.second * 2 + t.third * 1;
+                    const total = t.first + t.second + t.third;
+                    return { ...e, ...t, points, total };
+                  })
+                  .sort((a, b) => b.points - a.points);
                 return (
                   <TabsContent key={c.key} value={c.key} className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">{list.length} नोंदी</p>
+                      <p className="text-sm text-muted-foreground">{list.length} नोंदी · {catVotes.length} मते</p>
                       <Button
                         size="sm"
                         disabled={voted || list.length < 3 || !votingEnabled}
@@ -204,6 +221,47 @@ const SpardhaDetail = () => {
                           </Card>
                         ))}
                       </div>
+                    )}
+
+                    {/* Public vote results — visible when any vote exists */}
+                    {catVotes.length > 0 && (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Trophy className="h-4 w-4 text-accent" /> सार्वजनिक मतदान निकाल — {c.label}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-xs">
+                              <thead className="bg-muted/50">
+                                <tr>
+                                  <th className="text-left px-3 py-2">क्रम</th>
+                                  <th className="text-left px-3 py-2">ID</th>
+                                  <th className="text-center px-2 py-2">१ला</th>
+                                  <th className="text-center px-2 py-2">२रा</th>
+                                  <th className="text-center px-2 py-2">३रा</th>
+                                  <th className="text-center px-2 py-2">एकूण</th>
+                                  <th className="text-right px-3 py-2">गुण</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {ranked.map((r, i) => (
+                                  <tr key={r.id} className="border-t">
+                                    <td className="px-3 py-2 font-semibold">{i + 1}</td>
+                                    <td className="px-3 py-2 font-mono">{r.entry_code}</td>
+                                    <td className="text-center px-2 py-2">{r.first}</td>
+                                    <td className="text-center px-2 py-2">{r.second}</td>
+                                    <td className="text-center px-2 py-2">{r.third}</td>
+                                    <td className="text-center px-2 py-2 font-semibold">{r.total}</td>
+                                    <td className="text-right px-3 py-2 font-bold text-primary">{r.points}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
                     )}
                   </TabsContent>
                 );
