@@ -26,6 +26,17 @@ type QuizConfig = {
   title: string;
   description: string | null;
   duration_seconds: number;
+  publish_answer_key: boolean;
+};
+
+type AnswerKeyQ = {
+  id: string;
+  question: string;
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  correct_answer: "A" | "B" | "C" | "D";
 };
 
 const Quiz = () => {
@@ -37,15 +48,23 @@ const Quiz = () => {
   const [name, setName] = useState("");
   const [dob, setDob] = useState("");
   const [isStarting, setIsStarting] = useState(false);
+  const [answerKey, setAnswerKey] = useState<AnswerKeyQ[]>([]);
 
   useEffect(() => {
     (async () => {
       const { data } = await supabase
         .from("quiz_config")
-        .select("status, title, description, duration_seconds")
+        .select("status, title, description, duration_seconds, publish_answer_key")
         .limit(1)
         .maybeSingle();
       setConfig(data as QuizConfig | null);
+      if (data?.status === "COMPLETED" && (data as any).publish_answer_key) {
+        const { data: qs } = await supabase
+          .from("quiz_questions")
+          .select("id, question, option_a, option_b, option_c, option_d, correct_answer")
+          .order("display_order");
+        setAnswerKey((qs as any) || []);
+      }
       setIsLoading(false);
     })();
   }, []);
