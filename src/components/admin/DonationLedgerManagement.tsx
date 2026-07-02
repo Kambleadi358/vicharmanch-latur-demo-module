@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { logAdminAction } from "@/lib/activityLog";
 import logo from "@/assets/vicharmanch-logo.jpeg";
+import stampImg from "@/assets/vicharmanch-stamp.png";
 
 type PaymentMode = "cash" | "online";
 const MODE_LABEL: Record<PaymentMode, string> = { cash: "रोख", online: "ऑनलाइन" };
