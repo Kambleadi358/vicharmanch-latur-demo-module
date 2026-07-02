@@ -74,7 +74,7 @@ const groupOrder = ["मुख्यपृष्ठ", "समाज", "कार
 const Sidebar = ({
   active, onSelect,
 }: { active: SectionKey; onSelect: (k: SectionKey) => void }) => (
-  <nav className="space-y-5 p-4">
+  <nav className="space-y-5 p-4 pb-8">
     {groupOrder.map((g) => (
       <div key={g}>
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 px-2 font-semibold">
