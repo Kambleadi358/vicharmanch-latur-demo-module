@@ -74,7 +74,7 @@ const groupOrder = ["मुख्यपृष्ठ", "समाज", "कार
 const Sidebar = ({
   active, onSelect,
 }: { active: SectionKey; onSelect: (k: SectionKey) => void }) => (
-  <nav className="space-y-5 p-4">
+  <nav className="space-y-5 p-4 pb-8">
     {groupOrder.map((g) => (
       <div key={g}>
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 px-2 font-semibold">
@@ -178,8 +178,8 @@ const AdminDashboard = () => {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
-                <div className="p-4 border-b bg-gradient-to-r from-primary to-[hsl(217,80%,30%)] text-primary-foreground">
+              <SheetContent side="left" className="w-72 p-0 flex flex-col">
+                <div className="p-4 border-b bg-gradient-to-r from-primary to-[hsl(217,80%,30%)] text-primary-foreground flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
                     <div>
@@ -188,7 +188,9 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
-                <Sidebar active={active} onSelect={(k) => { setActive(k); setMobileOpen(false); }} />
+                <div className="flex-1 overflow-y-auto overscroll-contain">
+                  <Sidebar active={active} onSelect={(k) => { setActive(k); setMobileOpen(false); }} />
+                </div>
               </SheetContent>
             </Sheet>
 
@@ -216,7 +218,7 @@ const AdminDashboard = () => {
 
       <div className="flex-1 flex">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-r bg-card/80 backdrop-blur sticky top-[60px] self-start max-h-[calc(100vh-60px)] overflow-y-auto">
+        <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-r bg-card/80 backdrop-blur sticky top-[64px] self-start h-[calc(100vh-64px)] overflow-y-auto overscroll-contain">
           <Sidebar active={active} onSelect={setActive} />
         </aside>
 

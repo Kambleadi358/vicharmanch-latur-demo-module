@@ -66,12 +66,10 @@ const SpardhaDetail = () => {
         .eq("id", id)
         .maybeSingle();
       setComp(c);
-      const cols = c?.status === "LOCKED"
-        ? "id, entry_code, category, image_url, participant_name"
-        : "id, entry_code, category, image_url";
+      // Public UI: NEVER expose participant name — show entry ID only
       const { data: e } = await supabase
         .from("competition_entries")
-        .select(cols)
+        .select("id, entry_code, category, image_url")
         .eq("competition_id", id)
         .order("entry_code");
       setEntries(e ?? []);
@@ -87,7 +85,6 @@ const SpardhaDetail = () => {
   const isLocked = comp?.status === "LOCKED";
   const votingEnabled = isLocked;
 
-  const showName = (e: any) => isLocked ? e.participant_name : null;
 
   const votedKey = (cat: string) => `voted_${id}_${cat}`;
   const hasVoted = (cat: string) => !!localStorage.getItem(votedKey(cat));
@@ -212,7 +209,6 @@ const SpardhaDetail = () => {
                             <CardContent className="p-2 text-xs flex items-center justify-between">
                               <div>
                                 <div className="font-bold">{e.entry_code}</div>
-                                {showName(e) && <div className="text-muted-foreground truncate">{e.participant_name}</div>}
                               </div>
                               <Button variant="ghost" size="sm" onClick={() => downloadImage(e.image_url, e.entry_code)} className="h-7 w-7 p-0">
                                 <Download className="h-3 w-3" />
