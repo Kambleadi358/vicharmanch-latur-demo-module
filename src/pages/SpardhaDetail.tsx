@@ -66,12 +66,10 @@ const SpardhaDetail = () => {
         .eq("id", id)
         .maybeSingle();
       setComp(c);
-      const cols = c?.status === "LOCKED"
-        ? "id, entry_code, category, image_url, participant_name"
-        : "id, entry_code, category, image_url";
+      // Public UI: NEVER expose participant name — show entry ID only
       const { data: e } = await supabase
         .from("competition_entries")
-        .select(cols)
+        .select("id, entry_code, category, image_url")
         .eq("competition_id", id)
         .order("entry_code");
       setEntries(e ?? []);
