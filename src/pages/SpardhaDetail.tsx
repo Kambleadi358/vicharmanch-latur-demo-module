@@ -85,7 +85,6 @@ const SpardhaDetail = () => {
   const isLocked = comp?.status === "LOCKED";
   const votingEnabled = isLocked;
 
-  const showName = (e: any) => isLocked ? e.participant_name : null;
 
   const votedKey = (cat: string) => `voted_${id}_${cat}`;
   const hasVoted = (cat: string) => !!localStorage.getItem(votedKey(cat));
