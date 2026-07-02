@@ -178,8 +178,8 @@ const AdminDashboard = () => {
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 p-0">
-                <div className="p-4 border-b bg-gradient-to-r from-primary to-[hsl(217,80%,30%)] text-primary-foreground">
+              <SheetContent side="left" className="w-72 p-0 flex flex-col">
+                <div className="p-4 border-b bg-gradient-to-r from-primary to-[hsl(217,80%,30%)] text-primary-foreground flex-shrink-0">
                   <div className="flex items-center gap-2">
                     <Shield className="h-5 w-5" />
                     <div>
@@ -188,7 +188,9 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
-                <Sidebar active={active} onSelect={(k) => { setActive(k); setMobileOpen(false); }} />
+                <div className="flex-1 overflow-y-auto overscroll-contain">
+                  <Sidebar active={active} onSelect={(k) => { setActive(k); setMobileOpen(false); }} />
+                </div>
               </SheetContent>
             </Sheet>
 
