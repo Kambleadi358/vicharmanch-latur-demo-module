@@ -130,54 +130,78 @@ const DonationLedgerManagement = () => {
     }
   };
 
-  const exportPDF = () => {
-    const rows = enriched
-      .slice()
-      .sort((a, b) => a.house_code - b.house_code);
+  const exportPDF = async () => {
+    const rows = enriched.slice().sort((a, b) => a.house_code - b.house_code);
     const tg = totals;
+
+    // Fetch year-scoped expenses for kharch section
+    const { data: expenseRows } = await supabase
+      .from("ledger_expenses")
+      .select("title, amount, created_at")
+      .eq("year", year)
+      .order("created_at", { ascending: true });
+    const expenses = (expenseRows as any[]) || [];
+    const totalKharch = expenses.reduce((s, e) => s + Number(e.amount || 0), 0);
+    const shillak = tg.paid - totalKharch;
+
     const today = new Date().toLocaleDateString("mr-IN", { day: "numeric", month: "long", year: "numeric" });
     const html = `<!doctype html><html lang="mr"><head><meta charset="utf-8"><title>देणगी खातावही ${year}</title>
 <style>
-  @page { size: A4; margin: 12mm; }
+  @page { size: A4; margin: 14mm 12mm 22mm 12mm; }
   *{box-sizing:border-box}
   body{font-family:'Noto Sans Devanagari','Tiro Devanagari Marathi',system-ui,sans-serif;color:#0f172a;margin:0;padding:0}
   .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px double #0c2340;padding-bottom:10px;margin-bottom:12px}
-  .hdr img{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #c9a84c}
+  .hdr img.logo{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #c9a84c}
   .hdr h1{margin:0;font-size:16px;color:#0c2340}
-  .hdr h2{margin:2px 0 0;font-size:12px;color:#64748b;font-weight:500}
-  .meta{display:flex;justify-content:space-between;margin:8px 0 12px;font-size:11px;color:#475569}
-  .totals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+  .hdr h2{margin:2px 0 0;font-size:11px;color:#64748b;font-weight:500}
+  .meta{display:flex;justify-content:space-between;margin:6px 0 10px;font-size:11px;color:#475569}
+  .totals{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
   .t{border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px}
-  .t b{display:block;font-size:10px;color:#64748b;font-weight:500}
-  .t span{font-size:14px;font-weight:700;color:#0c2340}
-  table{width:100%;border-collapse:collapse;font-size:10.5px}
+  .t b{display:block;font-size:9.5px;color:#64748b;font-weight:500}
+  .t span{font-size:13px;font-weight:700;color:#0c2340}
+  .t.paid span{color:#059669}
+  .t.kharch span{color:#dc2626}
+  .t.balance span{color:${shillak >= 0 ? "#0c2340" : "#dc2626"}}
+  h3.section{font-size:13px;color:#0c2340;border-left:4px solid #c9a84c;padding-left:8px;margin:14px 0 6px}
+  table{width:100%;border-collapse:collapse;font-size:10.5px;page-break-inside:auto}
+  tr{page-break-inside:avoid}
   th,td{border:1px solid #cbd5e1;padding:5px 6px;text-align:left}
   th{background:#0c2340;color:#fff;font-weight:600}
   tr:nth-child(even) td{background:#f8fafc}
+  tfoot td{background:#eef2ff;font-weight:700;color:#0c2340}
   .right{text-align:right}
   .ok{color:#059669;font-weight:600}
   .warn{color:#d97706;font-weight:600}
   .pend{color:#dc2626;font-weight:600}
-  .ft{margin-top:14px;border-top:1px solid #cbd5e1;padding-top:8px;font-size:10px;color:#64748b;text-align:center}
+  .sign{margin-top:22px;display:flex;justify-content:space-between;align-items:flex-end;gap:20px}
+  .sign .box{flex:1;text-align:center;font-size:11px;color:#334155}
+  .sign .line{border-top:1px solid #64748b;margin-top:56px;padding-top:4px}
+  .stamp{position:relative;width:110px;height:110px}
+  .stamp img{width:100%;height:100%;object-fit:contain;opacity:0.9;transform:rotate(-8deg)}
+  .stamp .cap{position:absolute;bottom:-14px;left:0;right:0;text-align:center;font-size:10px;color:#0c2340;font-weight:600}
+  .ft{position:fixed;bottom:6mm;left:12mm;right:12mm;border-top:1px solid #cbd5e1;padding-top:5px;font-size:9.5px;color:#64748b;display:flex;justify-content:space-between}
   @media print { button { display:none } }
 </style></head><body>
   <div class="hdr">
-    <img src="${logo}" alt="logo"/>
-    <div>
+    <img class="logo" src="${logo}" alt="logo"/>
+    <div style="flex:1">
       <h1>भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</h1>
       <h2>बौद्ध नगर, लातूर · समता | स्वातंत्र्य | बंधुता | न्याय</h2>
     </div>
   </div>
   <div class="meta">
-    <div><b>अहवाल:</b> देणगी खातावही — वर्ष ${year}</div>
+    <div><b>अहवाल:</b> देणगी खातावही व खर्च — वर्ष ${year}</div>
     <div><b>दिनांक:</b> ${today}</div>
   </div>
   <div class="totals">
     <div class="t"><b>एकूण घरे</b><span>${enriched.length}</span></div>
-    <div class="t"><b>नियुक्त रक्कम</b><span>${fmtINR(tg.assigned)}</span></div>
-    <div class="t"><b>जमा रक्कम</b><span>${fmtINR(tg.paid)}</span></div>
-    <div class="t"><b>शिल्लक रक्कम</b><span>${fmtINR(tg.remaining)}</span></div>
+    <div class="t"><b>नियुक्त</b><span>${fmtINR(tg.assigned)}</span></div>
+    <div class="t paid"><b>जमा (देणगी)</b><span>${fmtINR(tg.paid)}</span></div>
+    <div class="t kharch"><b>एकूण खर्च</b><span>${fmtINR(totalKharch)}</span></div>
+    <div class="t balance"><b>शिल्लक</b><span>${fmtINR(shillak)}</span></div>
   </div>
+
+  <h3 class="section">देणगी नोंदी (जमा)</h3>
   <table>
     <thead><tr>
       <th>घर क्र.</th><th>नाव</th><th>मोबाईल</th>
@@ -196,14 +220,50 @@ const DonationLedgerManagement = () => {
         }</td>
       </tr>`).join("")}
     </tbody>
+    <tfoot><tr><td colspan="3" class="right">एकूण</td>
+      <td class="right">${fmtINR(tg.assigned)}</td>
+      <td class="right">${fmtINR(tg.paid)}</td>
+      <td class="right">${fmtINR(tg.remaining)}</td><td></td></tr></tfoot>
   </table>
-  <div class="ft">हा अहवाल विचारमंच प्रणालीद्वारे स्वयं-निर्मित — पारदर्शकता, सातत्य, ऐतिहासिक जतन</div>
-  <script>window.onload=()=>{setTimeout(()=>window.print(),300)}</script>
+
+  <h3 class="section">खर्च नोंदी</h3>
+  ${expenses.length === 0 ? `<p style="font-size:11px;color:#64748b">या वर्षासाठी कोणतीही खर्च नोंद नाही.</p>` : `
+  <table>
+    <thead><tr><th style="width:40px">क्र.</th><th>तपशील</th><th style="width:110px" class="right">रक्कम</th><th style="width:110px">दिनांक</th></tr></thead>
+    <tbody>
+      ${expenses.map((e, i) => `<tr>
+        <td>${i + 1}</td>
+        <td>${escapeHtml(e.title)}</td>
+        <td class="right">${fmtINR(Number(e.amount))}</td>
+        <td>${new Date(e.created_at).toLocaleDateString("mr-IN")}</td>
+      </tr>`).join("")}
+    </tbody>
+    <tfoot><tr><td colspan="2" class="right">एकूण खर्च</td><td class="right">${fmtINR(totalKharch)}</td><td></td></tr></tfoot>
+  </table>`}
+
+  <div class="sign">
+    <div class="box">
+      <div class="line">कोषाध्यक्ष स्वाक्षरी</div>
+    </div>
+    <div class="stamp">
+      <img src="${stampImg}" alt="अधिकृत मुद्रा"/>
+      <div class="cap">अधिकृत मुद्रा</div>
+    </div>
+    <div class="box">
+      <div class="line">अध्यक्ष स्वाक्षरी</div>
+    </div>
+  </div>
+
+  <div class="ft">
+    <span>विचारमंच प्रणालीद्वारे स्वयं-निर्मित · पारदर्शकता · सातत्य</span>
+    <span>${today}</span>
+  </div>
+  <script>window.onload=()=>{setTimeout(()=>window.print(),400)}</script>
 </body></html>`;
     const w = window.open("", "_blank");
     if (!w) { toast.error("Pop-up blocked"); return; }
     w.document.open(); w.document.write(html); w.document.close();
-    logAdminAction("export_donation_ledger_pdf", "donation_payments", undefined, { year, rows: rows.length });
+    logAdminAction("export_donation_ledger_pdf", "donation_payments", undefined, { year, rows: rows.length, expenses: expenses.length });
   };
 
   // basic HTML escaper
