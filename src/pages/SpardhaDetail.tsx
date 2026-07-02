@@ -209,10 +209,10 @@ const SpardhaDetail = () => {
                             <CardContent className="p-2 text-xs flex items-center justify-between">
                               <div>
                                 <div className="font-bold">{e.entry_code}</div>
-                                {showName(e) && <div className="text-muted-foreground truncate">{e.participant_name}</div>}
                               </div>
                               <Button variant="ghost" size="sm" onClick={() => downloadImage(e.image_url, e.entry_code)} className="h-7 w-7 p-0">
                                 <Download className="h-3 w-3" />
+                              </Button>
                               </Button>
                             </CardContent>
                           </Card>
