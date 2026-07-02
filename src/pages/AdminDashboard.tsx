@@ -218,7 +218,7 @@ const AdminDashboard = () => {
 
       <div className="flex-1 flex">
         {/* Desktop sidebar */}
-        <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-r bg-card/80 backdrop-blur sticky top-[60px] self-start max-h-[calc(100vh-60px)] overflow-y-auto">
+        <aside className="hidden lg:block w-64 xl:w-72 flex-shrink-0 border-r bg-card/80 backdrop-blur sticky top-[64px] self-start h-[calc(100vh-64px)] overflow-y-auto overscroll-contain">
           <Sidebar active={active} onSelect={setActive} />
         </aside>
 
