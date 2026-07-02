@@ -134,28 +134,72 @@ const Quiz = () => {
               <p className="text-muted-foreground">कृपया निर्धारित वेळेस पुन्हा भेट द्या.</p>
             </motion.div>
           ) : config?.status === "COMPLETED" ? (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-card border border-border rounded-xl p-10 text-center space-y-6">
-              <Award className="mx-auto text-accent" size={56} />
-              <h2 className="text-2xl font-bold">प्रश्नमंजुषा संपली आहे</h2>
-              <p className="text-muted-foreground">तुमचा निकाल पाहण्यासाठी नाव व जन्मतारीख टाका.</p>
-              <div className="grid sm:grid-cols-2 gap-4 text-left max-w-md mx-auto">
-                <div>
-                  <Label>पूर्ण नाव</Label>
-                  <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="पूर्ण नाव" />
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+              <div className="bg-card border border-border rounded-xl p-8 text-center space-y-6">
+                <Award className="mx-auto text-accent" size={56} />
+                <h2 className="text-2xl font-bold">प्रश्नमंजुषा संपली आहे</h2>
+                <p className="text-muted-foreground">तुमचा निकाल पाहण्यासाठी नाव व जन्मतारीख टाका.</p>
+                <div className="grid sm:grid-cols-2 gap-4 text-left max-w-md mx-auto">
+                  <div>
+                    <Label>पूर्ण नाव</Label>
+                    <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="पूर्ण नाव" />
+                  </div>
+                  <div>
+                    <Label>जन्मतारीख</Label>
+                    <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
+                  </div>
                 </div>
-                <div>
-                  <Label>जन्मतारीख</Label>
-                  <Input type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
-                </div>
+                <Button
+                  size="lg"
+                  onClick={() => navigate(`/quiz/result?name=${encodeURIComponent(name.trim())}&dob=${dob}`)}
+                  disabled={!name.trim() || !dob}
+                >
+                  निकाल पहा
+                </Button>
               </div>
-              <Button
-                size="lg"
-                onClick={() => navigate(`/quiz/result?name=${encodeURIComponent(name.trim())}&dob=${dob}`)}
-                disabled={!name.trim() || !dob}
-              >
-                निकाल पहा
-              </Button>
+
+              {config.publish_answer_key && answerKey.length > 0 && (
+                <div className="bg-card border border-border rounded-xl p-6 sm:p-8">
+                  <div className="flex items-center gap-2 mb-1">
+                    <BookOpen className="text-accent" size={22} />
+                    <h3 className="text-xl font-bold">अधिकृत उत्तरतालिका</h3>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-5">
+                    हिरवा = योग्य उत्तर · लाल = चुकीचे पर्याय · सर्व सहभागींसाठी पारदर्शक जाहीर
+                  </p>
+                  <ol className="space-y-5">
+                    {answerKey.map((q, i) => (
+                      <li key={q.id} className="border-b border-border/70 pb-4 last:border-0">
+                        <p className="font-semibold mb-3 leading-relaxed">
+                          <span className="text-accent mr-1">प्र.{i + 1}.</span> {q.question}
+                        </p>
+                        <div className="grid sm:grid-cols-2 gap-2 text-sm">
+                          {(["A", "B", "C", "D"] as const).map((k) => {
+                            const label = q[`option_${k.toLowerCase()}` as "option_a"];
+                            const isCorrect = q.correct_answer === k;
+                            return (
+                              <div
+                                key={k}
+                                className={`p-2.5 rounded-md border flex items-start gap-2 ${
+                                  isCorrect
+                                    ? "border-green-600 bg-green-500/10 text-green-800 dark:text-green-300"
+                                    : "border-red-500/60 bg-red-500/5 text-red-800 dark:text-red-300"
+                                }`}
+                              >
+                                <span className="font-bold">{k}.</span>
+                                <span className="flex-1">{label}</span>
+                                {isCorrect
+                                  ? <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                                  : <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 opacity-60" />}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
             </motion.div>
           ) : step === "register" ? (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
