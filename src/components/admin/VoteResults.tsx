@@ -134,6 +134,10 @@ const VoteResults = () => {
                             </Badge>
                             <span className="font-mono text-sm font-bold">{r.entry_code}</span>
                           </div>
+                          <p className="text-[11px] mt-1 font-medium truncate opacity-95">{r.participant_name}</p>
+                          <div className="hidden">
+
+                          </div>
                           <p className="text-2xl font-black mt-2">{r.weighted} <span className="text-xs font-normal opacity-80">गुण</span></p>
                           <p className="text-[11px] opacity-90 mt-0.5">
                             १ले: <b>{r.first}</b> · २रे: <b>{r.second}</b> · ३रे: <b>{r.third}</b>
