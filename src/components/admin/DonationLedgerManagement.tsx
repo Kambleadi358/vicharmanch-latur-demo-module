@@ -241,18 +241,13 @@ const DonationLedgerManagement = () => {
     <tfoot><tr><td colspan="2" class="right">एकूण खर्च</td><td class="right">${fmtINR(totalKharch)}</td><td></td></tr></tfoot>
   </table>`}
 
-  <div class="sign">
-    <div class="box">
-      <div class="line">कोषाध्यक्ष स्वाक्षरी</div>
-    </div>
+  <div class="sign" style="justify-content:center">
     <div class="stamp">
       <img src="${stampImg}" alt="अधिकृत मुद्रा"/>
-      <div class="cap">अधिकृत मुद्रा</div>
-    </div>
-    <div class="box">
-      <div class="line">अध्यक्ष स्वाक्षरी</div>
+      <div class="cap">अधिकृत मुद्रा · भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</div>
     </div>
   </div>
+
 
   <div class="ft">
     <span>विचारमंच प्रणालीद्वारे स्वयं-निर्मित · पारदर्शकता · सातत्य</span>

@@ -45,32 +45,29 @@ const MediaGallerySection = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="max-w-4xl mx-auto"
+          className="max-w-2xl mx-auto"
         >
-          {/* Embedded Google Drive Preview */}
-          <div className="rounded-2xl overflow-hidden border-2 border-accent/20 shadow-xl bg-card">
-            <iframe
-              src={galleryLink.replace("/drive/folders/", "/embeddedfolderview?id=").split("?")[0].replace("/embeddedfolderview?id=", "/embeddedfolderview?id=") + "#grid"}
-              className="w-full h-[400px] sm:h-[500px]"
-              title="मीडिया गॅलरी"
-              style={{ border: "none" }}
-            />
-          </div>
-
-          <div className="text-center mt-6">
+          <div className="rounded-2xl border-2 border-accent/20 shadow-xl bg-card p-8 text-center space-y-4">
+            <div className="mx-auto h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center">
+              <Images size={32} className="text-accent" />
+            </div>
+            <p className="text-muted-foreground text-sm">
+              आमच्या कार्यक्रमांचे फोटो व व्हिडिओ Google Drive वर पहा
+            </p>
             <a href={galleryLink} target="_blank" rel="noopener noreferrer">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-accent text-accent-foreground font-semibold rounded-full shadow-lg hover:shadow-xl transition-shadow"
+                className="inline-flex items-center gap-2 px-8 py-3 bg-accent text-accent-foreground font-semibold rounded-full shadow-lg hover:shadow-xl transition-shadow"
               >
                 <Images size={20} />
-                संपूर्ण गॅलरी पहा
+                मीडिया गॅलरी उघडा
                 <ExternalLink size={16} />
               </motion.button>
             </a>
           </div>
         </motion.div>
+
       </div>
     </section>
   );

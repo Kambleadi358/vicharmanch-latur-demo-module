@@ -134,6 +134,8 @@ const VoteResults = () => {
                             </Badge>
                             <span className="font-mono text-sm font-bold">{r.entry_code}</span>
                           </div>
+                          <p className="text-[11px] mt-1 font-medium truncate opacity-95" title={r.participant_name}>{r.participant_name}</p>
+
                           <p className="text-2xl font-black mt-2">{r.weighted} <span className="text-xs font-normal opacity-80">गुण</span></p>
                           <p className="text-[11px] opacity-90 mt-0.5">
                             १ले: <b>{r.first}</b> · २रे: <b>{r.second}</b> · ३रे: <b>{r.third}</b>
@@ -166,9 +168,11 @@ const VoteResults = () => {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <span className="font-mono font-bold text-sm">{r.entry_code}</span>
+                                  <span className="text-xs text-muted-foreground truncate">{r.participant_name}</span>
                                 </div>
                                 <Progress value={pct} className="h-2 mt-1.5" />
                               </div>
+
                               <div className="text-right flex-shrink-0 w-28">
                                 <p className="text-lg font-bold text-primary leading-none">{r.weighted}</p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -185,8 +189,9 @@ const VoteResults = () => {
               </Card>
 
               <p className="text-[11px] text-muted-foreground text-center">
-                गुण-गणना: (१ले × ३) + (२रे × २) + (३रे × १) · Tie-breaker: अधिक १ले मते · सहभागी नावे लॉक होईपर्यंत गुप्त
+                गुण-गणना: (१ले × ३) + (२रे × २) + (३रे × १) · Tie-breaker: अधिक १ले मते · सहभागी नावे केवळ प्रशासकास दृश्य
               </p>
+
             </TabsContent>
           ))}
         </Tabs>
