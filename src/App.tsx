@@ -7,6 +7,8 @@ import { AnimatePresence } from "framer-motion";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { lazy, Suspense } from "react";
 import Index from "./pages/Index"; // keep landing eager for fast LCP
+import MaintenanceGate from "./components/MaintenanceGate";
+
 
 const About = lazy(() => import("./pages/About"));
 const Ideology = lazy(() => import("./pages/Ideology"));
