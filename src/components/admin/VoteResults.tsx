@@ -168,9 +168,11 @@ const VoteResults = () => {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
                                   <span className="font-mono font-bold text-sm">{r.entry_code}</span>
+                                  <span className="text-xs text-muted-foreground truncate">{r.participant_name}</span>
                                 </div>
                                 <Progress value={pct} className="h-2 mt-1.5" />
                               </div>
+
                               <div className="text-right flex-shrink-0 w-28">
                                 <p className="text-lg font-bold text-primary leading-none">{r.weighted}</p>
                                 <p className="text-[10px] text-muted-foreground mt-0.5">
