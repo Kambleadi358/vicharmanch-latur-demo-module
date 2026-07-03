@@ -52,33 +52,36 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <AnimatePresence mode="wait">
-            <Suspense fallback={<PageFallback />}>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/ideology" element={<Ideology />} />
-                <Route path="/programs" element={<Programs />} />
-                <Route path="/quiz" element={<Quiz />} />
-                <Route path="/quiz/take" element={<QuizTake />} />
-                <Route path="/quiz/result" element={<QuizResult />} />
-                <Route path="/accounts" element={<Accounts />} />
-                <Route path="/admin-login" element={<AdminLogin />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/admin-signup" element={<AdminSignup />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="/judge-login" element={<JudgeLogin />} />
-                <Route path="/judge" element={<JudgeDashboard />} />
-                <Route path="/spardha" element={<SpardhaList />} />
-                <Route path="/spardha/:id" element={<SpardhaDetail />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/ahval" element={<Ahval />} />
-                <Route path="/suggestion" element={<Suggestion />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
-          </AnimatePresence>
+          <MaintenanceGate>
+            <AnimatePresence mode="wait">
+              <Suspense fallback={<PageFallback />}>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/ideology" element={<Ideology />} />
+                  <Route path="/programs" element={<Programs />} />
+                  <Route path="/quiz" element={<Quiz />} />
+                  <Route path="/quiz/take" element={<QuizTake />} />
+                  <Route path="/quiz/result" element={<QuizResult />} />
+                  <Route path="/accounts" element={<Accounts />} />
+                  <Route path="/admin-login" element={<AdminLogin />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/admin-signup" element={<AdminSignup />} />
+                  <Route path="/admin" element={<AdminDashboard />} />
+                  <Route path="/judge-login" element={<JudgeLogin />} />
+                  <Route path="/judge" element={<JudgeDashboard />} />
+                  <Route path="/spardha" element={<SpardhaList />} />
+                  <Route path="/spardha/:id" element={<SpardhaDetail />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/ahval" element={<Ahval />} />
+                  <Route path="/suggestion" element={<Suggestion />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </AnimatePresence>
+          </MaintenanceGate>
         </BrowserRouter>
+
       </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
