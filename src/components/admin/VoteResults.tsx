@@ -189,8 +189,9 @@ const VoteResults = () => {
               </Card>
 
               <p className="text-[11px] text-muted-foreground text-center">
-                गुण-गणना: (१ले × ३) + (२रे × २) + (३रे × १) · Tie-breaker: अधिक १ले मते · सहभागी नावे लॉक होईपर्यंत गुप्त
+                गुण-गणना: (१ले × ३) + (२रे × २) + (३रे × १) · Tie-breaker: अधिक १ले मते · सहभागी नावे केवळ प्रशासकास दृश्य
               </p>
+
             </TabsContent>
           ))}
         </Tabs>
