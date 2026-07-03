@@ -7,38 +7,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import {
-  Settings as SettingsIcon, Shield, Image, BookOpen, CalendarDays, Bell, Archive, Save, Loader2, Key,
+  Settings as SettingsIcon, ShieldCheck, Images, Archive, CalendarDays,
+  Trash2, Wrench, Save, Loader2, Key, Lock, MapPin, Mail, Info,
 } from "lucide-react";
-import AdminSettings from "./AdminSettings";
 import AnnualArchiveManager from "./AnnualArchiveManager";
+import { logAdminAction } from "@/lib/activityLog";
+import logo from "@/assets/vicharmanch-stamp.png";
 
 const SettingsCenter = () => {
   const { user } = useAuth();
   const [activeYear, setActiveYear] = useState("");
-  const [anonAllowed, setAnonAllowed] = useState(true);
-  const [quizTitle, setQuizTitle] = useState("");
-  const [quizDuration, setQuizDuration] = useState(1800);
-  const [publishKey, setPublishKey] = useState(false);
-  const [savingEvent, setSavingEvent] = useState(false);
-  const [savingQuiz, setSavingQuiz] = useState(false);
+  const [suggestionsEnabled, setSuggestionsEnabled] = useState(true);
+  const [mediaLink, setMediaLink] = useState("");
+  const [maintenance, setMaintenance] = useState(false);
   const [newPwd, setNewPwd] = useState("");
-  const [changingPwd, setChangingPwd] = useState(false);
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [saving, setSaving] = useState<string | null>(null);
+  const [cleanupConfirm, setCleanupConfirm] = useState("");
 
   useEffect(() => {
     (async () => {
       const { data: settings } = await supabase.from("app_settings").select("*");
       settings?.forEach((s: any) => {
         if (s.section === "event" && s.key === "active_year") setActiveYear(String(s.value).replace(/"/g, ""));
-        if (s.section === "event" && s.key === "suggestions_anonymous_enabled") setAnonAllowed(!!s.value);
+        if (s.section === "event" && s.key === "suggestions_enabled") setSuggestionsEnabled(s.value !== false);
+        if (s.section === "system" && s.key === "maintenance_mode") setMaintenance(!!s.value);
       });
-      const { data: qc } = await supabase.from("quiz_config").select("*").maybeSingle();
-      if (qc) {
-        setQuizTitle(qc.title ?? "");
-        setQuizDuration(qc.duration_seconds ?? 1800);
-        setPublishKey(!!qc.publish_answer_key);
-      }
+      const { data: site } = await supabase
+        .from("site_settings").select("setting_value")
+        .eq("setting_key", "media_gallery_link").maybeSingle();
+      if (site) setMediaLink(site.setting_value);
     })();
   }, []);
 
@@ -46,99 +50,180 @@ const SettingsCenter = () => {
     await supabase.from("app_settings").upsert({ section, key, value }, { onConflict: "section,key" });
   };
 
-  const saveEvent = async () => {
-    setSavingEvent(true);
-    await upsertSetting("event", "active_year", activeYear);
-    await upsertSetting("event", "suggestions_anonymous_enabled", anonAllowed);
-    setSavingEvent(false);
-    toast.success("सेटिंग्ज जतन");
+  const saveMedia = async () => {
+    setSaving("media");
+    const { data: existing } = await supabase
+      .from("site_settings").select("id").eq("setting_key", "media_gallery_link").maybeSingle();
+    if (existing) await supabase.from("site_settings").update({ setting_value: mediaLink }).eq("setting_key", "media_gallery_link");
+    else await supabase.from("site_settings").insert({ setting_key: "media_gallery_link", setting_value: mediaLink });
+    setSaving(null);
+    toast.success("मीडिया लिंक जतन केली");
   };
 
-  const saveQuiz = async () => {
-    setSavingQuiz(true);
-    const { data: existing } = await supabase.from("quiz_config").select("id").maybeSingle();
-    const payload = { title: quizTitle, duration_seconds: Number(quizDuration) || 1800, publish_answer_key: publishKey };
-    if (existing) await supabase.from("quiz_config").update(payload).eq("id", existing.id);
-    else await supabase.from("quiz_config").insert(payload);
-    setSavingQuiz(false);
-    toast.success("प्रश्नमंजुषा सेटिंग्ज जतन");
+  const saveEvent = async () => {
+    setSaving("event");
+    await upsertSetting("event", "active_year", activeYear);
+    await upsertSetting("event", "suggestions_enabled", suggestionsEnabled);
+    setSaving(null);
+    toast.success("कार्यक्रम सेटिंग्ज जतन");
   };
 
   const changePassword = async () => {
-    if (newPwd.length < 8) { toast.error("किमान ८ अक्षरांचा पासवर्ड"); return; }
-    setChangingPwd(true);
+    if (newPwd.length < 8) return toast.error("किमान ८ अक्षरांचा पासवर्ड");
+    if (newPwd !== confirmPwd) return toast.error("पासवर्ड जुळत नाहीत");
+    setSaving("pwd");
     const { error } = await supabase.auth.updateUser({ password: newPwd });
-    setChangingPwd(false);
-    if (error) toast.error(error.message);
-    else { toast.success("पासवर्ड बदलला"); setNewPwd(""); }
+    setSaving(null);
+    if (error) return toast.error(error.message);
+    setNewPwd(""); setConfirmPwd("");
+    toast.success("पासवर्ड बदलला");
+    logAdminAction("change_password", "auth", user?.id);
+  };
+
+  const toggleMaintenance = async (v: boolean) => {
+    setMaintenance(v);
+    await upsertSetting("system", "maintenance_mode", v);
+    await logAdminAction(v ? "maintenance_on" : "maintenance_off", "system");
+    toast.success(v ? "🛑 मेंटेनन्स मोड सुरू" : "✅ मेंटेनन्स मोड बंद");
+  };
+
+  const runCleanup = async () => {
+    if (cleanupConfirm !== "CLEANUP") return toast.error("पुष्टीकरणासाठी CLEANUP टाईप करा");
+    setSaving("cleanup");
+    // Preserve archives; wipe operational data
+    const wipeTables = [
+      "donation_payments", "household_year_assignments", "ledger_expenses", "account_expenses",
+      "public_votes", "judge_scores", "competition_entries", "participants",
+      "program_winners", "prize_allocations", "prize_items",
+      "quiz_answers", "quiz_sessions", "quiz_cheating_logs",
+      "suggestions", "failed_participation_searches", "home_donations",
+    ] as const;
+    for (const t of wipeTables) {
+      await supabase.from(t as any).delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    }
+    await logAdminAction("system_cleanup", "system", undefined, { tables: wipeTables });
+    setSaving(null);
+    setCleanupConfirm("");
+    toast.success("प्रणाली स्वच्छ केली · अभिलेखागार जतन");
   };
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2"><SettingsIcon className="h-5 w-5" /> सेटिंग्ज केंद्र</h1>
+        <h1 className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+          <SettingsIcon className="h-5 w-5" /> सेटिंग्ज केंद्र
+        </h1>
         <p className="text-sm text-muted-foreground">सर्व प्रशासकीय कॉन्फिगरेशन एका ठिकाणी</p>
       </div>
 
-      <Tabs defaultValue="site" className="w-full">
-        <TabsList className="grid grid-cols-3 lg:grid-cols-6 w-full h-auto sticky top-0 z-10 bg-background/95 backdrop-blur border">
-          <TabsTrigger value="site" className="flex-col gap-1 py-2 text-[11px]"><Image className="h-4 w-4" />साइट</TabsTrigger>
-          <TabsTrigger value="security" className="flex-col gap-1 py-2 text-[11px]"><Shield className="h-4 w-4" />सुरक्षा</TabsTrigger>
-          <TabsTrigger value="quiz" className="flex-col gap-1 py-2 text-[11px]"><BookOpen className="h-4 w-4" />प्रश्नमंजुषा</TabsTrigger>
-          <TabsTrigger value="event" className="flex-col gap-1 py-2 text-[11px]"><CalendarDays className="h-4 w-4" />कार्यक्रम</TabsTrigger>
-          <TabsTrigger value="notification" className="flex-col gap-1 py-2 text-[11px]"><Bell className="h-4 w-4" />सूचना</TabsTrigger>
-          <TabsTrigger value="backup" className="flex-col gap-1 py-2 text-[11px]"><Archive className="h-4 w-4" />बॅकअप</TabsTrigger>
-        </TabsList>
+      <Tabs defaultValue="info" className="w-full">
+        <div className="overflow-x-auto -mx-2 px-2">
+          <TabsList className="inline-flex w-max gap-1 h-auto p-1 bg-muted sticky top-0 z-10 backdrop-blur">
+            <TabsTrigger value="info" className="gap-1.5 py-2 px-3 text-xs"><Info className="h-4 w-4" />खाते माहिती</TabsTrigger>
+            <TabsTrigger value="security" className="gap-1.5 py-2 px-3 text-xs"><ShieldCheck className="h-4 w-4" />सुरक्षा</TabsTrigger>
+            <TabsTrigger value="media" className="gap-1.5 py-2 px-3 text-xs"><Images className="h-4 w-4" />मीडिया</TabsTrigger>
+            <TabsTrigger value="archive" className="gap-1.5 py-2 px-3 text-xs"><Archive className="h-4 w-4" />अभिलेखागार</TabsTrigger>
+            <TabsTrigger value="event" className="gap-1.5 py-2 px-3 text-xs"><CalendarDays className="h-4 w-4" />कार्यक्रम</TabsTrigger>
+            <TabsTrigger value="cleanup" className="gap-1.5 py-2 px-3 text-xs"><Trash2 className="h-4 w-4" />स्वच्छता</TabsTrigger>
+            <TabsTrigger value="maintenance" className="gap-1.5 py-2 px-3 text-xs"><Wrench className="h-4 w-4" />मेंटेनन्स</TabsTrigger>
+          </TabsList>
+        </div>
 
-        <TabsContent value="site" className="mt-4">
-          <AdminSettings />
+        {/* 1. Info */}
+        <TabsContent value="info" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">संस्थेची माहिती</CardTitle>
+              <CardDescription>अधिकृत संपर्क तपशील</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4 p-4 rounded-lg border bg-muted/30">
+                <img src={logo} alt="logo" className="h-16 w-16 object-contain" />
+                <div>
+                  <p className="font-bold text-primary leading-tight">भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच</p>
+                  <p className="text-xs text-muted-foreground">बौद्ध नगर, लातूर</p>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center gap-2 rounded-lg border p-3">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase">ईमेल</p>
+                    <p className="text-sm font-medium break-all">vicharmanch1956@gmail.com</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border p-3">
+                  <MapPin className="h-4 w-4 text-primary" />
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase">स्थान</p>
+                    <p className="text-sm font-medium">बौद्ध नगर, लातूर</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border p-3 sm:col-span-2 bg-primary/5">
+                  <Lock className="h-4 w-4 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-[10px] text-muted-foreground uppercase">भूमिका</p>
+                    <p className="text-sm font-medium">प्रशासक · {user?.email}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
-        <TabsContent value="security" className="mt-4 space-y-3">
+        {/* 2. Security */}
+        <TabsContent value="security" className="mt-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2"><Key className="h-4 w-4" /> पासवर्ड बदला</CardTitle>
-              <CardDescription>लॉग इन: {user?.email}</CardDescription>
+              <CardDescription>किमान ८ अक्षरे</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Input type="password" placeholder="नवीन पासवर्ड (किमान ८ अक्षरे)" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
-              <Button onClick={changePassword} disabled={changingPwd}>
-                {changingPwd && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} पासवर्ड बदला
+              <div className="space-y-1.5">
+                <Label className="text-xs">नवीन पासवर्ड</Label>
+                <Input type="password" value={newPwd} onChange={(e) => setNewPwd(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">पुष्टी करा</Label>
+                <Input type="password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} />
+              </div>
+              <Button onClick={changePassword} disabled={saving === "pwd"} className="w-full">
+                {saving === "pwd" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                पासवर्ड बदला
               </Button>
-            </CardContent>
-          </Card>
-          <Card className="border-amber-300/40 bg-amber-50/50 dark:bg-amber-500/5">
-            <CardContent className="p-4 text-xs text-amber-900 dark:text-amber-200">
-              🔐 Microsoft Authenticator / TOTP द्वि-घटक प्रमाणीकरण भविष्यातील आवृत्तीत जोडले जाईल.
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="quiz" className="mt-4">
+        {/* 3. Media */}
+        <TabsContent value="media" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">प्रश्नमंजुषा सेटिंग्ज</CardTitle>
+              <CardTitle className="text-base">मीडिया गॅलरी</CardTitle>
+              <CardDescription>Google Drive फोल्डर लिंक — मुख्यपृष्ठावर बटणद्वारे उघडेल</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">शीर्षक</Label>
-                <Input value={quizTitle} onChange={(e) => setQuizTitle(e.target.value)} />
+                <Label className="text-xs">Google Drive लिंक</Label>
+                <Input value={mediaLink} onChange={(e) => setMediaLink(e.target.value)} placeholder="https://drive.google.com/drive/folders/..." />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">कालावधी (सेकंद)</Label>
-                <Input type="number" value={quizDuration} onChange={(e) => setQuizDuration(Number(e.target.value))} />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <Label className="text-xs">उत्तर सूची प्रकाशित करा</Label>
-                <Switch checked={publishKey} onCheckedChange={setPublishKey} />
-              </div>
-              <Button onClick={saveQuiz} disabled={savingQuiz}>
-                {savingQuiz ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} जतन
+              <Button onClick={saveMedia} disabled={saving === "media"} className="w-full">
+                {saving === "media" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                जतन करा
               </Button>
+              <p className="text-[11px] text-muted-foreground">
+                टीप: लिंक जतन केल्यावर मुख्यपृष्ठावर “मीडिया गॅलरी उघडा” बटण दिसेल.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* 4. Archive */}
+        <TabsContent value="archive" className="mt-4">
+          <AnnualArchiveManager />
+        </TabsContent>
+
+        {/* 5. Event */}
         <TabsContent value="event" className="mt-4">
           <Card>
             <CardHeader>
@@ -147,39 +232,104 @@ const SettingsCenter = () => {
             <CardContent className="space-y-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">सक्रिय वर्ष</Label>
-                <Input value={activeYear} onChange={(e) => setActiveYear(e.target.value.replace(/\D/g, "").slice(0, 4))} />
+                <Input
+                  value={activeYear}
+                  onChange={(e) => setActiveYear(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="2026"
+                />
               </div>
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div>
-                  <Label className="text-xs font-semibold">सुझाव पेटीत अनामिक संदेश परवानगी</Label>
-                  <p className="text-[10px] text-muted-foreground">वापरकर्ते आपले नाव लपवू शकतात</p>
+                  <Label className="text-xs font-semibold">सुझाव पेटी सक्रिय</Label>
+                  <p className="text-[10px] text-muted-foreground">सार्वजनिक सुझाव स्वीकारा</p>
                 </div>
-                <Switch checked={anonAllowed} onCheckedChange={setAnonAllowed} />
+                <Switch checked={suggestionsEnabled} onCheckedChange={setSuggestionsEnabled} />
               </div>
-              <Button onClick={saveEvent} disabled={savingEvent}>
-                {savingEvent ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} जतन
+              <Button onClick={saveEvent} disabled={saving === "event"} className="w-full">
+                {saving === "event" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+                जतन करा
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="notification" className="mt-4">
-          <Card>
+        {/* 6. Cleanup */}
+        <TabsContent value="cleanup" className="mt-4">
+          <Card className="border-destructive/40">
             <CardHeader>
-              <CardTitle className="text-base">सूचना सेटिंग्ज</CardTitle>
-              <CardDescription>SMS व ईमेल पाठवणी (भविष्यातील)</CardDescription>
+              <CardTitle className="text-base flex items-center gap-2 text-destructive">
+                <Trash2 className="h-4 w-4" /> प्रणाली स्वच्छता
+              </CardTitle>
+              <CardDescription>
+                सर्व चालू डेटा (देणगी, खर्च, स्पर्धा, मते, प्रश्नमंजुषा नोंदी) कायमस्वरूपी हटवा.
+                <b className="text-foreground"> वार्षिक अभिलेखागार सुरक्षित राहील.</b>
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="rounded-md border border-dashed p-6 text-center text-sm text-muted-foreground">
-                सध्या WhatsApp व SMS हे डिव्हाइसवरून पाठवले जातात (wa.me / sms: लिंक).<br />
-                स्वयंचलित बल्क पाठवणी पुढील आवृत्तीत जोडली जाईल.
+            <CardContent className="space-y-3">
+              <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive">
+                ⚠️ ही क्रिया परत घेता येत नाही. कृपया आधी अभिलेखागार तयार असल्याची खात्री करा.
               </div>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" className="w-full">
+                    <Trash2 className="h-4 w-4 mr-2" /> स्वच्छता सुरू करा
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>अंतिम पुष्टीकरण</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      सर्व चालू डेटा हटवण्यासाठी खाली <b>CLEANUP</b> टाईप करा.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <Input
+                    value={cleanupConfirm}
+                    onChange={(e) => setCleanupConfirm(e.target.value)}
+                    placeholder="CLEANUP"
+                  />
+                  <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setCleanupConfirm("")}>रद्द</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={runCleanup}
+                      disabled={saving === "cleanup" || cleanupConfirm !== "CLEANUP"}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {saving === "cleanup" ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+                      कायम हटवा
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="backup" className="mt-4">
-          <AnnualArchiveManager />
+        {/* 7. Maintenance */}
+        <TabsContent value="maintenance" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Wrench className="h-4 w-4" /> मेंटेनन्स मोड
+              </CardTitle>
+              <CardDescription>
+                सक्षम असताना सार्वजनिक वापरकर्त्यांना मेंटेनन्स पृष्ठ दिसेल. प्रशासकांना पूर्ण प्रवेश असेल.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between rounded-lg border p-4">
+                <div>
+                  <Label className="text-sm font-semibold">मेंटेनन्स मोड</Label>
+                  <p className="text-[11px] text-muted-foreground">
+                    {maintenance ? "🛑 सुरू — सार्वजनिक सिस्टम बंद" : "✅ बंद — सार्वजनिक सिस्टम चालू"}
+                  </p>
+                </div>
+                <Switch checked={maintenance} onCheckedChange={toggleMaintenance} />
+              </div>
+              <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground">
+                प्रत्येक ON/OFF क्रिया प्रशासकीय क्रियाकलाप लॉगमध्ये नोंदवली जाते.
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
