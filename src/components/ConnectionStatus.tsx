@@ -2,18 +2,18 @@ import { useConnectionHealth } from "@/hooks/useConnectionHealth";
 import { Wifi, WifiOff, Loader2, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface Props { compact?: boolean; className?: string }
+interface Props { compact?: boolean; className?: string; adminMode?: boolean }
 
 /**
  * Always-visible connection indicator. Use compact in headers,
- * full in admin dashboard.
+ * full in admin dashboard. `adminMode` reveals response time (ms).
  */
-const ConnectionStatus = ({ compact = false, className }: Props) => {
+const ConnectionStatus = ({ compact = false, className, adminMode = false }: Props) => {
   const { status, latency, retry } = useConnectionHealth();
 
   const styles = {
     online:   { c: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/40", icon: Wifi, label: "Online" },
-    slow:     { c: "bg-amber-500/15  text-amber-700  dark:text-amber-300  border-amber-500/40",  icon: AlertTriangle, label: "Slow Network Connection" },
+    slow:     { c: "bg-amber-500/15  text-amber-700  dark:text-amber-300  border-amber-500/40",  icon: AlertTriangle, label: "Slow Connection" },
     offline:  { c: "bg-rose-500/15   text-rose-700   dark:text-rose-300   border-rose-500/40",   icon: WifiOff, label: "Backend Unreachable" },
     checking: { c: "bg-muted text-muted-foreground border-border", icon: Loader2, label: "तपासत आहे..." },
   }[status];
