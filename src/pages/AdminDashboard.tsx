@@ -66,6 +66,7 @@ const NAV: NavItem[] = [
   { key: "notices",      label: "सूचना",          icon: Bell,         group: "गौरव व सूचना" },
   { key: "letterpad",    label: "दस्तऐवज",        icon: FileText,     group: "वित्त व दस्तऐवज" },
   { key: "annual",       label: "वार्षिक अहवाल",  icon: BookMarked,   group: "वित्त व दस्तऐवज" },
+  { key: "intelligence", label: "बुद्धिमत्ता अहवाल", icon: BrainCircuit, group: "वित्त व दस्तऐवज" },
   { key: "activity",     label: "क्रियाकलाप नोंदी", icon: Activity,   group: "इतर" },
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
