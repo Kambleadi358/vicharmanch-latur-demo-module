@@ -32,7 +32,7 @@ const ConnectionStatus = ({ compact = false, className, adminMode = false }: Pro
     >
       <Icon className={cn("h-3 w-3", status === "checking" && "animate-spin")} />
       {!compact && <span>{styles.label}</span>}
-      {!compact && latency != null && <span className="opacity-70">· {latency}ms</span>}
+      {adminMode && latency != null && <span className="opacity-70">· {latency}ms</span>}
     </button>
   );
 };
