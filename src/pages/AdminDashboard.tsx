@@ -27,18 +27,19 @@ import SuggestionManagement from "@/components/admin/SuggestionManagement";
 import ActivityLogManagement from "@/components/admin/ActivityLogManagement";
 import ParticipationAnalytics from "@/components/admin/ParticipationAnalytics";
 import FailedSearchManagement from "@/components/admin/FailedSearchManagement";
+import CommunityIntelligenceReport from "@/components/admin/CommunityIntelligenceReport";
 import ConnectionStatus from "@/components/ConnectionStatus";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
   FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
-  UsersRound, BookText, MessageSquare, Activity, BarChart3,
+  UsersRound, BookText, MessageSquare, Activity, BarChart3, BrainCircuit,
 } from "lucide-react";
 
 type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "prizes"
   | "letterpad" | "annual" | "settings" | "registry" | "ledger"
-  | "suggestions" | "activity" | "analytics" | "missing" | "votes";
+  | "suggestions" | "activity" | "analytics" | "missing" | "votes" | "intelligence";
 
 
 type NavItem = {
@@ -65,6 +66,7 @@ const NAV: NavItem[] = [
   { key: "notices",      label: "सूचना",          icon: Bell,         group: "गौरव व सूचना" },
   { key: "letterpad",    label: "दस्तऐवज",        icon: FileText,     group: "वित्त व दस्तऐवज" },
   { key: "annual",       label: "वार्षिक अहवाल",  icon: BookMarked,   group: "वित्त व दस्तऐवज" },
+  { key: "intelligence", label: "बुद्धिमत्ता अहवाल", icon: BrainCircuit, group: "वित्त व दस्तऐवज" },
   { key: "activity",     label: "क्रियाकलाप नोंदी", icon: Activity,   group: "इतर" },
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
@@ -148,6 +150,7 @@ const AdminDashboard = () => {
       case "prizes":       return <PrizeDistribution />;
       case "letterpad":    return <LetterpadManagement />;
       case "annual":       return <AnnualReportManagement />;
+      case "intelligence": return <CommunityIntelligenceReport />;
       case "activity":     return <ActivityLogManagement />;
       case "settings":     return <SettingsCenter />;
       case "missing":      return <FailedSearchManagement />;
@@ -201,7 +204,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <ConnectionStatus className="mr-1 hidden sm:inline-flex" />
+            <ConnectionStatus adminMode className="mr-1 hidden sm:inline-flex" />
             <Link to="/">
               <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10">
                 <Home className="h-4 w-4" />
