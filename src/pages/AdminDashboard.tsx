@@ -150,6 +150,7 @@ const AdminDashboard = () => {
       case "prizes":       return <PrizeDistribution />;
       case "letterpad":    return <LetterpadManagement />;
       case "annual":       return <AnnualReportManagement />;
+      case "intelligence": return <CommunityIntelligenceReport />;
       case "activity":     return <ActivityLogManagement />;
       case "settings":     return <SettingsCenter />;
       case "missing":      return <FailedSearchManagement />;
