@@ -201,7 +201,7 @@ const AdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-1">
-            <ConnectionStatus className="mr-1 hidden sm:inline-flex" />
+            <ConnectionStatus adminMode className="mr-1 hidden sm:inline-flex" />
             <Link to="/">
               <Button variant="ghost" size="sm" className="text-primary-foreground hover:bg-primary-foreground/10">
                 <Home className="h-4 w-4" />
