@@ -27,11 +27,12 @@ import SuggestionManagement from "@/components/admin/SuggestionManagement";
 import ActivityLogManagement from "@/components/admin/ActivityLogManagement";
 import ParticipationAnalytics from "@/components/admin/ParticipationAnalytics";
 import FailedSearchManagement from "@/components/admin/FailedSearchManagement";
+import CommunityIntelligenceReport from "@/components/admin/CommunityIntelligenceReport";
 import ConnectionStatus from "@/components/ConnectionStatus";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
   FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
-  UsersRound, BookText, MessageSquare, Activity, BarChart3,
+  UsersRound, BookText, MessageSquare, Activity, BarChart3, BrainCircuit,
 } from "lucide-react";
 
 type SectionKey =
