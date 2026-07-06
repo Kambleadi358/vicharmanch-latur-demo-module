@@ -190,6 +190,7 @@ const SamajNondaniManagement = () => {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+              <SamajNondaniReports />
               <Button size="sm" onClick={() => setShowAddHH(true)}>
                 <Plus className="h-4 w-4 mr-1" /> नवीन घर
               </Button>
