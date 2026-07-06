@@ -18,8 +18,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, Printer, Trash2, Users, Search, Download } from "lucide-react";
+import { Loader2, Printer, Trash2, Users, Search, Download, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const categoryLabels: Record<string, string> = {
   chota: "छोटा गट",
