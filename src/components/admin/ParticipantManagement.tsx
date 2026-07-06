@@ -203,9 +203,43 @@ const ParticipantManagement = () => {
             </CardTitle>
             <CardDescription>स्पर्धेसाठी नोंदणी केलेले सहभागी पहा व अहवाल छापा</CardDescription>
           </div>
-          <Button onClick={handlePrint} disabled={filtered.length === 0}>
-            <Printer className="h-4 w-4 mr-2" /> अहवाल छापा / PDF
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm">
+                  <AlertTriangle className="h-4 w-4 mr-1" /> सर्व सहभाग साफ करा
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>सर्व सहभागी नोंदणी हटवायच्या?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    ही क्रिया सर्व सहभागी नोंदी, त्यांची गाणी व स्पर्धा प्रविष्ट्या कायमस्वरूपी हटवेल.
+                    मूल्यांकन गुण, मते व अभिलेखागार अप्रभावित राहतील.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>रद्द</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={async () => {
+                      const ok = "00000000-0000-0000-0000-000000000000";
+                      await supabase.from("participation_songs").delete().neq("id", ok);
+                      await supabase.from("competition_entries").delete().neq("id", ok);
+                      await supabase.from("participants").delete().neq("id", ok);
+                      toast({ title: "सर्व सहभाग साफ केले" });
+                      load();
+                    }}
+                  >
+                    कायम हटवा
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+            <Button onClick={handlePrint} disabled={filtered.length === 0}>
+              <Printer className="h-4 w-4 mr-2" /> अहवाल छापा / PDF
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
