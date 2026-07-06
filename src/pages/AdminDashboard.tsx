@@ -17,7 +17,7 @@ import SamajNondaniManagement from "@/components/admin/SamajNondaniManagement";
 import ProgramManagement from "@/components/admin/ProgramManagement";
 import CertificateManagement from "@/components/admin/CertificateManagement";
 import SettingsCenter from "@/components/admin/SettingsCenter";
-import LetterpadManagement from "@/components/admin/LetterpadManagement";
+import LetterpadManagement from "@/components/admin/DocumentStudio";
 import PrizeDistribution from "@/components/admin/PrizeDistribution";
 import CompetitionManagement from "@/components/admin/CompetitionManagement";
 import ParticipantManagement from "@/components/admin/ParticipantManagement";
