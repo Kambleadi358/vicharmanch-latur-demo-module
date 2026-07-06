@@ -25,6 +25,16 @@ const Suggestion = () => {
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [enabled, setEnabled] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings").select("value")
+        .eq("section","event").eq("key","suggestions_enabled").maybeSingle();
+      setEnabled(data ? data.value !== false : true);
+    })();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
