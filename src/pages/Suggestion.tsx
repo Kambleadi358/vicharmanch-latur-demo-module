@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Home, MessageSquarePlus, Loader2, CheckCircle2 } from "lucide-react";
+import { Home, MessageSquarePlus, Loader2, CheckCircle2, Ban } from "lucide-react";
 import { z } from "zod";
 
 const schema = z.object({
