@@ -77,7 +77,18 @@ const Suggestion = () => {
       </header>
 
       <main className="max-w-2xl mx-auto p-4 sm:p-6">
-        {submitted ? (
+        {enabled === false ? (
+          <Card className="border-amber-500/40 bg-amber-50/70 dark:bg-amber-500/10">
+            <CardContent className="py-10 text-center space-y-3">
+              <Ban className="h-14 w-14 mx-auto text-amber-600" />
+              <h2 className="text-xl font-bold text-amber-800 dark:text-amber-200">सुझाव पेटी सध्या बंद आहे</h2>
+              <p className="text-sm text-muted-foreground">
+                आम्ही सध्या नवीन सुझाव स्वीकारत नाही आहोत. कृपया थोड्या वेळाने पुन्हा भेट द्या.
+              </p>
+              <Link to="/"><Button variant="outline"><Home className="h-4 w-4 mr-2" />मुख्यपृष्ठ</Button></Link>
+            </CardContent>
+          </Card>
+        ) : submitted ? (
           <Card className="border-emerald-500/30 bg-emerald-500/5">
             <CardContent className="py-10 text-center space-y-3">
               <CheckCircle2 className="h-14 w-14 mx-auto text-emerald-600" />
