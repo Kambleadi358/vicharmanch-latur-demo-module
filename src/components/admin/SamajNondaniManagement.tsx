@@ -22,6 +22,7 @@ import {
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
 } from "recharts";
+import SamajNondaniReports from "./SamajNondaniReports";
 
 type Gender = "male" | "female" | "other";
 type Edu =
@@ -189,6 +190,7 @@ const SamajNondaniManagement = () => {
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+              <SamajNondaniReports />
               <Button size="sm" onClick={() => setShowAddHH(true)}>
                 <Plus className="h-4 w-4 mr-1" /> नवीन घर
               </Button>
