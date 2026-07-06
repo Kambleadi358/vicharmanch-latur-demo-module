@@ -7,25 +7,25 @@ import logo from "@/assets/vicharmanch-stamp.png";
 const ADMIN_PATHS = ["/admin", "/admin-login", "/admin-signup", "/reset-password", "/judge-login", "/judge"];
 
 const MaintenanceGate = ({ children }: { children: ReactNode }) => {
-  const { isAdmin, isLoading } = useAuth();
+  const { isAdmin } = useAuth();
   const location = useLocation();
   const [maintenance, setMaintenance] = useState(false);
-  const [checked, setChecked] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    let cancelled = false;
+    const check = async () => {
       const { data } = await supabase
         .from("app_settings")
         .select("value")
         .eq("section", "system")
         .eq("key", "maintenance_mode")
         .maybeSingle();
-      setMaintenance(!!(data?.value));
-      setChecked(true);
-    })();
+      if (!cancelled) setMaintenance(data?.value === true || String(data?.value) === "true");
+    };
+    check();
+    const t = setInterval(check, 15000);
+    return () => { cancelled = true; clearInterval(t); };
   }, [location.pathname]);
-
-  if (!checked || isLoading) return <>{children}</>;
 
   const isAdminRoute = ADMIN_PATHS.some((p) => location.pathname.startsWith(p));
   if (!maintenance || isAdmin || isAdminRoute) return <>{children}</>;
