@@ -49,7 +49,8 @@ const FOOTER_HTML = (refId: string) => `
 
 const BASE_CSS = `
   @page { size: A4; margin: 18mm 16mm; }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+  html, body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   body { font-family: 'Tiro Devanagari Marathi', 'Noto Sans Devanagari', serif; color:#1e293b; margin:0; padding:0; line-height:1.7; }
   .doc-header { display:flex; align-items:center; gap:14px; padding-bottom:10px; border-bottom:3px solid #1e3a8a; }
   .doc-header img { height:70px; width:70px; object-fit:contain; }
