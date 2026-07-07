@@ -90,13 +90,6 @@ const Header = () => {
               <UserPlus size={20} />
             </Link>
             <Link
-              to="/judge-login"
-              className="text-primary-foreground/80 hover:text-accent transition-colors"
-              title="परीक्षक लॉगिन"
-            >
-              <Gavel size={20} />
-            </Link>
-            <Link
               to={isAdmin ? "/admin" : "/admin-login"}
               className="text-primary-foreground/80 hover:text-accent transition-colors"
               title={isAdmin ? "Admin Dashboard" : "Admin Login"}
