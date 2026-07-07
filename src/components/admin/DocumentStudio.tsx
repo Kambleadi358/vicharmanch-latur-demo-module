@@ -11,7 +11,7 @@ import {
   Plus, Trash2, ArrowUp, ArrowDown, Printer, Send, ChevronRight, ChevronLeft, Home,
 } from "lucide-react";
 import { toast } from "sonner";
-import logo from "@/assets/vicharmanch-stamp.png";
+import logo from "@/assets/vicharmanch-logo.jpeg";
 
 type DocType = "invitation" | "permission" | "schedule" | "congratulation" | "press";
 
