@@ -25,18 +25,28 @@ export function useConnectionHealth(intervalMs = 30000) {
   const timer = useRef<number | null>(null);
   const inflight = useRef(false);
 
-  /** Single attempt against Supabase. Returns latency or null on failure. */
+  /**
+   * Single attempt against Supabase REST root.
+   * We just need to know the backend responded — any HTTP status (even 401/404)
+   * means the server is reachable. Only a network failure = truly offline.
+   */
   const singleProbe = async (): Promise<number | null> => {
     const start = performance.now();
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
-      // Lightweight query — HEAD + count only, no rows returned.
-      const { error } = await supabase
-        .from("app_settings")
-        .select("key", { count: "exact", head: true })
-        .abortSignal(controller.signal);
-      if (error) return null;
+      const url = (supabase as any).supabaseUrl
+        ? `${(supabase as any).supabaseUrl}/rest/v1/`
+        : "";
+      if (!url) return null;
+      const res = await fetch(url, {
+        method: "HEAD",
+        signal: controller.signal,
+        headers: { apikey: (supabase as any).supabaseKey ?? "" },
+        cache: "no-store",
+      });
+      // Any response (even 401/404) proves the backend is reachable.
+      void res;
       return Math.round(performance.now() - start);
     } catch {
       return null;
