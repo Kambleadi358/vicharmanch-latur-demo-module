@@ -103,9 +103,9 @@ const HeroSection = () => {
                 <Trophy size={20} />
                 स्पर्धा पाहा
               </Link>
-              <Link to="/accounts" className="btn-outline-hero flex items-center gap-2">
-                <Wallet size={20} />
-                खाते माहिती
+              <Link to="/judge-login" className="btn-outline-hero flex items-center gap-2">
+                <Gavel size={20} />
+                परीक्षक लॉगिन
               </Link>
             </motion.div>
           </motion.div>
