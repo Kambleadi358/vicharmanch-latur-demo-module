@@ -148,7 +148,8 @@ const DonationLedgerManagement = () => {
     const html = `<!doctype html><html lang="mr"><head><meta charset="utf-8"><title>देणगी खातावही ${year}</title>
 <style>
   @page { size: A4; margin: 14mm 12mm 22mm 12mm; }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important;}
+  html,body{-webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;}
   body{font-family:'Noto Sans Devanagari','Tiro Devanagari Marathi',system-ui,sans-serif;color:#0f172a;margin:0;padding:0}
   .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px double #0c2340;padding-bottom:10px;margin-bottom:12px}
   .hdr img.logo{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #c9a84c}
