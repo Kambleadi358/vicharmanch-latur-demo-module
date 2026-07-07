@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { BookOpen, Calendar, Wallet, Trophy } from "lucide-react";
+import { BookOpen, Calendar, Gavel, Trophy } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 
 const HeroSection = () => {
