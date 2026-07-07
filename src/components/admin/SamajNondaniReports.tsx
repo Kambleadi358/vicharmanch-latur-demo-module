@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Printer, Loader2 } from "lucide-react";
-import logo from "@/assets/vicharmanch-stamp.png";
+import logo from "@/assets/vicharmanch-logo.jpeg";
 
 type Gender = "male" | "female" | "other";
 type Edu =
