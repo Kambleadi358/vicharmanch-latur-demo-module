@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { BookOpen, Calendar, Wallet, Trophy } from "lucide-react";
+import { BookOpen, Calendar, Gavel, Trophy } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 
 const HeroSection = () => {
@@ -103,9 +103,9 @@ const HeroSection = () => {
                 <Trophy size={20} />
                 स्पर्धा पाहा
               </Link>
-              <Link to="/accounts" className="btn-outline-hero flex items-center gap-2">
-                <Wallet size={20} />
-                खाते माहिती
+              <Link to="/judge-login" className="btn-outline-hero flex items-center gap-2">
+                <Gavel size={20} />
+                परीक्षक लॉगिन
               </Link>
             </motion.div>
           </motion.div>

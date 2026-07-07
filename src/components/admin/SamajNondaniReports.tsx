@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Printer, Loader2 } from "lucide-react";
-import logo from "@/assets/vicharmanch-stamp.png";
+import logo from "@/assets/vicharmanch-logo.jpeg";
 
 type Gender = "male" | "female" | "other";
 type Edu =
@@ -138,7 +138,8 @@ const SamajNondaniReports = () => {
 <title>${esc(title)}</title>
 <style>
   @page { size: A4; margin: 12mm; }
-  body { font-family: 'Tiro Devanagari Marathi', 'Noto Sans Devanagari', serif; color:#1e293b; margin:0; padding:0; }
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+  body { font-family: 'Tiro Devanagari Marathi', 'Noto Sans Devanagari', serif; color:#1e293b; margin:0; padding:0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
   .header { display:flex; align-items:center; gap:14px; border-bottom: 3px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 8px; }
   .header img { height:64px; width:64px; object-fit:contain; }
   .org h1 { margin:0; font-size:18px; color:#1e3a8a; }

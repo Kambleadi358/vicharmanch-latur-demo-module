@@ -418,7 +418,8 @@ const CommunityIntelligenceReport = () => {
 <title>Community Intelligence Report ${year}</title>
 <style>
   @page { size: A4; margin: 16mm 12mm 20mm 12mm; }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important;}
+  html,body{-webkit-print-color-adjust:exact !important; print-color-adjust:exact !important;}
   body{font-family:'Noto Sans Devanagari','Tiro Devanagari Marathi',system-ui,sans-serif;color:#0f172a;margin:0}
   .hdr{display:flex;align-items:center;gap:14px;border-bottom:3px double #0c2340;padding-bottom:10px;margin-bottom:14px}
   .hdr img{width:70px;height:70px;border-radius:50%;object-fit:cover;border:2px solid #c9a84c}
