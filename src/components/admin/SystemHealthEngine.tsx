@@ -36,8 +36,8 @@ const SystemHealthEngine = () => {
 
   const evaluate = async () => {
     setLoading(true);
-    const q = async <T,>(p: any): Promise<T[]> => {
-      try { const r = await p; return (r?.data as T[]) || []; } catch { return []; }
+    const q = async (p: any): Promise<any[]> => {
+      try { const r = await p; return (r?.data as any[]) || []; } catch { return []; }
     };
 
     const [
