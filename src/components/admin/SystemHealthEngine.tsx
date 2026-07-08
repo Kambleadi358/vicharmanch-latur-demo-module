@@ -36,7 +36,9 @@ const SystemHealthEngine = () => {
 
   const evaluate = async () => {
     setLoading(true);
-    const q = <T,>(p: Promise<any>): Promise<T[]> => p.then((r) => (r.data as T[]) || []).catch(() => [] as T[]);
+    const q = async <T,>(p: any): Promise<T[]> => {
+      try { const r = await p; return (r?.data as T[]) || []; } catch { return []; }
+    };
 
     const [
       households, members, assignments, payments, expenses,
