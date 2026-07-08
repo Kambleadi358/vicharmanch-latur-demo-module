@@ -17,6 +17,8 @@ import {
   Trash2, Wrench, Save, Loader2, Key, Lock, MapPin, Mail, Info,
 } from "lucide-react";
 import AnnualArchiveManager from "./AnnualArchiveManager";
+import SystemHealthEngine from "./SystemHealthEngine";
+import PermissionManager from "./PermissionManager";
 import { logAdminAction } from "@/lib/activityLog";
 import logo from "@/assets/vicharmanch-stamp.png";
 
