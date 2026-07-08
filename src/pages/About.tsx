@@ -46,7 +46,7 @@ const About = () => {
               <p className="text-muted-foreground leading-relaxed">
                 भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर ही अध्यक्षविहीन, विचारकेंद्रित व
                 पारदर्शक सामाजिक चळवळ आहे. आमची तत्त्वे व मूल्ये पाहण्यासाठी{" "}
-                <a href="/vichardhara" className="text-accent underline underline-offset-2">विचारधारा</a>{" "}
+                <a href="/ideology" className="text-accent underline underline-offset-2">विचारधारा</a>{" "}
                 पहा.
               </p>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 text-sm pt-1">
