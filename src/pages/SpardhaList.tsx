@@ -24,6 +24,10 @@ const SpardhaList = () => {
     })();
   }, []);
 
+  // Feature रांगोळी स्पर्धा if present; else keep as normal list.
+  const featured = comps.find((c) => (c.name || "").includes("रांगोळी"));
+  const rest = featured ? comps.filter((c) => c.id !== featured.id) : comps;
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
@@ -39,20 +43,50 @@ const SpardhaList = () => {
           ) : comps.length === 0 ? (
             <Card><CardContent className="p-12 text-center text-muted-foreground">सध्या कोणतीही स्पर्धा उपलब्ध नाही</CardContent></Card>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-4">
-              {comps.map((c) => (
-                <Link key={c.id} to={`/spardha/${c.id}`}>
-                  <Card className="hover:border-accent transition-colors cursor-pointer">
-                    <CardContent className="p-5 flex items-center justify-between">
-                      <div>
-                        <h3 className="font-bold text-lg">{c.name}</h3>
-                        <p className="text-xs text-muted-foreground">{(c.programs as any)?.name}</p>
+            <div className="space-y-6">
+              {featured && (
+                <Link to={`/spardha/${featured.id}`}>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }}
+                    whileHover={{ scale: 1.01 }}
+                    className="relative overflow-hidden rounded-2xl border-2 border-accent shadow-xl cursor-pointer"
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500 via-orange-500 to-rose-500 opacity-90" />
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_20%_50%,white_1px,transparent_2px),radial-gradient(circle_at_80%_50%,white_1px,transparent_2px)] [background-size:40px_40px]" />
+                    <div className="relative p-6 sm:p-8 text-white">
+                      <div className="inline-flex items-center gap-1.5 rounded-full bg-white/20 backdrop-blur px-3 py-1 text-[11px] font-bold uppercase tracking-widest mb-3">
+                        🎨 मुख्य आकर्षण · Main Focus
                       </div>
-                      <ChevronRight className="h-5 w-5 text-accent" />
-                    </CardContent>
-                  </Card>
+                      <h2 className="text-3xl sm:text-4xl font-black leading-tight">{featured.name}</h2>
+                      <p className="text-white/90 mt-2 text-sm">{(featured.programs as any)?.name}</p>
+                      <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-white text-fuchsia-700 px-5 py-2 font-bold text-sm shadow-lg">
+                        मत द्या <ChevronRight className="h-4 w-4" />
+                      </div>
+                    </div>
+                  </motion.div>
                 </Link>
-              ))}
+              )}
+
+              {rest.length > 0 && (
+                <div>
+                  {featured && <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3 font-semibold">इतर स्पर्धा</p>}
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    {rest.map((c) => (
+                      <Link key={c.id} to={`/spardha/${c.id}`}>
+                        <Card className="hover:border-accent transition-colors cursor-pointer">
+                          <CardContent className="p-5 flex items-center justify-between">
+                            <div>
+                              <h3 className="font-bold text-lg">{c.name}</h3>
+                              <p className="text-xs text-muted-foreground">{(c.programs as any)?.name}</p>
+                            </div>
+                            <ChevronRight className="h-5 w-5 text-accent" />
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </motion.div>

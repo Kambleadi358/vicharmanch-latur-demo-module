@@ -87,3 +87,40 @@ Pending: legacy donation module merge into ledger, full activity-log coverage on
 ## PDF Reports
 - Donation Ledger: client-side, opens printable window with community header (logo + Marathi name), totals grid, full ledger table. No server, no extra deps.
 
+
+## 2026-07-08 — PWA, Permissions, Health Engine
+
+### PWA
+- `public/manifest.webmanifest` — `display: standalone`, portrait, theme + background colors, icon set.
+- `index.html` — `<link rel="manifest">`, `theme-color`, `apple-touch-icon`.
+- No service worker registered yet (per user directive). Manifest-only installability.
+
+### Permission Architecture (`src/lib/permissions.ts`)
+- `getPermissionStatus(kind)` — uses `navigator.permissions` where supported; falls back to `Notification.permission`.
+- `requestPermission(kind)` — Camera/Mic via `getUserMedia` (stream immediately stopped); Notifications via `Notification.requestPermission`.
+- `getAllPermissions()` batched.
+- UI: `src/components/admin/PermissionManager.tsx` — surfaces state, request buttons, "मंजूर / नाकारले / विनंती करावी / उपलब्ध नाही" badges. Reusable for future Capacitor build.
+
+### Connection Health (updated)
+- `useConnectionHealth` polls `HEAD ${SUPABASE_URL}/rest/v1/` every 30 s.
+- Any HTTP response (even 401/404) = reachable. Only fetch failure = offline.
+- Retry × 2, delay 1.5 s. Slow threshold 1500 ms.
+
+### System Health Engine (`src/components/admin/SystemHealthEngine.tsx`)
+- Loads counts from 20 tables in one `Promise.all`.
+- Emits per-module `{ status: healthy | weak | checkup | poor, reason, action }` for 20 modules.
+- Weights: healthy 100, weak 75, checkup 50, poor 20 → Overall Health Score = arithmetic mean.
+- Breakdown: Data Integrity, Performance, Security, Community Data, Financial Records, Documentation, Archive.
+- Mounted at Admin → Settings → मेंटेनन्स tab (below maintenance switch, above Permission Manager).
+
+### Public Community Insights (`src/components/home/CommunityInsights.tsx`)
+- Rendered on `/about`.
+- KPIs: समाज वाढ %, देणगी वाढ %, महिला सहभाग %, लोकप्रिय स्पर्धा, सर्वाधिक सहभाग गट, सदस्य/घरे/कार्यक्रम.
+- Charts (Recharts): monthly donation trend, yearly participation trend, education pie, competition popularity bar.
+- Only aggregated data — no names, no per-household detail.
+
+### Android Readiness
+- Manifest + icons present.
+- Permission service abstracted; Capacitor plugins can drop-in behind the same API.
+- Pending before Play Store: real service worker, offline fallback, TWA/Bubblewrap wrap or Capacitor build, signing.
+
