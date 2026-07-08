@@ -45,3 +45,19 @@ _Last updated: 2026-06-04_
 | Donation Ledger PDF report: full printable A4, community header + logo, totals + per-household table, status colors | ✅ |
 | Connection Health chip added to public `Header` (always visible on every public page; sm+ screens) | ✅ |
 
+
+## 2026-07-08 Patch — PWA / Health / Insights
+
+| Fix | Status |
+|---|---|
+| Manifest-only PWA — installable Add-to-Home-Screen (no service worker yet) | ✅ |
+| Permission Manager (Camera / Microphone / Notifications) — request on demand, current status UI, Android APK-ready service | ✅ |
+| Connection Health Monitor — HEAD probe against `/rest/v1/`, retry × 2, slow > 1500 ms, no `navigator.onLine`-only false negatives | ✅ |
+| System Health Engine — 20 self-evaluating modules, Overall Health Score, 7-category breakdown (Data Integrity, Performance, Security, Community Data, Financial Records, Documentation, Archive) | ✅ |
+| Public Community Insights on `/about` — 8 KPIs + 4 charts, aggregated only, no personal data | ✅ |
+| `/ideology` page — added animated 4-Pillars section (स्वातंत्र्य, समता, बंधुता, न्याय); `/about` values moved here | ✅ |
+| SpardhaList — रांगोळी स्पर्धा featured banner when present | ✅ |
+
+### Deferred (post-audit)
+Offline caching · full service-worker · push notifications · Capacitor · TWA.
+
