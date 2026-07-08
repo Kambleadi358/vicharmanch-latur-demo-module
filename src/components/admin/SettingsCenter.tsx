@@ -332,6 +332,16 @@ const SettingsCenter = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Permission Manager */}
+          <div className="mt-4">
+            <PermissionManager />
+          </div>
+
+          {/* System Health Engine */}
+          <div className="mt-4">
+            <SystemHealthEngine />
+          </div>
         </TabsContent>
       </Tabs>
     </div>
