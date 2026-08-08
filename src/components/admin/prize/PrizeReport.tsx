@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, Package, AlertTriangle, Printer } from "lucide-react";
+import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
 
 const PrizeReport = () => {
   const { data: allocations } = useQuery({
@@ -136,6 +137,7 @@ th.center{text-align:center;}
     </table>
   </div>
 </div>
+${PDF_ATTRIBUTION_HTML}
 <script>window.onload=function(){setTimeout(function(){window.print();},600);};</script>
 </body>
 </html>`;

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import { Loader2, Printer, Trash2, Users, Search, Download, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -180,6 +181,7 @@ const ParticipantManagement = () => {
   </div>
   ${sections || `<p style="text-align:center;color:#64748b;padding:40px;">कोणतीही नोंद नाही</p>`}
   <p class="footer">— विचारमंच लातूर —</p>
+  ${PDF_ATTRIBUTION_HTML}
   <script>window.onload = () => { window.print(); };</script>
 </body>
 </html>`;

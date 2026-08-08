@@ -15,6 +15,7 @@ import {
   Activity, GraduationCap, Sparkles, AlertTriangle, Lightbulb,
 } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
+import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
 
 // ═══════════════════════════════════════════════════════════════════
 // Types & Helpers
@@ -603,6 +604,7 @@ ${insights.achievements.map((a) => `<div class="kpi"><b>${escapeHtml(a.label)}</
   <span>Vicharmanch COS · v2.0 · ${today}</span>
   <span>Community Intelligence Report ${year}</span>
 </div>
+${PDF_ATTRIBUTION_HTML}
 <script>window.onload=()=>{setTimeout(()=>window.print(),500)}</script>
 </body></html>`;
     const w = window.open("", "_blank");
