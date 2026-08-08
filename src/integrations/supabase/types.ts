@@ -1489,33 +1489,6 @@ export type Database = {
       }
     }
     Views: {
-      archives_public: {
-        Row: {
-          archive_date: string | null
-          created_at: string | null
-          id: string | null
-          remark: string | null
-          summary: Json | null
-          year: string | null
-        }
-        Insert: {
-          archive_date?: string | null
-          created_at?: string | null
-          id?: string | null
-          remark?: string | null
-          summary?: Json | null
-          year?: string | null
-        }
-        Update: {
-          archive_date?: string | null
-          created_at?: string | null
-          id?: string | null
-          remark?: string | null
-          summary?: Json | null
-          year?: string | null
-        }
-        Relationships: []
-      }
       household_donation_summary: {
         Row: {
           assigned_amount: number | null
@@ -1529,65 +1502,6 @@ export type Database = {
           year: string | null
         }
         Relationships: []
-      }
-      public_vote_choices: {
-        Row: {
-          category: string | null
-          competition_id: string | null
-          created_at: string | null
-          first_entry_id: string | null
-          id: string | null
-          second_entry_id: string | null
-          third_entry_id: string | null
-        }
-        Insert: {
-          category?: string | null
-          competition_id?: string | null
-          created_at?: string | null
-          first_entry_id?: string | null
-          id?: string | null
-          second_entry_id?: string | null
-          third_entry_id?: string | null
-        }
-        Update: {
-          category?: string | null
-          competition_id?: string | null
-          created_at?: string | null
-          first_entry_id?: string | null
-          id?: string | null
-          second_entry_id?: string | null
-          third_entry_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "public_votes_competition_id_fkey"
-            columns: ["competition_id"]
-            isOneToOne: false
-            referencedRelation: "competitions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_votes_first_entry_id_fkey"
-            columns: ["first_entry_id"]
-            isOneToOne: false
-            referencedRelation: "competition_entries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_votes_second_entry_id_fkey"
-            columns: ["second_entry_id"]
-            isOneToOne: false
-            referencedRelation: "competition_entries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "public_votes_third_entry_id_fkey"
-            columns: ["third_entry_id"]
-            isOneToOne: false
-            referencedRelation: "competition_entries"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Functions: {
