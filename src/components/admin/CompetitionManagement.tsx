@@ -15,6 +15,7 @@ import {
   Camera, Plus, Trophy, Users, Lock, Loader2, Trash2, Copy, Eye, EyeOff, Crown, KeyRound, RefreshCw,
 } from "lucide-react";
 import CameraCapture from "@/components/competition/CameraCapture";
+import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
 
 type Program = { id: string; name: string };
 type Competition = { id: string; program_id: string; name: string; status: string; is_visible: boolean };
@@ -309,6 +310,7 @@ const CompetitionManagement = () => {
       <div class="sub">स्पर्धा निकाल अहवाल — ${new Date().toLocaleDateString("mr-IN")}</div>
       <button onclick="window.print()" style="position:fixed;top:10px;right:10px;padding:8px 14px;">छापा</button>
       ${html || "<p>कोणतेही submitted गुण नाहीत.</p>"}
+      ${PDF_ATTRIBUTION_HTML}
       </body></html>`);
     w.document.close();
   };

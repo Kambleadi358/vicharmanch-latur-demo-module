@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Instagram, Mail, MapPin } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
+import AttributionBar from "./AttributionBar";
 
 const Footer = () => {
   return (
@@ -95,7 +96,7 @@ const Footer = () => {
 
       {/* Bottom Bar */}
       <div className="border-t border-primary-foreground/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-primary-foreground/60">
             <motion.p
               initial={{ opacity: 0 }}
@@ -104,8 +105,14 @@ const Footer = () => {
             >
               "विचार जिवंत ठेवण्यासाठी"
             </motion.p>
-            <p>© सर्व हक्क राखीव – Aditya</p>
+            <Link
+              to="/legal"
+              className="hover:text-accent transition-colors underline underline-offset-4"
+            >
+              कायदेशीर माहिती / About · Legal
+            </Link>
           </div>
+          <AttributionBar variant="onPrimary" className="border-t border-primary-foreground/10 pt-4" />
         </div>
       </div>
     </footer>

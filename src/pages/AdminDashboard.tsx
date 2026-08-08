@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import AttributionBar from "@/components/layout/AttributionBar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -251,6 +252,10 @@ const AdminDashboard = () => {
             >
               {renderSection(active)}
             </motion.div>
+
+            <footer className="mt-10 pt-6 border-t">
+              <AttributionBar />
+            </footer>
           </div>
         </main>
       </div>

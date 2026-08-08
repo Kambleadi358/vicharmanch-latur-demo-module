@@ -22,6 +22,7 @@ import {
 import { logAdminAction } from "@/lib/activityLog";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 import stampImg from "@/assets/vicharmanch-stamp.png";
+import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
 
 type PaymentMode = "cash" | "online";
 const MODE_LABEL: Record<PaymentMode, string> = { cash: "रोख", online: "ऑनलाइन" };
@@ -254,6 +255,7 @@ const DonationLedgerManagement = () => {
     <span>विचारमंच प्रणालीद्वारे स्वयं-निर्मित · पारदर्शकता · सातत्य</span>
     <span>${today}</span>
   </div>
+  ${PDF_ATTRIBUTION_HTML}
   <script>window.onload=()=>{setTimeout(()=>window.print(),400)}</script>
 </body></html>`;
     const w = window.open("", "_blank");

@@ -29,6 +29,7 @@ const SpardhaDetail = lazy(() => import("./pages/SpardhaDetail"));
 const Register = lazy(() => import("./pages/Register"));
 const Ahval = lazy(() => import("./pages/Ahval"));
 const Suggestion = lazy(() => import("./pages/Suggestion"));
+const Legal = lazy(() => import("./pages/Legal"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,7 +78,8 @@ const App = () => (
                   <Route path="/register" element={<Register />} />
                   <Route path="/ahval" element={<Ahval />} />
                   <Route path="/suggestion" element={<Suggestion />} />
-                  <Route path="*" element={<NotFound />} />
+                 <Route path="/legal" element={<Legal />} />
+                 <Route path="*" element={<NotFound />} />
                 </Routes>
               </Suspense>
             </AnimatePresence>

@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Archive, Download, AlertTriangle, CheckCircle2, Loader2, FileArchive, Printer, Lock } from "lucide-react";
 import JSZip from "jszip";
 import { logAdminAction } from "@/lib/activityLog";
+import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
 
 interface ArchiveRow {
   id: string;
@@ -225,6 +226,7 @@ const AnnualArchiveManager = () => {
     </div>
     <p style="margin-top:20px"><b>टिप्पणी:</b> ${a.remark.replace(/</g, "&lt;")}</p>
     <p class="footer">समता | स्वातंत्र्य | बंधुता | न्याय</p>
+    ${PDF_ATTRIBUTION_HTML}
     <script>window.onload=()=>window.print();</script>
     </body></html>`;
     const w = window.open("", "_blank");
