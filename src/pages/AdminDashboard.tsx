@@ -251,6 +251,10 @@ const AdminDashboard = () => {
             >
               {renderSection(active)}
             </motion.div>
+
+            <footer className="mt-10 pt-6 border-t">
+              <AttributionBar />
+            </footer>
           </div>
         </main>
       </div>
