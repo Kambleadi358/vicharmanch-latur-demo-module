@@ -290,6 +290,251 @@ export type Database = {
           },
         ]
       }
+      constitution_article_categories: {
+        Row: {
+          article_id: string
+          category_id: string
+        }
+        Insert: {
+          article_id: string
+          category_id: string
+        }
+        Update: {
+          article_id?: string
+          category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "constitution_article_categories_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "constitution_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "constitution_article_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "constitution_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      constitution_articles: {
+        Row: {
+          article_number: string
+          created_at: string
+          difficulty: string
+          display_order: number
+          id: string
+          is_active: boolean
+          keywords: string[]
+          official_text_en: string | null
+          official_text_mr: string | null
+          part_id: string | null
+          real_life_example_en: string | null
+          real_life_example_mr: string | null
+          simple_explanation_en: string | null
+          simple_explanation_mr: string | null
+          sort_key: number
+          title_en: string | null
+          title_mr: string
+          updated_at: string
+        }
+        Insert: {
+          article_number: string
+          created_at?: string
+          difficulty?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          keywords?: string[]
+          official_text_en?: string | null
+          official_text_mr?: string | null
+          part_id?: string | null
+          real_life_example_en?: string | null
+          real_life_example_mr?: string | null
+          simple_explanation_en?: string | null
+          simple_explanation_mr?: string | null
+          sort_key?: number
+          title_en?: string | null
+          title_mr: string
+          updated_at?: string
+        }
+        Update: {
+          article_number?: string
+          created_at?: string
+          difficulty?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          keywords?: string[]
+          official_text_en?: string | null
+          official_text_mr?: string | null
+          part_id?: string | null
+          real_life_example_en?: string | null
+          real_life_example_mr?: string | null
+          simple_explanation_en?: string | null
+          simple_explanation_mr?: string | null
+          sort_key?: number
+          title_en?: string | null
+          title_mr?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "constitution_articles_part_id_fkey"
+            columns: ["part_id"]
+            isOneToOne: false
+            referencedRelation: "constitution_parts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      constitution_categories: {
+        Row: {
+          created_at: string
+          display_order: number
+          icon: string | null
+          id: string
+          is_active: boolean
+          kind: string
+          name_en: string | null
+          name_mr: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name_en?: string | null
+          name_mr: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          display_order?: number
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          kind?: string
+          name_en?: string | null
+          name_mr?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      constitution_learning_content: {
+        Row: {
+          body_en: string | null
+          body_mr: string
+          created_at: string
+          display_order: number
+          id: string
+          is_active: boolean
+          slug: string
+          title_en: string | null
+          title_mr: string
+          updated_at: string
+        }
+        Insert: {
+          body_en?: string | null
+          body_mr: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          slug: string
+          title_en?: string | null
+          title_mr: string
+          updated_at?: string
+        }
+        Update: {
+          body_en?: string | null
+          body_mr?: string
+          created_at?: string
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          slug?: string
+          title_en?: string | null
+          title_mr?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      constitution_parts: {
+        Row: {
+          created_at: string
+          description_en: string | null
+          description_mr: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name_en: string | null
+          name_mr: string
+          part_code: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description_en?: string | null
+          description_mr?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name_en?: string | null
+          name_mr: string
+          part_code: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description_en?: string | null
+          description_mr?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name_en?: string | null
+          name_mr?: string
+          part_code?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      constitution_related_articles: {
+        Row: {
+          article_id: string
+          related_article_id: string
+        }
+        Insert: {
+          article_id: string
+          related_article_id: string
+        }
+        Update: {
+          article_id?: string
+          related_article_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "constitution_related_articles_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "constitution_articles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "constitution_related_articles_related_article_id_fkey"
+            columns: ["related_article_id"]
+            isOneToOne: false
+            referencedRelation: "constitution_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       donation_payments: {
         Row: {
           amount: number
