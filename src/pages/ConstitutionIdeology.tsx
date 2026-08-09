@@ -70,6 +70,17 @@ const ConstitutionIdeology = () => {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const catNamesByArticle = new Map<string, string>();
+    if (q) {
+      for (const l of links) {
+        const cat = categories.find((c) => c.id === l.category_id);
+        if (!cat) continue;
+        catNamesByArticle.set(
+          l.article_id,
+          `${catNamesByArticle.get(l.article_id) || ""} ${cat.name_mr} ${cat.slug}`.toLowerCase()
+        );
+      }
+    }
     return articles.filter((a) => {
       if (activePart && a.part_id !== activePart) return false;
       if (activeCat && !links.some((l) => l.article_id === a.id && l.category_id === activeCat)) return false;
@@ -77,11 +88,17 @@ const ConstitutionIdeology = () => {
       return (
         a.article_number.toLowerCase().includes(q) ||
         a.title_mr.toLowerCase().includes(q) ||
+        (a.title_en || "").toLowerCase().includes(q) ||
         (a.simple_explanation_mr || "").toLowerCase().includes(q) ||
-        (a.keywords || []).some((k) => k.toLowerCase().includes(q))
+        (a.official_text_en || "").toLowerCase().includes(q) ||
+        (a.keywords || []).some((k) => k.toLowerCase().includes(q)) ||
+        (catNamesByArticle.get(a.id) || "").includes(q)
       );
     });
-  }, [articles, links, query, activePart, activeCat]);
+  }, [articles, links, categories, query, activePart, activeCat]);
+
+  const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
+
 
   const topics = categories.filter((c) => c.kind === "topic");
   const rights = categories.filter((c) => c.kind === "fundamental_right");
