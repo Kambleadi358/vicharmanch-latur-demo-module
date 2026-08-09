@@ -212,27 +212,41 @@ const ConstitutionIdeology = () => {
           ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground">कोणतेही कलम सापडले नाही.</p>
           ) : (
-            <Accordion type="single" collapsible className="max-w-4xl mx-auto">
-              {filtered.map((a) => (
-                <AccordionItem key={a.id} value={a.id}>
-                  <AccordionTrigger className="text-left">
-                    <span className="font-semibold">कलम {a.article_number}</span>
-                    <span className="text-muted-foreground ml-3 font-normal">{a.title_mr}</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-3">
-                    {a.official_text_en && (
-                      <p className="text-sm italic text-muted-foreground border-l-2 border-accent pl-3">
-                        {a.official_text_en}
-                      </p>
-                    )}
-                    <p className="text-foreground leading-relaxed">{a.simple_explanation_mr}</p>
-                    {a.real_life_example_mr && (
-                      <div className="bg-secondary rounded-lg p-4 text-sm">{a.real_life_example_mr}</div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            <>
+              <p className="text-center text-sm text-muted-foreground mb-4">
+                एकूण {filtered.length} कलमे · दाखवत आहे {visible.length}
+              </p>
+              <Accordion type="single" collapsible className="max-w-4xl mx-auto">
+                {visible.map((a) => (
+                  <AccordionItem key={a.id} value={a.id}>
+                    <AccordionTrigger className="text-left">
+                      <span className="font-semibold">कलम {a.article_number}</span>
+                      <span className="text-muted-foreground ml-3 font-normal">{a.title_mr}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3">
+                      {a.official_text_en && (
+                        <p className="text-sm italic text-muted-foreground border-l-2 border-accent pl-3 whitespace-pre-line">
+                          {a.official_text_en}
+                        </p>
+                      )}
+                      {a.simple_explanation_mr && (
+                        <p className="text-foreground leading-relaxed">{a.simple_explanation_mr}</p>
+                      )}
+                      {a.real_life_example_mr && (
+                        <div className="bg-secondary rounded-lg p-4 text-sm">{a.real_life_example_mr}</div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+              {visible.length < filtered.length && (
+                <div className="text-center mt-6">
+                  <Button variant="outline" onClick={() => setLimit((l) => l + 30)}>
+                    आणखी कलमे पहा
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
