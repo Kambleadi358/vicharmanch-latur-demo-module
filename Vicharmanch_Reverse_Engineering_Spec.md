@@ -124,3 +124,13 @@ Pending: legacy donation module merge into ledger, full activity-log coverage on
 - Permission service abstracted; Capacitor plugins can drop-in behind the same API.
 - Pending before Play Store: real service worker, offline fallback, TWA/Bubblewrap wrap or Capacitor build, signing.
 
+
+## 2026-08-09 — Constitutional Literacy knowledge base
+
+- Source: `civictech-India/constitution-of-india` JSON (derived from constitutionofindia.net), fetched at import time — no AI-generated constitutional text.
+- Import ran once via a temporary service-role edge function (`seed-constitution`, deployed, executed, then deleted; not part of the app surface).
+- Coverage: 26 Parts (I–XXII incl. IVA, IXA, IXB, XIVA), 464 Articles, official English text on all 464.
+- Marathi simplified explanations + real-life examples: 36 verified articles only (unchanged, preserved on upsert). Remaining 428 have official text only — Marathi authoring pending.
+- Fields kept separate: `official_text_en` (authoritative), `simple_explanation_mr` (Vicharmanch), `real_life_example_mr`.
+- Validation before insert: article-number regex `^\d+[A-Z]*$`, non-empty title/text, title length ≤ 500, resolvable Part mapping, upsert by unique `article_number`. Skipped rows: 0.
+- UI (`/ideology/constitution`): search across article number, Marathi title, English title, official text, keywords and category names; part/category filters; paginated list (30 + "आणखी कलमे पहा"); Daily Article rotates by day index over articles that have a verified Marathi explanation.

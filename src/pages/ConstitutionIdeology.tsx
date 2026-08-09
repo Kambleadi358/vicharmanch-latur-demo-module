@@ -17,6 +17,7 @@ interface Article {
   id: string;
   article_number: string;
   title_mr: string;
+  title_en: string | null;
   official_text_en: string | null;
   simple_explanation_mr: string | null;
   real_life_example_mr: string | null;
@@ -43,6 +44,7 @@ const ConstitutionIdeology = () => {
   const [activePart, setActivePart] = useState<string | null>(null);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [limit, setLimit] = useState(30);
 
   useEffect(() => {
     (async () => {
@@ -62,14 +64,31 @@ const ConstitutionIdeology = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    setLimit(30);
+  }, [query, activePart, activeCat]);
+
   const dailyArticle = useMemo(() => {
-    if (!articles.length) return null;
+    // rotate only through articles that have a verified Marathi explanation
+    const pool = articles.filter((a) => (a.simple_explanation_mr || "").trim().length > 0);
+    if (!pool.length) return null;
     const day = Math.floor(Date.now() / 86400000);
-    return articles[day % articles.length];
+    return pool[day % pool.length];
   }, [articles]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const catNamesByArticle = new Map<string, string>();
+    if (q) {
+      for (const l of links) {
+        const cat = categories.find((c) => c.id === l.category_id);
+        if (!cat) continue;
+        catNamesByArticle.set(
+          l.article_id,
+          `${catNamesByArticle.get(l.article_id) || ""} ${cat.name_mr} ${cat.slug}`.toLowerCase()
+        );
+      }
+    }
     return articles.filter((a) => {
       if (activePart && a.part_id !== activePart) return false;
       if (activeCat && !links.some((l) => l.article_id === a.id && l.category_id === activeCat)) return false;
@@ -77,11 +96,17 @@ const ConstitutionIdeology = () => {
       return (
         a.article_number.toLowerCase().includes(q) ||
         a.title_mr.toLowerCase().includes(q) ||
+        (a.title_en || "").toLowerCase().includes(q) ||
         (a.simple_explanation_mr || "").toLowerCase().includes(q) ||
-        (a.keywords || []).some((k) => k.toLowerCase().includes(q))
+        (a.official_text_en || "").toLowerCase().includes(q) ||
+        (a.keywords || []).some((k) => k.toLowerCase().includes(q)) ||
+        (catNamesByArticle.get(a.id) || "").includes(q)
       );
     });
-  }, [articles, links, query, activePart, activeCat]);
+  }, [articles, links, categories, query, activePart, activeCat]);
+
+  const visible = useMemo(() => filtered.slice(0, limit), [filtered, limit]);
+
 
   const topics = categories.filter((c) => c.kind === "topic");
   const rights = categories.filter((c) => c.kind === "fundamental_right");
@@ -193,27 +218,41 @@ const ConstitutionIdeology = () => {
           ) : filtered.length === 0 ? (
             <p className="text-center text-muted-foreground">कोणतेही कलम सापडले नाही.</p>
           ) : (
-            <Accordion type="single" collapsible className="max-w-4xl mx-auto">
-              {filtered.map((a) => (
-                <AccordionItem key={a.id} value={a.id}>
-                  <AccordionTrigger className="text-left">
-                    <span className="font-semibold">कलम {a.article_number}</span>
-                    <span className="text-muted-foreground ml-3 font-normal">{a.title_mr}</span>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-3">
-                    {a.official_text_en && (
-                      <p className="text-sm italic text-muted-foreground border-l-2 border-accent pl-3">
-                        {a.official_text_en}
-                      </p>
-                    )}
-                    <p className="text-foreground leading-relaxed">{a.simple_explanation_mr}</p>
-                    {a.real_life_example_mr && (
-                      <div className="bg-secondary rounded-lg p-4 text-sm">{a.real_life_example_mr}</div>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+            <>
+              <p className="text-center text-sm text-muted-foreground mb-4">
+                एकूण {filtered.length} कलमे · दाखवत आहे {visible.length}
+              </p>
+              <Accordion type="single" collapsible className="max-w-4xl mx-auto">
+                {visible.map((a) => (
+                  <AccordionItem key={a.id} value={a.id}>
+                    <AccordionTrigger className="text-left">
+                      <span className="font-semibold">कलम {a.article_number}</span>
+                      <span className="text-muted-foreground ml-3 font-normal">{a.title_mr}</span>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-3">
+                      {a.official_text_en && (
+                        <p className="text-sm italic text-muted-foreground border-l-2 border-accent pl-3 whitespace-pre-line">
+                          {a.official_text_en}
+                        </p>
+                      )}
+                      {a.simple_explanation_mr && (
+                        <p className="text-foreground leading-relaxed">{a.simple_explanation_mr}</p>
+                      )}
+                      {a.real_life_example_mr && (
+                        <div className="bg-secondary rounded-lg p-4 text-sm">{a.real_life_example_mr}</div>
+                      )}
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+              {visible.length < filtered.length && (
+                <div className="text-center mt-6">
+                  <Button variant="outline" onClick={() => setLimit((l) => l + 30)}>
+                    आणखी कलमे पहा
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>
