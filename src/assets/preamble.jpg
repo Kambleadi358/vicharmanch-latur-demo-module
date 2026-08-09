@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="mr">
+  <head>
+    <script type="module">import { injectIntoGlobalHook } from "/@react-refresh";
+injectIntoGlobalHook(window);
+window.$RefreshReg$ = () => {};
+window.$RefreshSig$ = () => (type) => type;</script>
+
+    <script type="module" src="/@vite/client"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="theme-color" content="#1e3a5f" />
+    <link rel="apple-touch-icon" href="/favicon.jpeg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <title>विचारमंच व्यवस्थापन प्रणाली</title>
+    <meta name="description" content="अध्यक्षविहीन, विचारकेंद्रित, पारदर्शक चळवळ - वैचारिक, बौद्धिक, सामाजिक व सांस्कृतिक उपक्रम">
+    <meta name="keywords" content="आंबेडकर, विचारमंच, लातूर, जयंती, बुद्ध, धम्म, संघ, समता, बंधुता, न्याय" />
+    <meta name="author" content="Aditya" />
+
+    
+    
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="mr_IN" />
+    <meta property="og:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dcb3bc0d-a732-417b-a1e4-2f1c06f0d0fe/id-preview-94658fac--e9fabda7-3c76-4e80-b322-e1082054cbd3.lovable.app-1772863258364.png">
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@dr.ambedkar_vicharmanch" />
+    <meta name="twitter:image" content="https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/dcb3bc0d-a732-417b-a1e4-2f1c06f0d0fe/id-preview-94658fac--e9fabda7-3c76-4e80-b322-e1082054cbd3.lovable.app-1772863258364.png">
+    <meta property="og:title" content="विचारमंच व्यवस्थापन प्रणाली">
+  <meta name="twitter:title" content="विचारमंच व्यवस्थापन प्रणाली">
+  <meta property="og:description" content="अध्यक्षविहीन, विचारकेंद्रित, पारदर्शक चळवळ - वैचारिक, बौद्धिक, सामाजिक व सांस्कृतिक उपक्रम">
+  <meta name="twitter:description" content="अध्यक्षविहीन, विचारकेंद्रित, पारदर्शक चळवळ - वैचारिक, बौद्धिक, सामाजिक व सांस्कृतिक उपक्रम">
+</head>
+
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx?t=1786254852604"></script>
+  </body>
+</html>
