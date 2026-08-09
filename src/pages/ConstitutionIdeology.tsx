@@ -44,6 +44,7 @@ const ConstitutionIdeology = () => {
   const [activePart, setActivePart] = useState<string | null>(null);
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [limit, setLimit] = useState(30);
 
   useEffect(() => {
     (async () => {
