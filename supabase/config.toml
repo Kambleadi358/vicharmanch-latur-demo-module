@@ -29,6 +29,3 @@ verify_jwt = true
 
 [functions.public-vote]
 verify_jwt = false
-
-[functions.seed-constitution]
-verify_jwt = false
