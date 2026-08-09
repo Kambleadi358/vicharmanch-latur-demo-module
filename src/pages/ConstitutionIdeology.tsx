@@ -17,6 +17,7 @@ interface Article {
   id: string;
   article_number: string;
   title_mr: string;
+  title_en: string | null;
   official_text_en: string | null;
   simple_explanation_mr: string | null;
   real_life_example_mr: string | null;
