@@ -30,6 +30,7 @@ const Register = lazy(() => import("./pages/Register"));
 const Ahval = lazy(() => import("./pages/Ahval"));
 const Suggestion = lazy(() => import("./pages/Suggestion"));
 const Legal = lazy(() => import("./pages/Legal"));
+const ConstitutionIdeology = lazy(() => import("./pages/ConstitutionIdeology"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
