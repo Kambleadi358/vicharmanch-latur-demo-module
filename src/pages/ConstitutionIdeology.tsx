@@ -64,10 +64,16 @@ const ConstitutionIdeology = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    setLimit(30);
+  }, [query, activePart, activeCat]);
+
   const dailyArticle = useMemo(() => {
-    if (!articles.length) return null;
+    // rotate only through articles that have a verified Marathi explanation
+    const pool = articles.filter((a) => (a.simple_explanation_mr || "").trim().length > 0);
+    if (!pool.length) return null;
     const day = Math.floor(Date.now() / 86400000);
-    return articles[day % articles.length];
+    return pool[day % pool.length];
   }, [articles]);
 
   const filtered = useMemo(() => {
