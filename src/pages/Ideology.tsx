@@ -174,14 +174,6 @@ const Ideology = () => {
             "स्वातंत्र्य • समता • बंधुता • न्याय" — भारतीय संविधानाची प्रस्तावना
           </motion.p>
 
-          <div className="text-center mt-10">
-            <a
-              href="/ideology/constitution"
-              className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-6 py-3 text-sm font-medium hover:opacity-90 transition"
-            >
-              <BookOpen size={18} /> संविधान साक्षरता — कलमे व अधिकार
-            </a>
-          </div>
         </div>
       </section>
 
