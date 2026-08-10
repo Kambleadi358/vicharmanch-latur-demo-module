@@ -427,6 +427,44 @@ export type Database = {
         }
         Relationships: []
       }
+      constitution_events: {
+        Row: {
+          article_id: string | null
+          category_slug: string | null
+          created_at: string
+          event_type: string
+          id: string
+          matched_count: number
+          query_text: string | null
+        }
+        Insert: {
+          article_id?: string | null
+          category_slug?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          matched_count?: number
+          query_text?: string | null
+        }
+        Update: {
+          article_id?: string | null
+          category_slug?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          matched_count?: number
+          query_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "constitution_events_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "constitution_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       constitution_learning_content: {
         Row: {
           body_en: string | null
@@ -1488,6 +1526,7 @@ export type Database = {
       }
       quiz_questions: {
         Row: {
+          category_slug: string | null
           correct_answer: string
           created_at: string
           display_order: number
@@ -1501,6 +1540,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          category_slug?: string | null
           correct_answer: string
           created_at?: string
           display_order?: number
@@ -1514,6 +1554,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          category_slug?: string | null
           correct_answer?: string
           created_at?: string
           display_order?: number
