@@ -31,6 +31,7 @@ const Ahval = lazy(() => import("./pages/Ahval"));
 const Suggestion = lazy(() => import("./pages/Suggestion"));
 const Legal = lazy(() => import("./pages/Legal"));
 const ConstitutionIdeology = lazy(() => import("./pages/ConstitutionIdeology"));
+const ConstitutionArticle = lazy(() => import("./pages/ConstitutionArticle"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -64,6 +65,8 @@ const App = () => (
                   <Route path="/about" element={<About />} />
                   <Route path="/ideology" element={<Ideology />} />
                   <Route path="/ideology/constitution" element={<ConstitutionIdeology />} />
+                  <Route path="/ideology/constitution/kalam/:articleNumber" element={<ConstitutionArticle />} />
+
 
                   <Route path="/programs" element={<Programs />} />
                   <Route path="/quiz" element={<Quiz />} />
