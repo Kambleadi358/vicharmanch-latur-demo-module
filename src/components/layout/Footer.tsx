@@ -34,7 +34,7 @@ const Footer = () => {
             <ul className="space-y-2">
               {[
                 { path: "/about", label: "आमच्याबद्दल" },
-                { path: "/ideology", label: "विचारधारा" },
+                { path: "/ideology", label: "विचारधारा व संविधान" },
                 { path: "/programs", label: "कार्यक्रम" },
                 { path: "/quiz", label: "प्रश्नमंजुषा" },
               ].map((link) => (

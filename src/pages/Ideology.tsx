@@ -51,14 +51,59 @@ const Ideology = () => {
             className="text-center"
           >
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-primary-foreground mb-6">
-              विचारधारा
+              विचारधारा व संविधान
             </h1>
             <p className="text-xl text-primary-foreground/70 max-w-3xl mx-auto">
-              आंबेडकरवादी विचारांवर आधारित आमची तत्त्वे व मूल्ये
+              आंबेडकरवादी विचारांवर आधारित आमची तत्त्वे, मूल्ये आणि संविधान साक्षरता
             </p>
+
+            <motion.a
+              href="/ideology/constitution"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              whileHover={{ scale: 1.03 }}
+              className="mt-8 inline-flex items-center gap-3 rounded-full bg-accent text-accent-foreground px-8 py-4 text-base md:text-lg font-semibold shadow-lg"
+            >
+              <BookOpen size={22} /> संविधान साक्षरता — कलमे, हक्क व कर्तव्ये
+            </motion.a>
           </motion.div>
         </div>
       </section>
+
+      {/* Constitution Literacy — front and center */}
+      <section className="py-14 bg-secondary">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.a
+            href="/ideology/constitution"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            whileHover={{ y: -4 }}
+            className="block rounded-2xl border-2 border-accent/40 bg-card p-6 md:p-10 shadow-md hover:shadow-xl transition-shadow"
+          >
+            <div className="flex flex-col md:flex-row items-center gap-6 text-center md:text-left">
+              <div className="h-20 w-20 shrink-0 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <BookOpen size={40} />
+              </div>
+              <div className="flex-1">
+                <span className="text-accent text-sm font-medium uppercase tracking-wider">संविधान</span>
+                <h2 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
+                  भारतीय संविधान साक्षरता
+                </h2>
+                <p className="text-muted-foreground mt-2 leading-relaxed">
+                  उद्देशिका, सर्व भाग व कलमे, मूलभूत हक्क, मार्गदर्शक तत्त्वे आणि मूलभूत कर्तव्ये —
+                  सोप्या मराठीत शोधा व समजून घ्या.
+                </p>
+              </div>
+              <span className="rounded-full bg-primary text-primary-foreground px-6 py-3 text-sm font-medium shrink-0">
+                पहा
+              </span>
+            </div>
+          </motion.a>
+        </div>
+      </section>
+
 
       {/* Quote Section */}
       <section className="py-16 bg-background">
@@ -129,14 +174,6 @@ const Ideology = () => {
             "स्वातंत्र्य • समता • बंधुता • न्याय" — भारतीय संविधानाची प्रस्तावना
           </motion.p>
 
-          <div className="text-center mt-10">
-            <a
-              href="/ideology/constitution"
-              className="inline-flex items-center gap-2 rounded-full bg-primary text-primary-foreground px-6 py-3 text-sm font-medium hover:opacity-90 transition"
-            >
-              <BookOpen size={18} /> संविधान साक्षरता — कलमे व अधिकार
-            </a>
-          </div>
         </div>
       </section>
 
