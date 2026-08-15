@@ -23,6 +23,7 @@ type Question = {
   correct_answer: "A" | "B" | "C" | "D";
   marks: number;
   display_order: number;
+  category_slug: string | null;
 };
 
 type Config = {
@@ -52,7 +53,7 @@ type Session = {
 
 const emptyQ: Omit<Question, "id"> = {
   question: "", option_a: "", option_b: "", option_c: "", option_d: "",
-  correct_answer: "A", marks: 1, display_order: 0,
+  correct_answer: "A", marks: 1, display_order: 0, category_slug: null,
 };
 
 const QuizManagement = () => {
@@ -64,6 +65,16 @@ const QuizManagement = () => {
   const [editing, setEditing] = useState<Question | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [form, setForm] = useState<Omit<Question, "id">>(emptyQ);
+  const [categories, setCategories] = useState<{ slug: string; name_mr: string }[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("constitution_categories")
+      .select("slug, name_mr")
+      .eq("is_active", true)
+      .order("display_order")
+      .then(({ data }) => setCategories((data as any) ?? []));
+  }, []);
 
   const loadAll = async () => {
     setLoading(true);
@@ -320,6 +331,22 @@ const QuizManagement = () => {
                       <div><Label>गुण</Label><Input type="number" value={form.marks} onChange={(e) => setForm({ ...form, marks: Number(e.target.value) || 1 })} /></div>
                       <div><Label>क्रम</Label><Input type="number" value={form.display_order} onChange={(e) => setForm({ ...form, display_order: Number(e.target.value) || 0 })} /></div>
                     </div>
+                    <div>
+                      <Label>संविधान विषय (ऐच्छिक)</Label>
+                      <Select
+                        value={form.category_slug ?? "__none__"}
+                        onValueChange={(v) => setForm({ ...form, category_slug: v === "__none__" ? null : v })}
+                      >
+                        <SelectTrigger><SelectValue placeholder="विषय निवडा" /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="__none__">विषय नाही</SelectItem>
+                          {categories.map((c) => (
+                            <SelectItem key={c.slug} value={c.slug}>{c.name_mr}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground mt-1">विषयनिहाय निकाल विश्लेषणासाठी वापरले जाते</p>
+                    </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setFormOpen(false)}>रद्द</Button>
@@ -334,7 +361,7 @@ const QuizManagement = () => {
               <div key={q.id} className="border border-border rounded-lg p-3 flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="font-medium">{i + 1}. {q.question}</p>
-                  <p className="text-xs text-muted-foreground mt-1">योग्य: <strong>{q.correct_answer}</strong> · गुण: {q.marks}</p>
+                  <p className="text-xs text-muted-foreground mt-1">योग्य: <strong>{q.correct_answer}</strong> · गुण: {q.marks}{q.category_slug ? ` · विषय: ${categories.find((c) => c.slug === q.category_slug)?.name_mr ?? q.category_slug}` : ""}</p>
                 </div>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" onClick={() => openEdit(q)}><Pencil className="h-4 w-4" /></Button>

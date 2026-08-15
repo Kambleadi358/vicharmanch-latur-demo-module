@@ -4,7 +4,10 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Award, CheckCircle2, XCircle, Loader2, Clock, BookOpen, Home } from "lucide-react";
+import { Award, CheckCircle2, XCircle, Loader2, Clock, BookOpen, Home, BarChart3, Lightbulb } from "lucide-react";
+import { fetchCategories, fetchArticlesByCategory, type CArticle, type CCategory } from "@/lib/constitution";
+import { recordQuizAttempt } from "@/lib/constitutionProgress";
+import { Link } from "react-router-dom";
 
 type Result = {
   participant_name: string;
@@ -17,6 +20,14 @@ type Result = {
   status: string;
   quiz_status: string;
   show_answer_key: boolean;
+  topics?: {
+    slug: string;
+    total: number;
+    attempted: number;
+    correct: number;
+    incorrect: number;
+    percentage: number;
+  }[];
   breakdown: {
     question: string;
     options: Record<string, string>;
@@ -33,6 +44,8 @@ const QuizResult = () => {
   const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string>("");
+  const [categories, setCategories] = useState<CCategory[]>([]);
+  const [recommended, setRecommended] = useState<{ category: CCategory; articles: CArticle[] } | null>(null);
 
   useEffect(() => {
     const sid = params.get("session_id") || sessionStorage.getItem("quiz_session_id");
@@ -74,6 +87,29 @@ const QuizResult = () => {
       }
     })();
   }, [params]);
+
+  useEffect(() => {
+    const topics = result?.topics ?? [];
+    if (!topics.length) return;
+    recordQuizAttempt(
+      result!.percentage,
+      Object.fromEntries(topics.map((t) => [t.slug, t.percentage]))
+    );
+    (async () => {
+      const cats = await fetchCategories();
+      setCategories(cats);
+      const weakest = topics[0];
+      if (!weakest || weakest.percentage >= 60) return;
+      const cat = cats.find((c) => c.slug === weakest.slug);
+      if (!cat) return;
+      const articles = await fetchArticlesByCategory(cat.id);
+      setRecommended({ category: cat, articles: articles.slice(0, 5) });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result]);
+
+  const catName = (slug: string) =>
+    categories.find((c) => c.slug === slug)?.name_mr ?? slug;
 
   if (loading) {
     return (
@@ -134,6 +170,60 @@ const QuizResult = () => {
               <p className="text-3xl font-bold mt-1">{minutes}:{seconds.toString().padStart(2, "0")}</p>
             </div>
           </div>
+
+          {/* Topic-wise performance */}
+          {(result.topics?.length ?? 0) > 0 && (
+            <div className="bg-card border border-border rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="text-accent" />
+                <h2 className="text-xl font-semibold">विषयनिहाय कामगिरी</h2>
+              </div>
+              <div className="space-y-4">
+                {result.topics!.map((t) => (
+                  <div key={t.slug}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">{catName(t.slug)}</span>
+                      <span className="text-muted-foreground">
+                        {t.correct}/{t.total} · {t.percentage}%
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${t.percentage >= 60 ? "bg-accent" : "bg-destructive"}`}
+                        style={{ width: `${Math.max(2, t.percentage)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Explainable learning recommendations */}
+          {recommended && recommended.articles.length > 0 && (
+            <div className="bg-card border border-border rounded-xl p-6">
+              <div className="flex items-center gap-2 mb-2">
+                <Lightbulb className="text-accent" />
+                <h2 className="text-xl font-semibold">शिफारस केलेले वाचन</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                तुमची <strong>{recommended.category.name_mr}</strong> विषयातील कामगिरी तुलनेने कमी आहे.
+                ही कलमे त्या विषयाशी संबंधित आहेत.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {recommended.articles.map((a) => (
+                  <Link
+                    key={a.id}
+                    to={`/ideology/constitution/kalam/${a.article_number}`}
+                    className="border border-border rounded-lg p-3 hover:border-accent transition-colors"
+                  >
+                    <p className="text-sm font-semibold text-accent">कलम {a.article_number}</p>
+                    <p className="text-sm text-foreground">{a.title_mr || a.title_en}</p>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Answer key */}
           {result.show_answer_key && result.breakdown.length > 0 ? (
