@@ -54,15 +54,37 @@ Deno.serve(async (req) => {
       .select("question_id, selected_option, is_correct, time_spent_seconds")
       .eq("session_id", session.id);
 
+    const order: string[] = (session.question_order as string[]) ?? [];
+    const { data: qs } = await supabase
+      .from("quiz_questions")
+      .select("id, question, option_a, option_b, option_c, option_d, correct_answer, marks, category_slug")
+      .in("id", order.length ? order : ["00000000-0000-0000-0000-000000000000"]);
+    const byId = new Map((qs ?? []).map((q: any) => [q.id, q]));
+    const ansById = new Map((answers ?? []).map((a: any) => [a.question_id, a]));
+
+    // ---- Topic-wise (category) performance ----
+    const topicMap = new Map<string, { attempted: number; correct: number; total: number }>();
+    for (const qid of order) {
+      const q: any = byId.get(qid);
+      if (!q?.category_slug) continue;
+      const a: any = ansById.get(qid);
+      const t = topicMap.get(q.category_slug) ?? { attempted: 0, correct: 0, total: 0 };
+      t.total += 1;
+      if (a?.selected_option) t.attempted += 1;
+      if (a?.is_correct) t.correct += 1;
+      topicMap.set(q.category_slug, t);
+    }
+    const topics = [...topicMap.entries()].map(([slug, t]) => ({
+      slug,
+      total: t.total,
+      attempted: t.attempted,
+      correct: t.correct,
+      incorrect: t.attempted - t.correct,
+      percentage: t.total > 0 ? Math.round((t.correct / t.total) * 1000) / 10 : 0,
+    })).sort((a, b) => a.percentage - b.percentage);
+
     let breakdown: any[] = [];
     if (showAnswerKey) {
-      const order: string[] = (session.question_order as string[]) ?? [];
-      const { data: qs } = await supabase
-        .from("quiz_questions")
-        .select("id, question, option_a, option_b, option_c, option_d, correct_answer, marks")
-        .in("id", order);
-      const byId = new Map((qs ?? []).map((q) => [q.id, q]));
-      const ansById = new Map((answers ?? []).map((a) => [a.question_id, a]));
       breakdown = order.map((qid) => {
         const q: any = byId.get(qid);
         const a: any = ansById.get(qid);
@@ -74,6 +96,7 @@ Deno.serve(async (req) => {
               your_answer: a?.selected_option ?? null,
               is_correct: !!a?.is_correct,
               marks: q.marks,
+              category_slug: q.category_slug ?? null,
             }
           : null;
       }).filter(Boolean);
@@ -95,6 +118,7 @@ Deno.serve(async (req) => {
         status: session.status,
         quiz_status: config?.status ?? "UPCOMING",
         show_answer_key: showAnswerKey,
+        topics,
         breakdown,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
