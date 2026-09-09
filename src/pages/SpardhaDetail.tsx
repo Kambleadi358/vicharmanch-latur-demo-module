@@ -1,4 +1,4 @@
-// Public competition detail: gallery + voting
+// Public competition detail: gallery + single-choice voting + top 10 results
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,8 @@ const fingerprint = () => {
   return stored;
 };
 
+interface Tally { entry_id: string; entry_code: string; category: string; votes: number }
+
 const SpardhaDetail = () => {
   const { id } = useParams();
   const [comp, setComp] = useState<any>(null);
@@ -48,18 +50,24 @@ const SpardhaDetail = () => {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState<"chota" | "motha" | "khula">("chota");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [votes, setVotes] = useState<any[]>([]);
+  const [tally, setTally] = useState<Tally[]>([]);
 
   // Voting state per category
   const [voteOpen, setVoteOpen] = useState(false);
   const [phone, setPhone] = useState("");
-  const [picks, setPicks] = useState<{ first?: string; second?: string; third?: string }>({});
+  const [voterName, setVoterName] = useState("");
+  const [pick, setPick] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [votedTick, setVotedTick] = useState(0);
+
+  const loadTally = async (compId: string) => {
+    const { data } = await (supabase as any).rpc("get_vote_tally", { _competition_id: compId });
+    setTally(((data as Tally[]) ?? []).map((t) => ({ ...t, votes: Number(t.votes) })));
+  };
 
   useEffect(() => {
     (async () => {
       if (!id) return;
-      // First fetch comp to know if LOCKED → only then request participant_name
       const { data: c } = await supabase
         .from("competitions")
         .select("id, name, status, programs(name)")
@@ -73,38 +81,27 @@ const SpardhaDetail = () => {
         .eq("competition_id", id)
         .order("entry_code");
       setEntries(e ?? []);
-      const { data: v } = await supabase
-        .from("public_votes")
-        .select("category, first_entry_id, second_entry_id, third_entry_id")
-        .eq("competition_id", id);
-      setVotes(v ?? []);
+      await loadTally(id);
       setLoading(false);
     })();
   }, [id]);
 
-  const isLocked = comp?.status === "LOCKED";
-  const votingEnabled = isLocked;
-
+  const votingEnabled = comp?.status === "LOCKED";
 
   const votedKey = (cat: string) => `voted_${id}_${cat}`;
-  const hasVoted = (cat: string) => !!localStorage.getItem(votedKey(cat));
+  const hasVoted = (cat: string) => { void votedTick; return !!localStorage.getItem(votedKey(cat)); };
 
-  const togglePick = (slot: "first" | "second" | "third", entryId: string) => {
-    setPicks((p) => {
-      const next = { ...p };
-      // If this entry is already in another slot, remove it
-      (Object.keys(next) as Array<"first" | "second" | "third">).forEach((k) => {
-        if (next[k] === entryId) delete next[k];
-      });
-      next[slot] = entryId;
-      return next;
-    });
-  };
+  const voteMap = useMemo(() => {
+    const m = new Map<string, number>();
+    tally.forEach((t) => m.set(t.entry_id, t.votes));
+    return m;
+  }, [tally]);
 
   const submitVote = async () => {
     if (!id) return;
+    if (voterName.trim().length < 2) { toast.error("आपले नाव लिहा"); return; }
     if (!phone || phone.replace(/\D/g, "").length < 10) { toast.error("वैध 10-अंकी मोबाइल नंबर द्या"); return; }
-    if (!picks.first || !picks.second || !picks.third) { toast.error("तीन निवडा"); return; }
+    if (!pick) { toast.error("एक रांगोळी निवडा"); return; }
     setSubmitting(true);
     try {
       const { data, error } = await supabase.functions.invoke("public-vote", {
@@ -112,10 +109,9 @@ const SpardhaDetail = () => {
           competition_id: id,
           category: activeCategory,
           voter_phone: phone,
+          voter_name: voterName,
           device_fingerprint: fingerprint(),
-          first_entry_id: picks.first,
-          second_entry_id: picks.second,
-          third_entry_id: picks.third,
+          entry_id: pick,
         },
       });
       if (error || (data as any)?.error) {
@@ -123,9 +119,11 @@ const SpardhaDetail = () => {
         return;
       }
       localStorage.setItem(votedKey(activeCategory), "1");
+      setVotedTick((t) => t + 1);
       toast.success("धन्यवाद! आपले मत नोंदले गेले");
       setVoteOpen(false);
-      setPicks({}); setPhone("");
+      setPick(null); setPhone(""); setVoterName("");
+      await loadTally(id);
     } finally { setSubmitting(false); }
   };
 
@@ -166,36 +164,64 @@ const SpardhaDetail = () => {
               {CATEGORIES.map((c) => {
                 const list = entries.filter((e) => e.category === c.key);
                 const voted = hasVoted(c.key);
-                // Build vote tallies for this category
-                const catVotes = votes.filter((v: any) => v.category === c.key);
-                const tally = new Map<string, { first: number; second: number; third: number }>();
-                list.forEach((e) => tally.set(e.id, { first: 0, second: 0, third: 0 }));
-                catVotes.forEach((v: any) => {
-                  if (v.first_entry_id && tally.has(v.first_entry_id)) tally.get(v.first_entry_id)!.first++;
-                  if (v.second_entry_id && tally.has(v.second_entry_id)) tally.get(v.second_entry_id)!.second++;
-                  if (v.third_entry_id && tally.has(v.third_entry_id)) tally.get(v.third_entry_id)!.third++;
-                });
-                const ranked = list
-                  .map((e) => {
-                    const t = tally.get(e.id) || { first: 0, second: 0, third: 0 };
-                    const points = t.first * 3 + t.second * 2 + t.third * 1;
-                    const total = t.first + t.second + t.third;
-                    return { ...e, ...t, points, total };
-                  })
-                  .sort((a, b) => b.points - a.points);
+                const totalVotes = list.reduce((s, e) => s + (voteMap.get(e.id) || 0), 0);
+                const top10 = list
+                  .map((e) => ({ ...e, votes: voteMap.get(e.id) || 0 }))
+                  .filter((e) => e.votes > 0)
+                  .sort((a, b) => b.votes - a.votes || a.entry_code.localeCompare(b.entry_code))
+                  .slice(0, 10);
+                const maxVotes = top10[0]?.votes || 0;
                 return (
                   <TabsContent key={c.key} value={c.key} className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">{list.length} नोंदी · {catVotes.length} मते</p>
+                      <p className="text-sm text-muted-foreground">{list.length} नोंदी · {totalVotes} मते</p>
                       <Button
                         size="sm"
-                        disabled={voted || list.length < 3 || !votingEnabled}
-                        onClick={() => { setPicks({}); setVoteOpen(true); }}
+                        disabled={voted || list.length === 0 || !votingEnabled}
+                        onClick={() => { setPick(null); setVoteOpen(true); }}
                       >
                         <Vote className="h-4 w-4 mr-1" />
                         {voted ? "मतदान केले" : votingEnabled ? "मतदान करा" : "Lock नंतर मतदान"}
                       </Button>
                     </div>
+
+                    {/* Top 10 public results */}
+                    {top10.length > 0 && (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm flex items-center gap-2">
+                            <Trophy className="h-4 w-4 text-accent" /> सर्वाधिक मते — टॉप १० ({c.label})
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {top10.map((r, i) => (
+                            <div key={r.id} className="flex items-center gap-3">
+                              <div className={`h-8 w-8 rounded-md flex items-center justify-center text-sm font-bold shrink-0 ${
+                                i < 3 ? "bg-accent text-accent-foreground" : "bg-muted text-foreground"
+                              }`}>{i + 1}</div>
+                              <button onClick={() => setPreviewUrl(r.image_url)} className="shrink-0">
+                                <img src={r.image_url} alt={`रांगोळी ${r.entry_code}`} loading="lazy"
+                                  className="h-12 w-12 rounded object-cover border" />
+                              </button>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-mono text-sm font-bold">{r.entry_code}</div>
+                                <div className="h-2 bg-muted rounded overflow-hidden mt-1">
+                                  <div className="h-full bg-primary rounded"
+                                    style={{ width: `${maxVotes ? Math.round((r.votes / maxVotes) * 100) : 0}%` }} />
+                                </div>
+                              </div>
+                              <div className="text-right shrink-0 w-16">
+                                <span className="text-base font-bold text-primary">{r.votes}</span>
+                                <span className="text-[10px] text-muted-foreground block leading-none">मते</span>
+                              </div>
+                            </div>
+                          ))}
+                          <p className="text-[11px] text-muted-foreground pt-1">
+                            गोपनीयतेसाठी सार्वजनिक पानावर फक्त नोंद क्रमांक दिसतो — सहभागींची नावे दाखवली जात नाहीत.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
 
                     {list.length === 0 ? (
                       <Card><CardContent className="p-12 text-center text-muted-foreground">कोणतीही नोंद नाही</CardContent></Card>
@@ -204,11 +230,12 @@ const SpardhaDetail = () => {
                         {list.map((e) => (
                           <Card key={e.id} className="overflow-hidden">
                             <button onClick={() => setPreviewUrl(e.image_url)} className="block w-full">
-                              <img src={e.image_url} alt={e.entry_code} loading="lazy" className="w-full aspect-square object-cover" />
+                              <img src={e.image_url} alt={`रांगोळी नोंद ${e.entry_code}`} loading="lazy" className="w-full aspect-square object-cover" />
                             </button>
                             <CardContent className="p-2 text-xs flex items-center justify-between">
                               <div>
                                 <div className="font-bold">{e.entry_code}</div>
+                                <div className="text-[10px] text-muted-foreground">{voteMap.get(e.id) || 0} मते</div>
                               </div>
                               <Button variant="ghost" size="sm" onClick={() => downloadImage(e.image_url, e.entry_code)} className="h-7 w-7 p-0">
                                 <Download className="h-3 w-3" />
@@ -217,47 +244,6 @@ const SpardhaDetail = () => {
                           </Card>
                         ))}
                       </div>
-                    )}
-
-                    {/* Public vote results — visible when any vote exists */}
-                    {catVotes.length > 0 && (
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm flex items-center gap-2">
-                            <Trophy className="h-4 w-4 text-accent" /> सार्वजनिक मतदान निकाल — {c.label}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-xs">
-                              <thead className="bg-muted/50">
-                                <tr>
-                                  <th className="text-left px-3 py-2">क्रम</th>
-                                  <th className="text-left px-3 py-2">ID</th>
-                                  <th className="text-center px-2 py-2">१ला</th>
-                                  <th className="text-center px-2 py-2">२रा</th>
-                                  <th className="text-center px-2 py-2">३रा</th>
-                                  <th className="text-center px-2 py-2">एकूण</th>
-                                  <th className="text-right px-3 py-2">गुण</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {ranked.map((r, i) => (
-                                  <tr key={r.id} className="border-t">
-                                    <td className="px-3 py-2 font-semibold">{i + 1}</td>
-                                    <td className="px-3 py-2 font-mono">{r.entry_code}</td>
-                                    <td className="text-center px-2 py-2">{r.first}</td>
-                                    <td className="text-center px-2 py-2">{r.second}</td>
-                                    <td className="text-center px-2 py-2">{r.third}</td>
-                                    <td className="text-center px-2 py-2 font-semibold">{r.total}</td>
-                                    <td className="text-right px-3 py-2 font-bold text-primary">{r.points}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </CardContent>
-                      </Card>
                     )}
                   </TabsContent>
                 );
@@ -271,64 +257,48 @@ const SpardhaDetail = () => {
       {/* Image preview */}
       <Dialog open={!!previewUrl} onOpenChange={(o) => !o && setPreviewUrl(null)}>
         <DialogContent className="max-w-4xl p-2">
-          {previewUrl && <img src={previewUrl} className="w-full h-auto rounded" />}
+          {previewUrl && <img src={previewUrl} alt="रांगोळी" className="w-full h-auto rounded" />}
         </DialogContent>
       </Dialog>
 
-      {/* Vote dialog */}
+      {/* Vote dialog — single choice */}
       <Dialog open={voteOpen} onOpenChange={setVoteOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <CardHeader className="p-0 pb-3">
             <CardTitle>{CATEGORIES.find((c) => c.key === activeCategory)?.label} — मतदान</CardTitle>
+            <p className="text-xs text-muted-foreground">एका गटात फक्त एकच रांगोळी निवडता येते. एक मोबाइल नंबर = एक मत.</p>
           </CardHeader>
           <div className="space-y-3">
-            <div>
-              <Label>मोबाइल नंबर</Label>
-              <Input type="tel" inputMode="numeric" maxLength={10} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98XXXXXXXX" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <Label>आपले नाव</Label>
+                <Input value={voterName} onChange={(e) => setVoterName(e.target.value)} placeholder="पूर्ण नाव" />
+              </div>
+              <div>
+                <Label>मोबाइल नंबर</Label>
+                <Input type="tel" inputMode="numeric" maxLength={10} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="98XXXXXXXX" />
+              </div>
             </div>
             <div>
-              <Label>आपली निवड (1ला, 2रा, 3रा क्रमांक)</Label>
-              <p className="text-xs text-muted-foreground mb-2">चित्रावर क्लिक करून slot निवडा</p>
-              <div className="grid grid-cols-3 gap-2 mb-3">
-                {(["first", "second", "third"] as const).map((slot, i) => {
-                  const ent = entries.find((e) => e.id === picks[slot]);
-                  return (
-                    <div key={slot} className="border-2 border-dashed border-muted rounded-lg p-2 min-h-[100px]">
-                      <div className="text-xs font-semibold text-center mb-1">{i + 1}ला क्रमांक</div>
-                      {ent ? (
-                        <div className="relative">
-                          <img src={ent.image_url} className="w-full aspect-square object-cover rounded" />
-                          <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs text-center py-0.5">{ent.entry_code}</div>
-                        </div>
-                      ) : <div className="text-xs text-muted-foreground text-center py-6">रिक्त</div>}
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="grid grid-cols-4 gap-2 max-h-64 overflow-y-auto p-1">
+              <Label>आपली निवड</Label>
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-72 overflow-y-auto p-1 mt-2">
                 {entries.filter((e) => e.category === activeCategory).map((e) => {
-                  const slot = (Object.keys(picks) as Array<"first" | "second" | "third">).find((k) => picks[k] === e.id);
+                  const selected = pick === e.id;
                   return (
-                    <div key={e.id} className="space-y-1">
-                      <div className={`relative cursor-pointer border-2 rounded ${slot ? "border-accent" : "border-transparent"}`}>
-                        <img src={e.image_url} className="w-full aspect-square object-cover rounded" />
-                        <div className="absolute top-0 left-0 bg-black/60 text-white text-[10px] px-1 rounded-br">{e.entry_code}</div>
-                        {slot && (
-                          <div className="absolute top-0 right-0 bg-accent text-accent-foreground text-[10px] font-bold px-1 rounded-bl">
-                            {slot === "first" ? "1" : slot === "second" ? "2" : "3"}
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex gap-0.5">
-                        {(["first", "second", "third"] as const).map((s, i) => (
-                          <button
-                            key={s}
-                            onClick={() => togglePick(s, e.id)}
-                            className={`flex-1 text-[10px] py-0.5 rounded ${picks[s] === e.id ? "bg-accent text-accent-foreground" : "bg-muted"}`}
-                          >{i + 1}</button>
-                        ))}
-                      </div>
-                    </div>
+                    <button
+                      key={e.id}
+                      type="button"
+                      onClick={() => setPick(e.id)}
+                      className={`relative rounded border-2 overflow-hidden transition-all ${selected ? "border-accent ring-2 ring-accent/40" : "border-transparent"}`}
+                    >
+                      <img src={e.image_url} alt={`रांगोळी ${e.entry_code}`} className="w-full aspect-square object-cover" />
+                      <span className="absolute top-0 left-0 bg-black/60 text-white text-[10px] px-1 rounded-br">{e.entry_code}</span>
+                      {selected && (
+                        <span className="absolute inset-0 bg-accent/20 flex items-center justify-center">
+                          <Check className="h-6 w-6 text-accent-foreground bg-accent rounded-full p-1" />
+                        </span>
+                      )}
+                    </button>
                   );
                 })}
               </div>
