@@ -97,6 +97,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_security_questions: {
+        Row: {
+          a1_hash: string
+          a2_hash: string
+          a3_hash: string
+          created_at: string
+          q1: string
+          q2: string
+          q3: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          a1_hash: string
+          a2_hash: string
+          a3_hash: string
+          created_at?: string
+          q1: string
+          q2: string
+          q3: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          a1_hash?: string
+          a2_hash?: string
+          a3_hash?: string
+          created_at?: string
+          q1?: string
+          q2?: string
+          q3?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       annual_reports: {
         Row: {
           created_at: string
@@ -1349,10 +1385,12 @@ export type Database = {
           competition_id: string
           created_at: string
           device_fingerprint: string
+          entry_id: string | null
           first_entry_id: string | null
           id: string
           second_entry_id: string | null
           third_entry_id: string | null
+          voter_name: string | null
           voter_phone: string
         }
         Insert: {
@@ -1360,10 +1398,12 @@ export type Database = {
           competition_id: string
           created_at?: string
           device_fingerprint: string
+          entry_id?: string | null
           first_entry_id?: string | null
           id?: string
           second_entry_id?: string | null
           third_entry_id?: string | null
+          voter_name?: string | null
           voter_phone: string
         }
         Update: {
@@ -1371,10 +1411,12 @@ export type Database = {
           competition_id?: string
           created_at?: string
           device_fingerprint?: string
+          entry_id?: string | null
           first_entry_id?: string | null
           id?: string
           second_entry_id?: string | null
           third_entry_id?: string | null
+          voter_name?: string | null
           voter_phone?: string
         }
         Relationships: [
@@ -1383,6 +1425,13 @@ export type Database = {
             columns: ["competition_id"]
             isOneToOne: false
             referencedRelation: "competitions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "public_votes_entry_id_fkey"
+            columns: ["entry_id"]
+            isOneToOne: false
+            referencedRelation: "competition_entries"
             referencedColumns: ["id"]
           },
           {
@@ -1791,6 +1840,16 @@ export type Database = {
       }
     }
     Functions: {
+      clear_all_participation: { Args: never; Returns: Json }
+      get_vote_tally: {
+        Args: { _competition_id: string }
+        Returns: {
+          category: string
+          entry_code: string
+          entry_id: string
+          votes: number
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
