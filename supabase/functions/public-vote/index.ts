@@ -1,5 +1,5 @@
-// Public: cast vote (1st/2nd/3rd) per category. DB-enforced uniqueness on (comp,category,phone)
-// and (comp,category,fingerprint). Validates competition is LOCKED.
+// Public: cast a SINGLE vote for one entry per category. DB-enforced uniqueness on
+// (comp,category,phone) and (comp,category,fingerprint). Validates competition is LOCKED.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
@@ -16,22 +16,17 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const body = await req.json().catch(() => ({}));
-    const {
-      competition_id, category, voter_phone, device_fingerprint,
-      first_entry_id, second_entry_id, third_entry_id,
-    } = body ?? {};
+    const { competition_id, category, voter_phone, voter_name, device_fingerprint, entry_id } = body ?? {};
 
     // Validate
     if (!isUUID(competition_id)) return jsonRes({ error: "अवैध स्पर्धा" }, 400);
     if (!["chota", "motha", "khula"].includes(category)) return jsonRes({ error: "अवैध गट" }, 400);
-    if (!isUUID(first_entry_id) || !isUUID(second_entry_id) || !isUUID(third_entry_id)) {
-      return jsonRes({ error: "तीनही क्रमांकांसाठी निवड करा" }, 400);
-    }
-    if (new Set([first_entry_id, second_entry_id, third_entry_id]).size !== 3) {
-      return jsonRes({ error: "तीन वेगवेगळ्या entries निवडा" }, 400);
-    }
+    if (!isUUID(entry_id)) return jsonRes({ error: "एक रांगोळी निवडा" }, 400);
+
     const phone = String(voter_phone ?? "").replace(/\D/g, "");
     if (phone.length < 10 || phone.length > 15) return jsonRes({ error: "वैध मोबाइल नंबर द्या" }, 400);
+    const name = String(voter_name ?? "").trim().slice(0, 100);
+    if (name.length < 2) return jsonRes({ error: "आपले नाव लिहा" }, 400);
     const fp = String(device_fingerprint ?? "").slice(0, 128);
     if (fp.length < 5) return jsonRes({ error: "device verify अयशस्वी" }, 400);
 
@@ -40,7 +35,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Confirm competition is LOCKED (single indexed lookup)
+    // Confirm competition is LOCKED
     const { data: competition } = await supabase
       .from("competitions")
       .select("id, status")
@@ -51,16 +46,28 @@ Deno.serve(async (req) => {
       return jsonRes({ error: "मतदान फक्त स्पर्धा lock झाल्यानंतरच सुरू होते" }, 409);
     }
 
-    // Insert; rely on unique constraints to atomically prevent duplicates under load.
+    // Entry must belong to this competition + category
+    const { data: entry } = await supabase
+      .from("competition_entries")
+      .select("id, competition_id, category")
+      .eq("id", entry_id)
+      .maybeSingle();
+    if (!entry || entry.competition_id !== competition_id || entry.category !== category) {
+      return jsonRes({ error: "निवडलेली नोंद या गटात नाही" }, 400);
+    }
+
     const { error } = await supabase.from("public_votes").insert({
-      competition_id, category, voter_phone: phone, device_fingerprint: fp,
-      first_entry_id, second_entry_id, third_entry_id,
+      competition_id,
+      category,
+      voter_phone: phone,
+      voter_name: name,
+      device_fingerprint: fp,
+      entry_id,
     });
 
     if (error) {
-      // 23505 = unique_violation → user already voted in this program
       if ((error as any).code === "23505" || /duplicate|unique/i.test(error.message)) {
-        return jsonRes({ error: "तुम्ही या स्पर्धेत आधीच मतदान केले आहे", duplicate: true }, 409);
+        return jsonRes({ error: "तुम्ही या गटात आधीच मतदान केले आहे", duplicate: true }, 409);
       }
       throw error;
     }
