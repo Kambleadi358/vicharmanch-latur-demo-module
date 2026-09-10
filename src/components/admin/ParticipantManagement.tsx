@@ -216,8 +216,9 @@ const ParticipantManagement = () => {
                 <AlertDialogHeader>
                   <AlertDialogTitle>सर्व सहभागी नोंदणी हटवायच्या?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    ही क्रिया सर्व सहभागी नोंदी, त्यांची गाणी व स्पर्धा प्रविष्ट्या कायमस्वरूपी हटवेल.
-                    मूल्यांकन गुण, मते व अभिलेखागार अप्रभावित राहतील.
+                    ही क्रिया सर्व सहभागी नोंदी, त्यांची गाणी, स्पर्धा प्रविष्ट्या, परीक्षक गुण व मते कायमस्वरूपी हटवेल.
+                    अभिलेखागार अप्रभावित राहील.
+
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -225,16 +226,22 @@ const ParticipantManagement = () => {
                   <AlertDialogAction
                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                     onClick={async () => {
-                      const ok = "00000000-0000-0000-0000-000000000000";
-                      await supabase.from("participation_songs").delete().neq("id", ok);
-                      await supabase.from("competition_entries").delete().neq("id", ok);
-                      await supabase.from("participants").delete().neq("id", ok);
-                      toast({ title: "सर्व सहभाग साफ केले" });
+                      const { data, error } = await (supabase as any).rpc("clear_all_participation");
+                      if (error) {
+                        toast({ title: "साफ करता आले नाही", description: error.message, variant: "destructive" });
+                        return;
+                      }
+                      const d = (data ?? {}) as Record<string, number>;
+                      toast({
+                        title: "सर्व सहभाग साफ केले",
+                        description: `सहभागी: ${d.participants ?? 0} · नोंदी: ${d.entries ?? 0} · गाणी: ${d.songs ?? 0} · मते: ${d.votes ?? 0} · गुण: ${d.scores ?? 0}`,
+                      });
                       load();
                     }}
                   >
                     कायम हटवा
                   </AlertDialogAction>
+
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>

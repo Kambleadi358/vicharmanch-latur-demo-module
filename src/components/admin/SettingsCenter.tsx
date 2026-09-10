@@ -19,6 +19,8 @@ import {
 import AnnualArchiveManager from "./AnnualArchiveManager";
 import SystemHealthEngine from "./SystemHealthEngine";
 import PermissionManager from "./PermissionManager";
+import SecurityQuestions from "./SecurityQuestions";
+
 import { logAdminAction } from "@/lib/activityLog";
 import logo from "@/assets/vicharmanch-stamp.png";
 
@@ -174,7 +176,7 @@ const SettingsCenter = () => {
         </TabsContent>
 
         {/* 2. Security */}
-        <TabsContent value="security" className="mt-4">
+        <TabsContent value="security" className="mt-4 space-y-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-base flex items-center gap-2"><Key className="h-4 w-4" /> पासवर्ड बदला</CardTitle>
@@ -195,7 +197,9 @@ const SettingsCenter = () => {
               </Button>
             </CardContent>
           </Card>
+          <SecurityQuestions />
         </TabsContent>
+
 
         {/* 3. Media */}
         <TabsContent value="media" className="mt-4">

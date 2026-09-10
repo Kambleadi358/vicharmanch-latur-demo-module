@@ -8,7 +8,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { useToast } from "@/hooks/use-toast";
 import { Shield, Mail, Lock, ArrowLeft, KeyRound } from "lucide-react";
 
@@ -22,11 +21,12 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // OTP reset state
+  // Security-question reset state
   const [resetOpen, setResetOpen] = useState(false);
   const [resetStep, setResetStep] = useState<ResetStep>("request");
   const [resetEmail, setResetEmail] = useState("");
-  const [otp, setOtp] = useState("");
+  const [questions, setQuestions] = useState<string[]>([]);
+  const [answers, setAnswers] = useState<string[]>(["", "", ""]);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
@@ -48,40 +48,43 @@ const AdminLogin = () => {
   };
 
   const openReset = () => {
-    setResetEmail(email.trim() || "vicharmanch1956@gmail.com");
+    setResetEmail(email.trim());
     setResetStep("request");
-    setOtp("");
+    setQuestions([]);
+    setAnswers(["", "", ""]);
     setNewPassword("");
     setConfirmPassword("");
     setResetOpen(true);
   };
 
-  const sendOtp = async () => {
+  const loadQuestions = async () => {
     if (!resetEmail.trim()) {
       toast({ title: "ईमेल आवश्यक", variant: "destructive" });
       return;
     }
     setResetBusy(true);
     try {
-      // Supabase recovery emails include a 6-digit OTP token that can be verified directly.
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim());
-      if (error) {
-        toast({ title: "OTP पाठवण्यात त्रुटी", description: error.message, variant: "destructive" });
-      } else {
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+        body: { action: "questions", email: resetEmail.trim() },
+      });
+      if (error || (data as any)?.error) {
         toast({
-          title: "OTP पाठवला",
-          description: `${resetEmail} वर ६-अंकी कोड पाठवला आहे. ईमेल तपासा.`,
+          title: "सुरक्षा प्रश्न सापडले नाहीत",
+          description: (data as any)?.error || "प्रथम प्रशासक पॅनेलमधून सुरक्षा प्रश्न सेट करा.",
+          variant: "destructive",
         });
-        setResetStep("verify");
+        return;
       }
+      setQuestions((data as any).questions || []);
+      setResetStep("verify");
     } finally {
       setResetBusy(false);
     }
   };
 
   const verifyAndReset = async () => {
-    if (otp.length !== 6) {
-      toast({ title: "६-अंकी OTP टाका", variant: "destructive" });
+    if (answers.some((a) => a.trim().length < 1)) {
+      toast({ title: "तीनही उत्तरे भरा", variant: "destructive" });
       return;
     }
     if (newPassword.length < 8) {
@@ -95,29 +98,20 @@ const AdminLogin = () => {
 
     setResetBusy(true);
     try {
-      const { error: vErr } = await supabase.auth.verifyOtp({
-        email: resetEmail.trim(),
-        token: otp,
-        type: "recovery",
+      const { data, error } = await supabase.functions.invoke("admin-reset-password", {
+        body: { action: "reset", email: resetEmail.trim(), answers, new_password: newPassword },
       });
-      if (vErr) {
-        toast({ title: "OTP अवैध", description: vErr.message, variant: "destructive" });
+      if (error || (data as any)?.error) {
+        toast({ title: "रीसेट अयशस्वी", description: (data as any)?.error || "उत्तरे तपासा", variant: "destructive" });
         return;
       }
-
-      const { error: uErr } = await supabase.auth.updateUser({ password: newPassword });
-      if (uErr) {
-        toast({ title: "पासवर्ड बदलण्यात त्रुटी", description: uErr.message, variant: "destructive" });
-        return;
-      }
-
       toast({ title: "पासवर्ड बदलला!", description: "नवीन पासवर्डने लॉगिन करा." });
-      await supabase.auth.signOut();
       setResetOpen(false);
     } finally {
       setResetBusy(false);
     }
   };
+
 
   return (
     <div className="min-h-screen hero-gradient flex items-center justify-center p-4">
