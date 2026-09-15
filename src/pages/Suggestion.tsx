@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { Home, MessageSquarePlus, Loader2, CheckCircle2, Ban } from "lucide-react";
 import { z } from "zod";
+import { useSeo } from "@/hooks/useSeo";
 
 const schema = z.object({
   name: z.string().trim().min(1, "नाव आवश्यक").max(100),
@@ -19,6 +20,12 @@ const schema = z.object({
 });
 
 const Suggestion = () => {
+  useSeo({
+    title: "सुझाव पेटी | विचारमंच लातूर",
+    description: "आपले सुझाव, तक्रारी व अभिप्राय थेट विचारमंचापर्यंत पोहोचवा.",
+    canonical: "/suggestion",
+  });
+
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [category, setCategory] = useState<"suggestion" | "complaint" | "feedback" | "other">("suggestion");

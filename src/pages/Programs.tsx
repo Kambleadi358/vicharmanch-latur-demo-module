@@ -6,6 +6,7 @@ import { BookOpen, Users, Music, Calendar, Clock, MapPin, Trophy, CheckCircle } 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useSeo } from "@/hooks/useSeo";
 
 const programCategories = [
   {
@@ -69,6 +70,12 @@ interface ProgramWinner {
 }
 
 const Programs = () => {
+  useSeo({
+    title: "उपक्रम व कार्यक्रम | विचारमंच लातूर",
+    description: "विचारमंचाचे वैचारिक, बौद्धिक, सामाजिक व सांस्कृतिक कार्यक्रम, स्पर्धा व विजेते.",
+    canonical: "/programs",
+  });
+
   // Fetch programs from database
   const { data: dbPrograms, isLoading } = useQuery({
     queryKey: ["public-programs"],

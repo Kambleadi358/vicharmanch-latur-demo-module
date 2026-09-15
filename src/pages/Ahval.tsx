@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FileText, Loader2, TrendingUp, TrendingDown, Wallet, Download, Calendar, ArrowRight, X } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from "recharts";
+import { useSeo } from "@/hooks/useSeo";
 
 interface AnnualReport {
   id: string;
@@ -24,6 +25,12 @@ interface ArchiveRow {
 }
 
 const Ahval = () => {
+  useSeo({
+    title: "वार्षिक अहवाल | विचारमंच लातूर",
+    description: "विचारमंचाचे वर्षनिहाय अहवाल, जमा-खर्च आलेख व PDF डाउनलोड.",
+    canonical: "/ahval",
+  });
+
   const [reports, setReports] = useState<AnnualReport[]>([]);
   const [archives, setArchives] = useState<ArchiveRow[]>([]);
   const [loading, setLoading] = useState(true);

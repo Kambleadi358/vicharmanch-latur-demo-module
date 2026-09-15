@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Layout from "@/components/layout/Layout";
 import { Wallet, TrendingUp, TrendingDown, Eye, Calendar, FileText, Loader2, User, IndianRupee } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useSeo } from "@/hooks/useSeo";
 
 interface Household { id: string; house_code: number; head_name: string; }
 interface Payment { id: string; household_id: string; year: string; amount: number; payment_date: string; }
@@ -19,6 +20,12 @@ const fmtDate = (s: string | null) => {
 };
 
 const Accounts = () => {
+  useSeo({
+    title: "खातेवही व पारदर्शक हिशोब | विचारमंच लातूर",
+    description: "देणगी, जमा, खर्च व शिल्लक यांचा एक-एक रुपयाचा खुला हिशोब — पूर्ण पारदर्शकता.",
+    canonical: "/accounts",
+  });
+
   const [households, setHouseholds] = useState<Household[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);

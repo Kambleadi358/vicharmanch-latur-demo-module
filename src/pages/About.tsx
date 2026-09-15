@@ -3,8 +3,15 @@ import Layout from "@/components/layout/Layout";
 import { MapPin, Mail, Instagram } from "lucide-react";
 import ambedkarPortrait from "@/assets/ambedkar-portrait.png";
 import CommunityInsights from "@/components/home/CommunityInsights";
+import { useSeo } from "@/hooks/useSeo";
 
 const About = () => {
+  useSeo({
+    title: "आमच्याबद्दल | विचारमंच लातूर",
+    description: "विचारमंचाची ओळख, कार्यपद्धती व सामुदायिक आकडेवारी — अध्यक्षविहीन व पारदर्शक चळवळीची माहिती.",
+    canonical: "/about",
+  });
+
   return (
     <Layout>
       {/* Hero */}

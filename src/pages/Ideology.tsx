@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import GratitudeCarousel from "@/components/ideology/GratitudeCarousel";
 import { 
+import { useSeo } from "@/hooks/useSeo";
   Scale, 
   Heart, 
   BookOpen, 
@@ -34,6 +35,12 @@ const principles = [
 ];
 
 const Ideology = () => {
+  useSeo({
+    title: "विचारधारा व संविधान | विचारमंच लातूर",
+    description: "समता, स्वातंत्र्य, बंधुता व न्याय — विचारमंचाची मूलतत्त्वे आणि संविधान साक्षरता उपक्रम.",
+    canonical: "/ideology",
+  });
+
   return (
     <Layout>
       {/* Hero Section */}

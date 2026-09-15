@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { BookOpen, Clock, Award, AlertTriangle, CheckCircle, Loader2, Calendar, ShieldAlert } from "lucide-react";
+import { useSeo } from "@/hooks/useSeo";
 
 const rules = [
   "प्रश्नमंजुषा डॉ. बाबासाहेब आंबेडकरांच्या जीवनावर आधारित आहे",
@@ -40,6 +41,12 @@ type AnswerKeyQ = {
 };
 
 const Quiz = () => {
+  useSeo({
+    title: "प्रश्नमंजुषा | विचारमंच लातूर",
+    description: "संविधान व डॉ. बाबासाहेब आंबेडकर विषयक ऑनलाइन प्रश्नमंजुषा — मोफत सहभाग व उत्तरतालिका.",
+    canonical: "/quiz",
+  });
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const [config, setConfig] = useState<QuizConfig | null>(null);
