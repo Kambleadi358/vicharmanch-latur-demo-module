@@ -12,3 +12,13 @@ Allow: /
 
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /admin-signup
+Disallow: /judge
+Disallow: /judge-login
+Disallow: /reset-password
+Disallow: /quiz/take
+Disallow: /quiz/result
+
+Sitemap: https://vicharmanch-latur-demo-module.lovable.app/sitemap.xml
