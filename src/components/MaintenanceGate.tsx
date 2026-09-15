@@ -53,7 +53,7 @@ const MaintenanceGate = ({ children }: { children: ReactNode }) => {
           href="/admin-login"
           className="inline-flex items-center justify-center rounded-lg border border-primary/40 bg-primary/5 px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
         >
-          परीक्षक / व्यवस्थापक लॉगिन
+          व्यवस्थापक लॉगिन
         </a>
         <div className="flex items-center justify-center gap-2 pt-2 text-muted-foreground">
           <span className="relative flex h-3 w-3">
