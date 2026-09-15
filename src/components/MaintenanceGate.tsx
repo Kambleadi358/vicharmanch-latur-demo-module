@@ -49,6 +49,19 @@ const MaintenanceGate = ({ children }: { children: ReactNode }) => {
         <p className="text-xs font-medium tracking-widest text-muted-foreground">
           स्वातंत्र्य | समता | बंधुता | न्याय
         </p>
+        <a
+          href="/admin-login"
+          className="inline-flex items-center justify-center rounded-lg border border-primary/40 bg-primary/5 px-5 py-2.5 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors"
+        >
+          परीक्षक / व्यवस्थापक लॉगिन
+        </a>
+        <div className="flex items-center justify-center gap-2 pt-2 text-muted-foreground">
+          <span className="relative flex h-3 w-3">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75"></span>
+            <span className="relative inline-flex h-3 w-3 rounded-full bg-amber-500"></span>
+          </span>
+          <span className="text-xs tracking-wide">देखभाल चालू आहे…</span>
+        </div>
       </div>
     </div>
   );
