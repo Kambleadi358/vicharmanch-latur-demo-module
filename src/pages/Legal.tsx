@@ -9,8 +9,9 @@ import {
   Info,
   Code2,
 } from "lucide-react";
-import {
 import { useSeo } from "@/hooks/useSeo";
+import {
+
   PLATFORM_NAME,
   PLATFORM_NAME_MR,
   ORGANIZATION,

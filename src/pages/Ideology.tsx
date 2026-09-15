@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import Layout from "@/components/layout/Layout";
 import GratitudeCarousel from "@/components/ideology/GratitudeCarousel";
-import { 
 import { useSeo } from "@/hooks/useSeo";
+import { 
+
   Scale, 
   Heart, 
   BookOpen, 
