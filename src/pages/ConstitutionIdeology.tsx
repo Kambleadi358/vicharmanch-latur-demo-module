@@ -21,6 +21,7 @@ import {
   type CArticle,
 } from "@/lib/constitution";
 import { readProgress, toggleLessonCompleted } from "@/lib/constitutionProgress";
+import { useSeo } from "@/hooks/useSeo";
 
 interface Lesson { id: string; slug: string; title_mr: string; body_mr: string; display_order: number }
 
@@ -41,6 +42,12 @@ const quickNav = [
 ];
 
 const ConstitutionIdeology = () => {
+  useSeo({
+    title: "संविधान साक्षरता | विचारमंच लातूर",
+    description: "भारतीय संविधानाची कलमे मराठीत — शोध, आजचे कलम, मूलभूत हक्क व सोप्या भाषेत स्पष्टीकरण.",
+    canonical: "/ideology/constitution",
+  });
+
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [rights, setRights] = useState<{ cat: CCategory; articles: CArticle[] }[]>([]);
   const [totals, setTotals] = useState({ articles: 0, lessons: 0, topics: 0 });

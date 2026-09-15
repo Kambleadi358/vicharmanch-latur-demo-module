@@ -9,7 +9,9 @@ import {
   Info,
   Code2,
 } from "lucide-react";
+import { useSeo } from "@/hooks/useSeo";
 import {
+
   PLATFORM_NAME,
   PLATFORM_NAME_MR,
   ORGANIZATION,
@@ -47,6 +49,12 @@ const Section = ({
 );
 
 const Legal = () => {
+  useSeo({
+    title: "कायदेशीर माहिती | विचारमंच लातूर",
+    description: "गोपनीयता धोरण, वापर अटी, डेटा वापर व कॉपीराइट attribution ची माहिती.",
+    canonical: "/legal",
+  });
+
   return (
     <Layout>
       <section className="hero-gradient py-20 relative overflow-hidden">

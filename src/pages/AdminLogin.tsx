@@ -147,7 +147,7 @@ const AdminLogin = () => {
 
               <div className="flex items-center justify-between text-sm">
                 <button type="button" onClick={openReset} className="text-primary hover:underline inline-flex items-center gap-1">
-                  <KeyRound className="h-3.5 w-3.5" /> पासवर्ड विसरलात? (OTP)
+                  <KeyRound className="h-3.5 w-3.5" /> पासवर्ड विसरलात?
                 </button>
               </div>
 
@@ -164,15 +164,15 @@ const AdminLogin = () => {
         </Card>
       </motion.div>
 
-      {/* OTP Reset Dialog */}
+      {/* Security-question Reset Dialog */}
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5" /> OTP द्वारे पासवर्ड रीसेट</DialogTitle>
+            <DialogTitle className="flex items-center gap-2"><KeyRound className="h-5 w-5" /> सुरक्षा प्रश्नांद्वारे पासवर्ड रीसेट</DialogTitle>
             <DialogDescription>
               {resetStep === "request"
-                ? "तुमच्या नोंदणीकृत ईमेलवर ६-अंकी OTP पाठवला जाईल."
-                : `${resetEmail} वर पाठवलेला OTP व नवीन पासवर्ड टाका.`}
+                ? "नोंदणीकृत ईमेल टाका. तुमचे सुरक्षा प्रश्न दाखवले जातील."
+                : "तीनही उत्तरे व नवीन पासवर्ड टाका."}
             </DialogDescription>
           </DialogHeader>
 
@@ -182,22 +182,23 @@ const AdminLogin = () => {
                 <Label>ईमेल</Label>
                 <Input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="h-11" />
               </div>
-              <Button onClick={sendOtp} disabled={resetBusy} className="w-full h-11">
-                {resetBusy ? "पाठवत आहे..." : "OTP पाठवा"}
+              <Button onClick={loadQuestions} disabled={resetBusy} className="w-full h-11">
+                {resetBusy ? "तपासत आहे..." : "पुढे"}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>६-अंकी OTP</Label>
-                <div className="flex justify-center">
-                  <InputOTP maxLength={6} value={otp} onChange={setOtp}>
-                    <InputOTPGroup>
-                      {[0,1,2,3,4,5].map(i => <InputOTPSlot key={i} index={i} />)}
-                    </InputOTPGroup>
-                  </InputOTP>
+              {questions.map((q, i) => (
+                <div key={i} className="space-y-2">
+                  <Label className="text-xs">{q}</Label>
+                  <Input
+                    value={answers[i]}
+                    onChange={(e) => setAnswers((p) => p.map((a, j) => (j === i ? e.target.value : a)))}
+                    className="h-11"
+                    placeholder="उत्तर"
+                  />
                 </div>
-              </div>
+              ))}
               <div className="space-y-2">
                 <Label>नवीन पासवर्ड</Label>
                 <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="h-11" />
@@ -212,11 +213,9 @@ const AdminLogin = () => {
                   {resetBusy ? "बदलत..." : "पासवर्ड बदला"}
                 </Button>
               </div>
-              <button type="button" onClick={sendOtp} disabled={resetBusy} className="w-full text-xs text-primary hover:underline">
-                OTP पुन्हा पाठवा
-              </button>
             </div>
           )}
+
         </DialogContent>
       </Dialog>
     </div>

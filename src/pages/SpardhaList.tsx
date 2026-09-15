@@ -7,8 +7,15 @@ import Footer from "@/components/layout/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Trophy, Loader2, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useSeo } from "@/hooks/useSeo";
 
 const SpardhaList = () => {
+  useSeo({
+    title: "स्पर्धा | विचारमंच लातूर",
+    description: "रांगोळी व इतर स्पर्धांच्या नोंदी, सार्वजनिक मतदान व निकाल पहा.",
+    canonical: "/spardha",
+  });
+
   const [comps, setComps] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

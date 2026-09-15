@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
+import { useSeo } from "@/hooks/useSeo";
 
 const categoryLabels: Record<string, string> = { chota: "छोटा गट", motha: "मोठा गट", khula: "खुला गट" };
 const ADMIN_WA = "918275956954";
@@ -18,6 +19,12 @@ const ADMIN_WA = "918275956954";
 interface Member { id: string; name: string; household_id: string }
 
 const Register = () => {
+  useSeo({
+    title: "सहभाग नोंदणी | विचारमंच लातूर",
+    description: "विचारमंचाच्या स्पर्धा व कार्यक्रमांसाठी ऑनलाइन सहभाग नोंदणी करा.",
+    canonical: "/register",
+  });
+
   const { toast } = useToast();
   const [comps, setComps] = useState<any[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
