@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, X } from "lucide-react";
 import { useNotifications } from "@/hooks/useNotifications";
 import {
