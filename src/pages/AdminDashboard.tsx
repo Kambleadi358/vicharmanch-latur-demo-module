@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import QuizManagement from "@/components/admin/QuizManagement";
 import NoticeManagement from "@/components/admin/NoticeManagement";
+import NotificationManagement from "@/components/admin/NotificationManagement";
 import LedgerWorkspace from "@/components/admin/LedgerWorkspace";
 import VoteResults from "@/components/admin/VoteResults";
 import SamajNondaniManagement from "@/components/admin/SamajNondaniManagement";
@@ -33,7 +34,7 @@ import ConnectionStatus from "@/components/ConnectionStatus";
 import {
   Shield, LogOut, Bell, IndianRupee, Home, CalendarDays, Award, Settings,
   FileText, Gift, BookOpen, Trophy, Users, Menu, LayoutDashboard, Plus, BookMarked,
-  UsersRound, BookText, MessageSquare, Activity, BarChart3, BrainCircuit,
+  UsersRound, BookText, MessageSquare, Activity, BarChart3, BrainCircuit, Send,
 } from "lucide-react";
 
 type SectionKey =
@@ -70,6 +71,7 @@ const NAV: NavItem[] = [
   { key: "annual",       label: "वार्षिक अहवाल",  icon: BookMarked,   group: "वित्त व दस्तऐवज" },
   { key: "intelligence", label: "बुद्धिमत्ता अहवाल", icon: BrainCircuit, group: "वित्त व दस्तऐवज" },
   { key: "activity",     label: "क्रियाकलाप नोंदी", icon: Activity,   group: "इतर" },
+  { key: "notifications", label: "सूचना प्रसारण",  icon: Send,        group: "इतर" },
   { key: "settings",     label: "सेटिंग्स",       icon: Settings,     group: "इतर" },
 ];
 
@@ -155,6 +157,7 @@ const AdminDashboard = () => {
       case "intelligence": return <CommunityIntelligenceReport />;
       case "activity":     return <ActivityLogManagement />;
       case "settings":     return <SettingsCenter />;
+      case "notifications": return <NotificationManagement />;
       case "missing":      return <FailedSearchManagement />;
     }
   };
