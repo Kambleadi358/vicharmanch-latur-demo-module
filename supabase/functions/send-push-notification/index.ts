@@ -63,11 +63,16 @@ Deno.serve(async (req: Request) => {
   const category = payload.category ?? "general";
   if (!title) return json({ error: "title required" }, 400);
 
-  // Persist to the in-app notification center using service role.
+  // Use the caller's own JWT (admin) for DB writes/reads — RLS allows
+  // admin to insert notifications and read all push tokens. No service
+  // role key is available on Lovable Cloud, so we cannot bypass RLS.
   const url = SUPABASE_URL || `https://${PROJECT_ID}.supabase.co`;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-  const serviceClient = createClient(url, serviceRoleKey || ANON_KEY);
-  const { data: notifRow, error: notifErr } = await serviceClient
+  const callerToken = req.headers.get("Authorization")!.slice(7);
+  const adminClient = createClient(url, ANON_KEY, {
+    global: { headers: { Authorization: `Bearer ${callerToken}` } },
+  });
+
+  const { data: notifRow, error: notifErr } = await adminClient
     .from("notifications")
     .insert({
       title,
@@ -78,11 +83,10 @@ Deno.serve(async (req: Request) => {
     })
     .select("id")
     .single();
-  // Insert failure shouldn't block the push, but surface it.
   const notifId = notifRow?.id ?? null;
 
-  // Fetch all device tokens (service role bypasses RLS).
-  const { data: subs } = await serviceClient
+  // Fetch all device tokens (admin can read all per RLS policy).
+  const { data: subs } = await adminClient
     .from("push_subscriptions")
     .select("token")
     .order("created_at", { ascending: true });
