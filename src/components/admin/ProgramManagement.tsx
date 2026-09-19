@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { notifySubscribers } from "@/lib/notify";
 import { Plus, Trash2, Trophy } from "lucide-react";
 
 interface Program {
@@ -94,6 +95,12 @@ const ProgramManagement = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-programs"] });
       setIsAddOpen(false);
+      notifySubscribers({
+        title: `नवीन कार्यक्रम: ${formData.name}`,
+        body: formData.description || undefined,
+        link: "/programs",
+        category: "program",
+      });
       setFormData({ name: "", date: "", time: "", location: "", status: "upcoming", description: "" });
       toast.success("कार्यक्रम जोडला!");
     },
