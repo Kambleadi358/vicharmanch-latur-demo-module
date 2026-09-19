@@ -152,7 +152,7 @@ Deno.serve(async (req: Request) => {
 
   // Clean up stale tokens so we don't keep retrying them.
   if (staleTokens.length > 0) {
-    await serviceClient
+    await adminClient
       .from("push_subscriptions")
       .delete()
       .in("token", staleTokens);
