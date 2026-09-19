@@ -5,6 +5,8 @@ import { Menu, X, Instagram, Shield, UserPlus } from "lucide-react";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 import { useAuth } from "@/contexts/AuthContext";
 import ConnectionStatus from "@/components/ConnectionStatus";
+import NotificationCenter from "@/components/NotificationCenter";
+import { useAutoPromptPush } from "@/hooks/usePushNotifications";
 
 const navLinks = [
   { path: "/", label: "मुख्य पृष्ठ" },
@@ -21,6 +23,7 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { isAdmin, user } = useAuth();
+  useAutoPromptPush();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-primary-foreground/10">
@@ -74,6 +77,7 @@ const Header = () => {
           {/* Social & Admin & Mobile Toggle */}
           <div className="flex items-center gap-3 sm:gap-4">
             <ConnectionStatus compact className="hidden sm:inline-flex" />
+            <NotificationCenter />
             <a
               href="https://instagram.com/dr.ambedkar_vicharmanch"
               target="_blank"
