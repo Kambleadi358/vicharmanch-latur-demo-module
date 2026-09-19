@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { notifySubscribers } from "@/lib/notify";
 import { Plus, Trash2, Edit2, Save, X, Eye, EyeOff } from "lucide-react";
 
 interface Notice {
@@ -82,6 +83,12 @@ const NoticeManagement = () => {
         toast({ title: "त्रुटी", description: "सूचना जोडण्यात त्रुटी", variant: "destructive" });
       } else {
         toast({ title: "यशस्वी", description: "सूचना जोडली गेली" });
+        notifySubscribers({
+          title: `नवीन सूचना: ${formData.title}`,
+          body: formData.description || undefined,
+          link: "/",
+          category: "notice",
+        });
         resetForm();
         fetchNotices();
       }
