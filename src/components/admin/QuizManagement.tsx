@@ -110,6 +110,23 @@ const QuizManagement = () => {
     if (error) return toast.error(error.message);
     toast.success("कॉन्फिग अद्यतनित");
     setConfig({ ...config, ...patch });
+    // Notify on quiz completion / answer-key publication.
+    if (patch.status === "COMPLETED") {
+      notifySubscribers({
+        title: "प्रश्नमंजुषा पूर्ण झाली",
+        body: "निकाल लवकरच प्रकाशित होतील.",
+        link: "/quiz",
+        category: "quiz",
+      });
+    }
+    if (patch.publish_answer_key) {
+      notifySubscribers({
+        title: "उत्तरतालिका प्रकाशित",
+        body: "प्रश्नमंजुषेची उत्तरतालिका आता उपलब्ध आहे.",
+        link: "/quiz",
+        category: "quiz",
+      });
+    }
   };
 
   // ===== Question CRUD =====
