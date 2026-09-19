@@ -22,7 +22,7 @@ function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
   if (m < 1) return "आत्ता";
-  if (m < 60) return `${m} मिनि अगो";
+  if (m < 60) return `${m} मिनि अगो`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h} तास अगो`;
   const d = Math.floor(h / 24);
