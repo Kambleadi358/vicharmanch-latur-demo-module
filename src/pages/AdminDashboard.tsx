@@ -40,7 +40,8 @@ type SectionKey =
   | "dashboard" | "programs" | "competition" | "participants" | "quiz"
   | "certificates" | "notices" | "prizes"
   | "letterpad" | "annual" | "settings" | "registry" | "ledger"
-  | "suggestions" | "activity" | "analytics" | "missing" | "votes" | "intelligence";
+  | "suggestions" | "activity" | "analytics" | "missing" | "votes" | "intelligence"
+  | "notifications";
 
 
 type NavItem = {
