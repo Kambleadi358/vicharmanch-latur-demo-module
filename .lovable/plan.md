@@ -1,113 +1,61 @@
+# Android / PWA readiness fixes
 
-# V2 Modules 2–7 — Implementation Plan
+No redesign, no new features. Six targeted fixes plus verification.
 
-Doing all 6 modules truly "in one go" without phases produces buggy, shallow code. Here is the honest plan: one large migration that covers every new table, then UI/edge functions in 4 phases. Each phase is a single round and is independently usable.
+## What I found (root causes)
 
----
+**"Read only row is archived" on delete** — On 6 June 2026 a year-lock archive was run for **2026, the year that is still active**. That marked all 7 donation entries as archived (read-only). The households themselves are still active, but deleting a household cascades into its donation entries, so the archive guard blocks it and reports "archived" about the household. The ledger screen also still lists those archived entries as if they were current, with a delete button that can never work.
 
-## Phase 0 — Single Database Migration (one approval)
+So the guard is behaving correctly; the data was archived under a live year and the screens don't show that state.
 
-All schema for Modules 2–7 in one migration so we don't ping-pong approvals.
+**Print / PDF** — reports open a new browser window and call print. Inside an Android app shell (WebView) pop-up windows and printing are blocked, so the button appears to do nothing.
 
-New tables (all `admin`-only RLS, `service_role` grants):
+**Program date/time** — both are free-text Marathi strings and the status is chosen manually, so it can contradict the actual date.
 
-- `suggestions` — Module 3. Fields: name, mobile, category (`enum: suggestion|complaint|feedback|other`), message, status (`enum: new|accepted|rejected|resolved`), is_anonymous, admin_response, resolved_at.
-- `admin_activity_logs` — Module 5. Fields: actor_user_id, actor_email, action, entity_type, entity_id, details (jsonb), ip, user_agent.
-- `app_settings` — Module 7. Generic key/value/section store (sections: site, security, quiz, event, notification, backup). Extends existing `site_settings` rather than replacing it.
-- `participation_songs` — Module 4. Fields: participant_id, file_path, original_filename, mime, size_bytes. Storage bucket `participation-songs` (private).
-- `archives` — Module 6. Fields: year, archive_date, created_by, remark, summary (jsonb of totals), zip_path.
-- Add `is_archived boolean default false` + `archived_year text` to: `households`, `household_members`, `donation_payments`, `programs`, `participants`, `prize_allocations`, `quiz_sessions`, `suggestions`, `notices`, `admin_activity_logs`. Used for read-only enforcement.
-- DB trigger `enforce_archive_readonly()` on those tables: blocks UPDATE/DELETE when `is_archived = true`.
-- DB function `promote_education_levels()` already exists — reused for Module 6 carry-forward.
-- New storage bucket `archives` (private, admin-only signed URL downloads).
+## 1. Archive state, deletion, and reopening a year
 
----
+- Ledger and registry screens read each record's archive state and show a **"संग्रहित"** badge; for archived records the delete/edit buttons are disabled with the real reason on hover, instead of a failing button.
+- Before deleting a household, check its members and donation entries. If any dependent record is archived, show the true reason: "या घराच्या देणगी नोंदी संग्रहित आहेत — प्रथम ते वर्ष पुन्हा उघडा."
+- Add an admin-only, logged action in **सेटिंग्ज → वार्षिक अभिलेखागार**: **"वर्ष पुन्हा उघडा"**. It clears the archive flag for that year's records (the ZIP/PDF archive file itself stays untouched) so an accidentally locked live year can be corrected the supported way. Confirmation dialog names the year and record counts.
+- Year-lock gets a guard: it refuses to archive the currently active year without an explicit extra confirmation.
+- Archive protection itself is unchanged — no RLS is disabled, nothing becomes writable behind the guard.
+- All deletes get a confirmation dialog, then refresh the ledger, household summary and dashboard figures so totals stay consistent.
 
-## Phase 1 — Module 2 (Donation Communication Center) + Module 3 (Suggestion Box)
+## 2. Print / PDF that works inside the Android app
 
-Smallest, highest value, no auth complexity.
+One shared helper used by every existing print/PDF button (donation statement, registry reports, certificates, documents, prize report, archive report):
 
-**Module 2** — extend `DonationLedgerManagement.tsx`:
-- For each household × year row, compute `assigned − paid`.
-- Two action buttons per row:
-  - "पूर्ण देणगी संदेश" — visible when `paid >= assigned && assigned > 0`. Opens dialog with the completed-payment template pre-filled (name, year-1891 jayanti number, amount).
-  - "स्मरणपत्र संदेश" — visible when `paid < assigned`. Opens dialog with the pending template (name, pending amount).
-- Dialog: WhatsApp button (`https://wa.me/<mobile>?text=<encoded>`), SMS button (`sms:<mobile>?body=<encoded>`), Copy button.
-- Bulk action: "सर्व प्रलंबित घरांना स्मरणपत्र" → opens list with checkboxes, generates a single WhatsApp "click-to-chat" link per selected household (no Twilio).
-- Optional email receipt: deferred (no SMTP connector chosen yet).
+- Renders the same HTML as today — logo, Marathi text, tables, stamp, official layout all unchanged.
+- Prints through a hidden frame instead of a pop-up window, which works in normal browsers and app shells.
+- In an app shell it also offers **"PDF जतन करा"**, which produces a file and hands it to the device's share/save sheet so it can be opened in a PDF viewer or saved.
+- No fake "छपाई सुरू..." state: the button shows progress only while work is happening, and failures show "PDF तयार होऊ शकली नाही — पुन्हा प्रयत्न करा."
 
-**Module 3** — Public form + admin queue:
-- Public page `/suggestion` (Marathi): name, mobile, category select (सुझाव/तक्रार/अभिप्राय/इतर), message, anonymous toggle (if enabled in settings).
-- New admin section `suggestions` in sidebar (group: समाज). List with status filter, accept/reject/resolve actions. Resolve opens a dialog that drafts a Marathi response; WhatsApp/Copy buttons.
+## 3. Permissions
 
----
+- On first launch, a one-time Marathi welcome sheet explains and asks for **notifications only** (the one permission needed everywhere). It can be dismissed and re-run from the Permission Manager.
+- Camera is asked only when the camera screen opens. Denied shows exactly: "कॅमेरा परवानगी नाकारली आहे. कृपया Browser/App Settings मधून कॅमेरा परवानगी द्या." with a **"परवानगी तपासा / पुन्हा प्रयत्न करा"** action; permanently-denied states say settings must be used.
+- Notification denial shows a matching message with the same settings guidance, and the Permission Manager reflects live state (granted / denied / permanently denied / unsupported) and re-checks when the app regains focus.
+- Microphone is removed from the permission list — no feature uses it.
+- Android manifest guidance: notifications (Android 13+ POST_NOTIFICATIONS) and camera are requested at runtime after launch, never at install.
 
-## Phase 2 — Module 5 (Admin Activity Log) + Module 7 (Settings Center)
+## 4. Test notification (real, end-to-end)
 
-**Module 5**:
-- Helper `logAdminAction(action, entity_type, entity_id, details)` in `src/lib/activityLog.ts`.
-- Insert calls at: login, logout, household CRUD, member CRUD, donation payment CRUD, program/competition CRUD, suggestion status change, archive creation, settings change.
-- New admin section "क्रियाकलाप नोंदी" with filterable table (date range, actor, action, entity).
-- Microsoft Authenticator / TOTP: per earlier decision we keep email+password and add TOTP later — this module ships activity logs only, with a stub UI note about future TOTP.
+In the admin notification screen: current permission state, whether this device is registered, and a **"चाचणी सूचना पाठवा"** button that sends a real push to this device only — title "विचारमंच — चाचणी सूचना", body "ही विचारमंच अ‍ॅपची चाचणी सूचना आहे." Tapping it opens the app. The result shown is the actual delivery outcome; a failure is reported as a failure with its reason, and a denied permission tells the admin to enable notifications in App Settings.
 
-**Module 7** — `SettingsCenter.tsx`:
-- Replaces the current single-screen `AdminSettings` tab with a tabbed module:
-  1. साइट सेटिंग्स (existing site_settings — logo, gallery URL, instagram, etc.)
-  2. सुरक्षा सेटिंग्स (password change, leaked-password protection toggle, future TOTP placeholder)
-  3. प्रश्नमंजुषा सेटिंग्स (quiz config — title, scheduled_start, duration, publish_answer_key)
-  4. कार्यक्रम सेटिंग्स (current active year, default categories, anonymous-suggestions toggle)
-  5. सूचना सेटिंग्स (placeholder for SMS/email — disabled until provider added)
-  6. बॅकअप सेटिंग्स (link to archive center, manual export buttons)
-- Backed by generic `app_settings` (section/key/value), with the existing `site_settings` and `quiz_config` tables read-through.
+## 5. Program date and time pickers
 
----
+- कार्यक्रम व्यवस्थापन gets a date picker and a time picker (Indian time, Asia/Kolkata), pre-filled correctly when editing an existing program.
+- Status is derived from the full date **and** time against the current moment: later → **आगामी**, earlier → **पूर्ण**. The manual status control is replaced by this automatic value, and it re-evaluates as time passes.
+- Existing programs whose date is stored as Marathi text keep displaying exactly as they do now; they show the picker once re-saved.
 
-## Phase 3 — Module 4 (Participation Analytics + Song Upload)
+## 6. Regression check
 
-- New section "सहभाग विश्लेषण": charts (year-wise growth bar, program-wise pie, age category breakdown छोटा/मोठा/खुला). Uses existing `participants` + `competitions` data.
-- Participant registration form: when competition name contains "नृत्य", show optional MP3/M4A/WAV upload (max 15 MB). Upload to `participation-songs` bucket; insert row in `participation_songs`.
-- Admin participant table: shows download icon if song exists. Download renames file to `<participant_name>-<entry_code>.<ext>` on the fly (browser-side rename via blob).
+I'll walk the app in a browser and confirm: camera-denied flow, notification-denied flow, test notification, PDF generation and save, active household delete, archived protection, active donation delete, donation totals after deletion, program pickers and automatic status, existing programs, admin authorization, and the mobile layout.
 
----
+## Technical notes
 
-## Phase 4 — Module 6 (वार्षिक अभिलेखागार)
-
-Largest single module. Rebuild `YearLockManager` → `AnnualArchiveManager`.
-
-10-step wizard component:
-1. **Validation summary** — read counts/totals from each domain table, display as checklist.
-2. **Password confirm** — re-prompt admin password, call `supabase.auth.signInWithPassword` to verify.
-3. **Remark input** — required textarea, e.g. "भीमजयंती १३५ वार्षिक अभिलेख".
-4. **Snapshot creation** — call new edge function `archive-create`:
-   - Computes summary (households, members, donations, expenses, programs, participants, winners, balance).
-   - Inserts `archives` row.
-   - Sets `is_archived=true`, `archived_year=<year>` on all domain rows for that year.
-5. **ZIP package** — edge function streams JSON exports of every table for that year + a `manifest.json` + the archive PDF, returns a signed URL. Browser triggers download.
-6. **Read-only enforcement** — the DB trigger from Phase 0 blocks edits to archived rows automatically; UI shows a "🔒 अभिलेखित" badge.
-7. **Year-transition wizard** — confirms new active year, sets `households.active_year` to new year for non-archived rows.
-8. **Registry carry-forward** — copies households/members into the new year (keeping mobile, addresses), bumps `education_level` via the existing `promote_education_levels()` function.
-9. **Do not carry forward** — expenses/programs/participants/winners/quiz/suggestions/notifications/logs are left in the archived year and not duplicated.
-10. **Archive dashboard** — new public block on `/ahval` (वार्षिक अहवाल) lists archives with year, totals, balance, remark, archive date, PDF download. Admin sees the same plus ZIP re-download.
-11. **Archive certificate PDF** — edge function `archive-pdf` renders A4 portrait with org name/logo, year, totals, balance, programs, participants, remark, date.
-
----
-
-## What I will NOT do in this round
-
-- Real SMS sending (Twilio) — wa.me/SMS deep links only, per your earlier choice.
-- Microsoft Authenticator / TOTP — placeholder only.
-- Email receipts — no SMTP connector chosen.
-- Public audit2.md — per your earlier instruction, after modules are built.
-
----
-
-## Approval needed
-
-Confirm one of:
-
-- A: Build Phase 0 migration + Phase 1 now. Then Phases 2/3/4 in follow-up turns. (Recommended — keeps each shipment testable.)
-- B: Build Phase 0 + Phases 1, 2, 3 now; Phase 4 (Archive) separately. (Aggressive but doable.)
-- C: All 4 phases in one turn. (Will be shallow on Phase 4; risk of incomplete archive flow.)
-
-If you don't reply, I'll proceed with **A**.
-
+- New `src/lib/print.ts` (hidden-iframe print + blob/share fallback + WebView detection); existing print HTML builders untouched.
+- `src/lib/permissions.ts`: drop microphone, add `permanently-denied` detection via Permissions API + `getUserMedia` error names, re-query on `visibilitychange`.
+- Migration: `reopen_archive_year(_year text)` security-definer function, admin-only, clearing `is_archived`/`archived_year` across the archive-guarded tables for that year and writing an `admin_activity_logs` entry.
+- `send-push-notification` edge function gains an optional single-token target for the admin test send and returns the real per-token FCM outcome.
+- `programs.date`/`time` stay text columns; the form stores ISO date + 24h time and derives status on read, so no breaking schema change.
