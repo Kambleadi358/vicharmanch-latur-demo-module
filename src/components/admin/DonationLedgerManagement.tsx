@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { printDocument } from "@/lib/print";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -258,9 +259,7 @@ const DonationLedgerManagement = () => {
   ${PDF_ATTRIBUTION_HTML}
   <script>window.onload=()=>{setTimeout(()=>window.print(),400)}</script>
 </body></html>`;
-    const w = window.open("", "_blank");
-    if (!w) { toast.error("Pop-up blocked"); return; }
-    w.document.open(); w.document.write(html); w.document.close();
+    void printDocument(html, { filename: `donation-ledger-${year}` });
     logAdminAction("export_donation_ledger_pdf", "donation_payments", undefined, { year, rows: rows.length, expenses: expenses.length });
   };
 

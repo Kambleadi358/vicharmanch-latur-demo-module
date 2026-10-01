@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { printDocument } from "@/lib/print";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -186,13 +187,7 @@ const ParticipantManagement = () => {
 </body>
 </html>`;
 
-    const w = window.open("", "_blank");
-    if (!w) {
-      toast({ title: "Pop-up blocked", description: "Allow pop-ups to print.", variant: "destructive" });
-      return;
-    }
-    w.document.write(html);
-    w.document.close();
+    void printDocument(html, { filename: "participants" });
   };
 
   return (

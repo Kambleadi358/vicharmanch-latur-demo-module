@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { printDocument } from "@/lib/print";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -229,9 +230,7 @@ const AnnualArchiveManager = () => {
     ${PDF_ATTRIBUTION_HTML}
     <script>window.onload=()=>window.print();</script>
     </body></html>`;
-    const w = window.open("", "_blank");
-    if (!w) { toast.error("Pop-up blocked"); return; }
-    w.document.write(html); w.document.close();
+    void printDocument(html, { filename: "annual-archive-report" });
   };
 
   return (
