@@ -21,6 +21,7 @@ import {
   Copy, Printer, History, CheckCircle2, Clock, AlertCircle, Users2, MessageSquare, FileDown,
 } from "lucide-react";
 import { logAdminAction } from "@/lib/activityLog";
+import { explainDbError, ARCHIVED_LABEL, ARCHIVED_HINT } from "@/lib/dbErrors";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 import stampImg from "@/assets/vicharmanch-stamp.png";
 import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
@@ -34,7 +35,7 @@ interface Household {
 interface Payment {
   id: string; household_id: string; year: string; amount: number;
   payment_date: string; payment_mode: PaymentMode; remark: string | null;
-  created_at: string;
+  created_at: string; is_archived?: boolean; archived_year?: string | null;
 }
 interface Assignment {
   household_id: string; year: string; assigned_amount: number;
@@ -447,8 +448,13 @@ const LedgerDialog = ({ household, year, allPayments, assignment, onClose, onCha
   };
 
   const deletePayment = async (p: Payment) => {
+    if (p.is_archived) {
+      toast.error(explainDbError({ message: "archived" }));
+      setConfirmDel(null);
+      return;
+    }
     const { error } = await supabase.from("donation_payments").delete().eq("id", p.id);
-    if (error) toast.error("त्रुटी: " + error.message);
+    if (error) toast.error(explainDbError(error));
     else {
       toast.success("नोंद हटवली");
       logAdminAction("delete_donation_payment", "donation_payments", p.id, { amount: p.amount, year: p.year });
@@ -490,7 +496,21 @@ const LedgerDialog = ({ household, year, allPayments, assignment, onClose, onCha
     toast.success("संदेश कॉपी झाला");
   };
 
-  const printStatement = () => window.print();
+  const printStatement = () => {
+    const esc = (v: string) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
+    const rows = yearPayments.map((p) => `<tr><td>${new Date(p.payment_date).toLocaleDateString("mr-IN")}</td><td class="r">${fmtINR(Number(p.amount))}</td><td>${MODE_LABEL[p.payment_mode]}</td><td>${esc(p.remark || "")}</td></tr>`).join("");
+    const html = `<!doctype html><html lang="mr"><head><meta charset="utf-8"><title>देणगी विवरण</title>
+<style>@page{size:A4;margin:14mm}body{font-family:'Noto Sans Devanagari','Tiro Devanagari Marathi',serif;color:#111;background:#fff}
+.hd{display:flex;align-items:center;gap:12px;border-bottom:2px solid #1b3a6b;padding-bottom:8px;margin-bottom:12px}.hd img{height:56px;width:56px;border-radius:50%;object-fit:cover}
+h1{font-size:18px;margin:0;color:#1b3a6b}h2{font-size:14px;margin:4px 0 0;color:#444}table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+th,td{border:1px solid #999;padding:5px 7px;text-align:left}th{background:#f1f4f9}.r{text-align:right}.sum{display:flex;gap:10px;margin-top:12px;font-size:13px}.sum div{flex:1;border:1px solid #ccc;padding:6px;border-radius:4px}</style></head><body>
+<div class="hd"><img src="${logo}" alt=""/><div><h1>भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</h1><h2>देणगी विवरण — घर #${household.house_code} · ${esc(household.head_name)} · वर्ष ${filterYear}</h2></div></div>
+<table><thead><tr><th>दिनांक</th><th class="r">रक्कम</th><th>पद्धत</th><th>टीप</th></tr></thead><tbody>${rows || `<tr><td colspan="4">या वर्षात कोणतीही देणगी नाही</td></tr>`}
+<tr><th>एकूण</th><th class="r">${fmtINR(yearPaid)}</th><th colspan="2"></th></tr></tbody></table>
+<div class="sum"><div>नियुक्त<br/><b>${fmtINR(yearAssigned)}</b></div><div>जमा<br/><b>${fmtINR(yearPaid)}</b></div><div>शिल्लक<br/><b>${fmtINR(remaining)}</b></div></div>
+${PDF_ATTRIBUTION_HTML}</body></html>`;
+    void printDocument(html, { filename: `donation-statement-${household.house_code}-${filterYear}` });
+  };
 
   return (
     <Dialog open onOpenChange={(b) => !b && onClose()}>
@@ -557,10 +577,15 @@ const LedgerDialog = ({ household, year, allPayments, assignment, onClose, onCha
                     <tr key={p.id}>
                       <td className="p-2">{new Date(p.payment_date).toLocaleDateString("mr-IN")}</td>
                       <td className="p-2 text-right font-semibold">{fmtINR(Number(p.amount))}</td>
-                      <td className="p-2"><Badge variant="outline" className="text-[10px]">{MODE_LABEL[p.payment_mode]}</Badge></td>
+                      <td className="p-2">
+                        <Badge variant="outline" className="text-[10px]">{MODE_LABEL[p.payment_mode]}</Badge>
+                        {p.is_archived && <Badge variant="secondary" className="text-[10px] ml-1" title={ARCHIVED_HINT}>{ARCHIVED_LABEL}</Badge>}
+                      </td>
                       <td className="p-2 hidden sm:table-cell text-xs text-muted-foreground truncate max-w-[180px]">{p.remark}</td>
                       <td className="p-2 print:hidden">
                         <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive"
+                          disabled={!!p.is_archived}
+                          title={p.is_archived ? ARCHIVED_HINT : "हटवा"}
                           onClick={() => setConfirmDel(p)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
