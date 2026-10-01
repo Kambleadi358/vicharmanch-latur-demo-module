@@ -255,19 +255,16 @@ const CertificateManagement = () => {
     return printDocument(generateCertificateHTML(winnerName, rank, category), { filename: `certificate-${winnerName}` });
   };
 
-  const printAllCertificates = () => {
+  const printAllCertificates = async () => {
     if (allWinners.length === 0) {
       toast.error("कोणतेही विजेते नाहीत");
       return;
     }
-
-    allWinners.forEach((winner, index) => {
-      setTimeout(() => {
-        printCertificate(winner.name, winner.rank, winner.category);
-      }, index * 1000);
-    });
-
-    toast.success(`${allWinners.length} प्रमाणपत्रे तयार होत आहेत`);
+    for (const winner of allWinners) {
+      // Sequential so each print/PDF finishes before the next starts.
+      // eslint-disable-next-line no-await-in-loop
+      await printCertificate(winner.name, winner.rank, winner.category);
+    }
   };
 
   const downloadAllAsZip = async () => {
