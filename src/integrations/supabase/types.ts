@@ -1927,6 +1927,7 @@ export type Database = {
       next_judge_code: { Args: never; Returns: string }
       promote_education_levels: { Args: never; Returns: number }
       recalculate_quiz_scores: { Args: never; Returns: undefined }
+      reopen_archive_year: { Args: { _year: string }; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"

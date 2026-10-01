@@ -1,5 +1,6 @@
 // Admin module: link competition to program, manage entries with camera, manage judges, view results, declare winners
 import { useEffect, useMemo, useState, useCallback } from "react";
+import { printDocument } from "@/lib/print";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -290,9 +291,7 @@ const CompetitionManagement = () => {
       html += `</section>`;
     });
 
-    const w = window.open("", "_blank", "width=900,height=700");
-    if (!w) { toast.error("Pop-up blocked"); return; }
-    w.document.write(`<!doctype html><html lang="mr"><head><meta charset="utf-8"><title>स्पर्धा निकाल</title>
+    void printDocument(`<!doctype html><html lang="mr"><head><meta charset="utf-8"><title>स्पर्धा निकाल</title>
       <style>
         @page { size: A4; margin: 18mm; }
         body { font-family: 'Tiro Devanagari Marathi', serif; color: #111; }
@@ -311,8 +310,7 @@ const CompetitionManagement = () => {
       <button onclick="window.print()" style="position:fixed;top:10px;right:10px;padding:8px 14px;">छापा</button>
       ${html || "<p>कोणतेही submitted गुण नाहीत.</p>"}
       ${PDF_ATTRIBUTION_HTML}
-      </body></html>`);
-    w.document.close();
+      </body></html>`, { filename: "competition-results" });
   };
 
   function escapeHtml(s: string) {

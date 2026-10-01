@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { printDocument } from "@/lib/print";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -607,9 +608,7 @@ ${insights.achievements.map((a) => `<div class="kpi"><b>${escapeHtml(a.label)}</
 ${PDF_ATTRIBUTION_HTML}
 <script>window.onload=()=>{setTimeout(()=>window.print(),500)}</script>
 </body></html>`;
-    const w = window.open("", "_blank");
-    if (!w) { toast.error("Pop-up blocked"); return; }
-    w.document.open(); w.document.write(html); w.document.close();
+    void printDocument(html, { filename: "community-intelligence-report" });
   };
 
   // ─── On-screen preview ─────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { printDocument } from "@/lib/print";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -172,10 +173,7 @@ const DocumentStudio = () => {
   };
 
   const printDoc = () => {
-    const w = window.open("", "_blank");
-    if (!w) { toast.error("Pop-up blocked"); return; }
-    const html = buildPreviewHtml().replace("</body>", "<script>window.onload=()=>setTimeout(()=>window.print(),300)</script></body>");
-    w.document.write(html); w.document.close();
+    void printDocument(buildPreviewHtml(), { filename: "vicharmanch-document" });
   };
 
   const sendMessage = () => {

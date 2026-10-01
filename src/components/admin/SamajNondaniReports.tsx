@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { printDocument } from "@/lib/print";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -181,11 +182,9 @@ const SamajNondaniReports = () => {
   <script>window.onload = () => setTimeout(() => window.print(), 300);</script>
 </body></html>`;
 
-    const w = window.open("", "_blank");
+    const ok = await printDocument(html, { filename: "samaj-nondani-report" });
     setLoading(false);
-    if (!w) { alert("Pop-up blocked"); return; }
-    w.document.write(html); w.document.close();
-    setOpen(false);
+    if (ok) setOpen(false);
   };
 
   return (

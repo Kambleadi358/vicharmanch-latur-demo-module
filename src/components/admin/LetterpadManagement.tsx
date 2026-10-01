@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { printDocument } from "@/lib/print";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -128,12 +129,7 @@ ${bodyHTML}
 </body>
 </html>`;
 
-    const w = window.open("", "_blank");
-    if (w) {
-      w.document.write(printHTML);
-      w.document.close();
-      toast({ title: "यशस्वी", description: "पत्र तयार - प्रिंट करा" });
-    }
+    void printDocument(printHTML, { filename: "letterpad" });
   };
 
   // Compute dynamic positions for preview (scaled to preview container)

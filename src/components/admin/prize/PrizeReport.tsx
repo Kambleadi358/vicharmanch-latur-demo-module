@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { printDocument } from "@/lib/print";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -142,11 +143,7 @@ ${PDF_ATTRIBUTION_HTML}
 </body>
 </html>`;
 
-    const w = window.open("", "_blank");
-    if (w) {
-      w.document.write(printHTML);
-      w.document.close();
-    }
+    void printDocument(printHTML, { filename: "prize-report" });
   };
 
   return (
