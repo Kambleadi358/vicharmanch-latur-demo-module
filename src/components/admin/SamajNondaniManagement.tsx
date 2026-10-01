@@ -15,6 +15,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { explainDbError } from "@/lib/dbErrors";
 import {
   Plus, Search, Users, Home, Phone, Trash2, Edit2, GraduationCap,
   RefreshCw, UserPlus, Loader2,
@@ -353,15 +354,52 @@ const HouseholdDetailDialog = ({ household, members, onClose, onChanged }: {
       return;
     }
     const { error } = await supabase.from("household_members").delete().eq("id", m.id);
-    if (error) toast.error("त्रुटी: " + error.message);
+    if (error) toast.error(explainDbError(error));
     else { toast.success("सदस्य हटवला"); onChanged(); }
     setConfirmDelete(null);
   };
 
+  // Dependency check so the confirmation shows exactly what will happen.
+  const [deps, setDeps] = useState<{ payments: number; archivedPayments: number; archivedMembers: number; hhArchived: boolean } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  useEffect(() => {
+    if (!confirmDeleteHH) return;
+    setDeps(null);
+    (async () => {
+      const [pay, apay, amem, hh] = await Promise.all([
+        supabase.from("donation_payments").select("id", { count: "exact", head: true }).eq("household_id", household.id),
+        supabase.from("donation_payments").select("id", { count: "exact", head: true }).eq("household_id", household.id).eq("is_archived", true),
+        supabase.from("household_members").select("id", { count: "exact", head: true }).eq("household_id", household.id).eq("is_archived", true),
+        supabase.from("households").select("is_archived").eq("id", household.id).maybeSingle(),
+      ]);
+      setDeps({
+        payments: pay.count ?? 0,
+        archivedPayments: apay.count ?? 0,
+        archivedMembers: amem.count ?? 0,
+        hhArchived: !!(hh.data as any)?.is_archived,
+      });
+    })();
+  }, [confirmDeleteHH, household.id]);
+
+  const blockedReason = deps
+    ? deps.hhArchived
+      ? "हे घर वार्षिक अभिलेखागारात संग्रहित आहे — फक्त वाचनासाठी."
+      : deps.archivedPayments > 0
+        ? `या घराच्या ${deps.archivedPayments} देणगी नोंदी संग्रहित आहेत — प्रथम सेटिंग्ज → वार्षिक अभिलेखागार मधून ते वर्ष पुन्हा उघडा.`
+        : deps.archivedMembers > 0
+          ? `या घराचे ${deps.archivedMembers} सदस्य संग्रहित आहेत — प्रथम ते वर्ष पुन्हा उघडा.`
+          : null
+    : null;
+
   const deleteHousehold = async () => {
+    if (!deps || blockedReason) return;
+    setDeleting(true);
     const { error } = await supabase.from("households").delete().eq("id", household.id);
-    if (error) toast.error("त्रुटी: " + error.message);
-    else { toast.success("घर हटवले"); onChanged(); onClose(); }
+    setDeleting(false);
+    if (error) { toast.error(explainDbError(error)); return; }
+    toast.success("घर हटवले");
+    setConfirmDeleteHH(false);
+    onChanged(); onClose();
   };
 
   return (
@@ -459,13 +497,26 @@ const HouseholdDetailDialog = ({ household, members, onClose, onChanged }: {
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>संपूर्ण घर हटवायचे?</AlertDialogTitle>
-              <AlertDialogDescription>
-                हे घर आणि त्याचे सर्व सदस्य हटवले जातील. देणगी इतिहास असल्यास हटवता येणार नाही.
+              <AlertDialogDescription asChild>
+                <div className="space-y-2 text-sm">
+                  {!deps ? (
+                    <p className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> संबंधित नोंदी तपासत आहे...</p>
+                  ) : blockedReason ? (
+                    <p className="text-destructive font-medium">{blockedReason}</p>
+                  ) : (
+                    <p>
+                      घर #{household.house_code}, त्याचे सर्व सदस्य
+                      {deps.payments > 0 ? ` आणि ${deps.payments} देणगी नोंदी` : ""} कायमचे हटवले जातील.
+                    </p>
+                  )}
+                </div>
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>रद्द</AlertDialogCancel>
-              <AlertDialogAction onClick={deleteHousehold} className="bg-destructive">हटवा</AlertDialogAction>
+              <Button variant="destructive" onClick={deleteHousehold} disabled={!deps || !!blockedReason || deleting}>
+                {deleting && <Loader2 className="h-4 w-4 mr-1 animate-spin" />} हटवा
+              </Button>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
