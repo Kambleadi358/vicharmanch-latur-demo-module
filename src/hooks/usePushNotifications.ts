@@ -83,15 +83,8 @@ export function usePushNotifications() {
 // Convenience helper to run a one-time prompt on first eligible visit.
 export function useAutoPromptPush() {
   const { register, status } = usePushNotifications();
-  useEffect(() => {
-    if (localStorage.getItem(LS_KEY)) return;
-    // Only auto-prompt when actually in a top-level window (not the
-    // cross-origin preview iframe, where the prompt is suppressed).
-    if (window.top !== window.self) return;
-    if (!('Notification' in window) || Notification.permission !== 'default') return;
-    // Defer slightly so it doesn't fight the initial render.
-    const t = setTimeout(() => register(), 3500);
-    return () => clearTimeout(t);
-  }, [register]);
+  // Permissions are never requested automatically on page load. Registration
+  // is invoked only from the Permission Manager or an explicit test action.
+  useEffect(() => {}, []);
   return { register, status };
 }

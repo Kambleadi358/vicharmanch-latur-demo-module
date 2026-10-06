@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Mic, Bell, ShieldCheck, XCircle, AlertCircle, MinusCircle } from "lucide-react";
+import { Camera, Bell, ShieldCheck, XCircle, AlertCircle, MinusCircle, Settings2 } from "lucide-react";
 import {
   getAllPermissions, requestPermission,
   PERMISSION_LABELS_MR, type PermissionKind, type PermState,
 } from "@/lib/permissions";
 
 const ICONS: Record<PermissionKind, React.ComponentType<{ className?: string }>> = {
-  camera: Camera, microphone: Mic, notifications: Bell,
+  camera: Camera, notifications: Bell,
 };
 
 const stateBadge = (s: PermState) => {
@@ -26,7 +26,16 @@ const PermissionManager = () => {
   const [busy, setBusy] = useState<PermissionKind | null>(null);
 
   const refresh = async () => setPerms(await getAllPermissions());
-  useEffect(() => { refresh(); }, []);
+  useEffect(() => {
+    void refresh();
+    const onVisible = () => { if (document.visibilityState === "visible") void refresh(); };
+    window.addEventListener("focus", onVisible);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onVisible);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
 
   const onRequest = async (k: PermissionKind) => {
     setBusy(k);
@@ -42,11 +51,11 @@ const PermissionManager = () => {
           <ShieldCheck className="h-4 w-4" /> परवानगी व्यवस्थापक
         </CardTitle>
         <CardDescription>
-          कॅमेरा, मायक्रोफोन व सूचना परवानग्या. गरजेच्या वेळीच विनंती केली जाते. Android APK साठी तयार.
+          कॅमेरा वापरताना आणि सूचना सुरू करताना परवानगी मागितली जाईल. मायक्रोफोनचा वापर नसल्याने त्याची परवानगी मागितली जात नाही.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
-        {(["camera", "microphone", "notifications"] as PermissionKind[]).map((k) => {
+        {(["camera", "notifications"] as PermissionKind[]).map((k) => {
           const info = perms?.[k];
           const Icon = ICONS[k];
           return (
@@ -70,8 +79,9 @@ const PermissionManager = () => {
             </div>
           );
         })}
-        <p className="text-[11px] text-muted-foreground pt-1">
-          नाकारल्यास ब्राउझर सेटिंग्जमधून पुन्हा सक्षम करावे लागते.
+        <p className="text-[11px] text-muted-foreground pt-1 flex items-start gap-1.5">
+          <Settings2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          नाकारलेली सूचना परवानगी पुन्हा सुरू करण्यासाठी ब्राउझर किंवा अ‍ॅप सेटिंग्जमध्ये परवानगी बदला.
         </p>
       </CardContent>
     </Card>

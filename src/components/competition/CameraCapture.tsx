@@ -58,7 +58,7 @@ const CameraCapture = ({ onCaptured, onClose }: Props) => {
     } catch (e: any) {
       const msg =
         e?.name === "NotAllowedError"
-          ? "Camera permission नाकारली. Browser settings मधून परवानगी द्या."
+          ? "कॅमेरा परवानगी नाकारली आहे. कृपया Browser/App Settings मधून कॅमेरा परवानगी द्या."
           : e?.name === "NotFoundError"
             ? "Camera सापडला नाही."
             : e?.message ?? "Camera सुरू करता आला नाही";
@@ -145,7 +145,7 @@ const CameraCapture = ({ onCaptured, onClose }: Props) => {
           <div className="text-center text-white p-6">
             <p className="mb-4">{error}</p>
             <Button onClick={() => startCamera(facing)} variant="secondary">
-              पुन्हा प्रयत्न करा
+              परवानगी तपासा / पुन्हा प्रयत्न करा
             </Button>
           </div>
         ) : (
