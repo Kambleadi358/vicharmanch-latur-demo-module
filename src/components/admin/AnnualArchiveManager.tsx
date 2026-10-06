@@ -13,6 +13,7 @@ import { Archive, Download, AlertTriangle, CheckCircle2, Loader2, FileArchive, P
 import JSZip from "jszip";
 import { logAdminAction } from "@/lib/activityLog";
 import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 interface ArchiveRow {
   id: string;
@@ -33,6 +34,9 @@ const AnnualArchiveManager = () => {
   const [busy, setBusy] = useState(false);
   const [validation, setValidation] = useState<{ key: string; label: string; count: number }[]>([]);
   const [archives, setArchives] = useState<ArchiveRow[]>([]);
+  const [reopenTarget, setReopenTarget] = useState<ArchiveRow | null>(null);
+  const [reopenCounts, setReopenCounts] = useState<Record<string, number> | null>(null);
+  const [reopening, setReopening] = useState(false);
 
   const loadArchives = async () => {
     const { data } = await supabase
@@ -43,6 +47,30 @@ const AnnualArchiveManager = () => {
   };
 
   useEffect(() => { loadArchives(); }, []);
+
+  const prepareReopen = async (archive: ArchiveRow) => {
+    setReopenTarget(archive);
+    const tables = ["households", "household_members", "donation_payments", "programs", "participants", "prize_allocations", "quiz_sessions", "notices", "competition_entries", "account_expenses", "ledger_expenses"] as const;
+    const counts = await Promise.all(tables.map(async (table) => {
+      const { count } = await (supabase.from(table) as any).select("id", { count: "exact", head: true }).eq("is_archived", true).eq("archived_year", archive.year);
+      return [table, count ?? 0] as const;
+    }));
+    setReopenCounts(Object.fromEntries(counts));
+  };
+
+  const reopenYear = async () => {
+    if (!reopenTarget) return;
+    setReopening(true);
+    const { data, error } = await supabase.rpc("reopen_archive_year", { _year: reopenTarget.year });
+    setReopening(false);
+    if (error) { toast.error("वर्ष पुन्हा उघडता आले नाही: " + error.message); return; }
+    const counts = Object.values((data ?? {}) as Record<string, number>).reduce((a, n) => a + Number(n || 0), 0);
+    toast.success(`${reopenTarget.year} वर्ष पुन्हा उघडले · ${counts} नोंदी सक्रिय केल्या`);
+    logAdminAction("archive.reopen", "archives", reopenTarget.id, { year: reopenTarget.year, counts: data });
+    setReopenTarget(null); setReopenCounts(null);
+    await loadArchives();
+    await runValidation();
+  };
 
   const runValidation = async () => {
     setBusy(true);
@@ -83,6 +111,7 @@ const AnnualArchiveManager = () => {
     if (!remark.trim()) { toast.error("कृपया अभिलेख टिप्पणी टाका"); return; }
     if (!password.trim()) { toast.error("पासवर्ड टाका"); return; }
     if (!confirm(`${year} वर्षाचा संपूर्ण अभिलेख तयार करायचा?\n\nनंतर त्या वर्षाच्या नोंदी फक्त वाचनासाठी राहतील.`)) return;
+    if (year === currentYear && !confirm(`${year} हे चालू वर्ष आहे. ते आत्ताच संग्रहित केल्यास चालू नोंदी वाचनीय-मात्र होतील. तरीही पुढे जायचे?`)) return;
 
     setBusy(true);
     try {
@@ -179,12 +208,18 @@ const AnnualArchiveManager = () => {
       ];
       // donation_payments: only the year
       await supabase.from("donation_payments").update({ is_archived: true, archived_year: year }).eq("year", year).eq("is_archived", false);
-      for (const t of ["programs", "participants", "prize_allocations", "quiz_sessions", "notices", "competition_entries", "account_expenses", "suggestions"] as const) {
-        await (supabase.from(t as any) as any).update({ is_archived: true, archived_year: year }).eq("is_archived", false);
-      }
+      // Archive only data belonging to this year, never every live row.
+      await supabase.from("programs").update({ is_archived: true, archived_year: year }).eq("date", year).eq("is_archived", false);
+      await supabase.from("participants").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
+      await supabase.from("prize_allocations").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
+      await supabase.from("quiz_sessions").update({ is_archived: true, archived_year: year }).eq("created_at", `gte.${year}-01-01`).eq("is_archived", false);
+      await supabase.from("notices").update({ is_archived: true, archived_year: year }).eq("archived_year", year).eq("is_archived", false);
+      await supabase.from("competition_entries").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
+      await supabase.from("account_expenses").update({ is_archived: true, archived_year: year }).eq("year", year).eq("is_archived", false);
+      await supabase.from("suggestions").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
 
       // Carry-forward education promotion for new year
-      await supabase.rpc("promote_education_levels" as any);
+      if (year !== currentYear) await supabase.rpc("promote_education_levels" as any);
 
       logAdminAction("archive.create", "archive", archiveRow.id, { year, summary });
       toast.success(`${year} चा अभिलेख यशस्वीरित्या तयार झाला`);
@@ -322,12 +357,34 @@ const AnnualArchiveManager = () => {
                   <Button size="sm" variant="outline" onClick={() => printCertificate(a)}>
                     <Printer className="h-3.5 w-3.5 mr-1" /> प्रमाणपत्र
                   </Button>
+                  <Button size="sm" variant="outline" onClick={() => void prepareReopen(a)}>
+                    वर्ष पुन्हा उघडा
+                  </Button>
                 </div>
               ))}
             </div>
           )}
         </CardContent>
       </Card>
+      <AlertDialog open={!!reopenTarget} onOpenChange={(open) => { if (!open && !reopening) { setReopenTarget(null); setReopenCounts(null); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{reopenTarget?.year} वर्ष पुन्हा उघडायचे?</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2">
+                <p>या वर्षातील नोंदी पुन्हा संपादनयोग्य होतील. तयार केलेली ZIP/PDF प्रत बदलणार नाही.</p>
+                {reopenCounts ? <ul className="grid grid-cols-2 gap-1 text-xs">{Object.entries(reopenCounts).filter(([, n]) => n > 0).map(([name, count]) => <li key={name}>{name}: {count}</li>)}{Object.values(reopenCounts).every((n) => n === 0) && <li>पुन्हा उघडण्यासारखी नोंद नाही.</li>}</ul> : <p>नोंदी मोजत आहे…</p>}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reopening}>रद्द</AlertDialogCancel>
+            <AlertDialogAction onClick={(e) => { e.preventDefault(); void reopenYear(); }} disabled={!reopenCounts || reopening}>
+              {reopening && <Loader2 className="h-4 w-4 mr-2 animate-spin" />} पुन्हा उघडा
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
