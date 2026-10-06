@@ -52,7 +52,8 @@ function mountFrame(html: string, landscape: boolean): Promise<HTMLIFrameElement
     const timer = setTimeout(() => reject(new Error("load timeout")), 20000);
     iframe.onload = () => { clearTimeout(timer); resolve(iframe); };
     document.body.appendChild(iframe);
-    const doc = iframe.contentDocument!;
+    const doc = iframe.contentDocument;
+    if (!doc) { iframe.remove(); reject(new Error("print frame unavailable")); return; }
     doc.open(); doc.write(html); doc.close();
     // Some engines fire onload synchronously before handler; fallback.
     if (doc.readyState === "complete") { clearTimeout(timer); resolve(iframe); }
@@ -64,7 +65,8 @@ async function renderPdfBlob(iframe: HTMLIFrameElement, landscape: boolean): Pro
     import("html2canvas"),
     import("jspdf"),
   ]);
-  const doc = iframe.contentDocument!;
+  const doc = iframe.contentDocument;
+  if (!doc) throw new Error("print frame unavailable");
   const body = doc.body;
   iframe.style.height = `${Math.max(body.scrollHeight, 1200)}px`;
   const canvas = await html2canvas(body, {
@@ -81,7 +83,9 @@ async function renderPdfBlob(iframe: HTMLIFrameElement, landscape: boolean): Pro
     const sliceH = Math.min(pagePx, canvas.height - y);
     const slice = document.createElement("canvas");
     slice.width = canvas.width; slice.height = sliceH;
-    slice.getContext("2d")!.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
+    const context = slice.getContext("2d");
+    if (!context) throw new Error("PDF canvas unavailable");
+    context.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, canvas.width, sliceH);
     if (!first) pdf.addPage();
     pdf.addImage(slice.toDataURL("image/jpeg", 0.92), "JPEG", 0, 0, pageW, sliceH / pxPerMm);
     first = false; y += sliceH;
@@ -115,13 +119,15 @@ export async function printDocument(rawHtml: string, opts: PrintOptions = {}): P
   let iframe: HTMLIFrameElement | null = null;
   try {
     iframe = await mountFrame(html, landscape);
-    await waitForAssets(iframe.contentDocument!);
+    if (!iframe.contentDocument) throw new Error("print frame unavailable");
+    await waitForAssets(iframe.contentDocument);
     if (usePdf) {
       const blob = await renderPdfBlob(iframe, landscape);
       await deliverPdf(blob, filename);
       toast.success("PDF तयार झाली", { id: tid });
     } else {
-      const win = iframe.contentWindow!;
+      const win = iframe.contentWindow;
+      if (!win) throw new Error("print window unavailable");
       win.focus();
       win.print();
       toast.dismiss(tid);

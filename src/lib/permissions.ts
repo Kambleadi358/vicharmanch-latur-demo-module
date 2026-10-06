@@ -2,7 +2,7 @@
 // Reusable across web & future Android/Capacitor build.
 // Permissions are requested only when actually needed by a feature.
 
-export type PermissionKind = "camera" | "microphone" | "notifications";
+export type PermissionKind = "camera" | "notifications";
 export type PermState = "granted" | "denied" | "prompt" | "unsupported";
 
 interface Info { supported: boolean; state: PermState; }
@@ -10,8 +10,7 @@ interface Info { supported: boolean; state: PermState; }
 async function queryNavigatorPermission(name: PermissionName): Promise<PermState> {
   try {
     if (!("permissions" in navigator)) return "prompt";
-    // @ts-ignore – some names are experimental
-    const p = await navigator.permissions.query({ name });
+    const p = await navigator.permissions.query({ name } as PermissionDescriptor);
     return p.state as PermState;
   } catch {
     return "prompt";
@@ -24,17 +23,9 @@ export async function getPermissionStatus(kind: PermissionKind): Promise<Info> {
       if (!navigator.mediaDevices?.getUserMedia) return { supported: false, state: "unsupported" };
       return { supported: true, state: await queryNavigatorPermission("camera" as PermissionName) };
     }
-    case "microphone": {
-      if (!navigator.mediaDevices?.getUserMedia) return { supported: false, state: "unsupported" };
-      return { supported: true, state: await queryNavigatorPermission("microphone" as PermissionName) };
-    }
     case "notifications": {
       if (!("Notification" in window)) return { supported: false, state: "unsupported" };
-      const s = Notification.permission;
-      return {
-        supported: true,
-        state: s === "default" ? "prompt" : (s as PermState),
-      };
+      return { supported: true, state: Notification.permission === "default" ? "prompt" : Notification.permission };
     }
   }
 }
@@ -46,33 +37,28 @@ export async function requestPermission(kind: PermissionKind): Promise<PermState
       stream.getTracks().forEach((t) => t.stop());
       return "granted";
     }
-    if (kind === "microphone") {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => t.stop());
-      return "granted";
-    }
     if (kind === "notifications") {
       if (!("Notification" in window)) return "unsupported";
       const r = await Notification.requestPermission();
       return r === "default" ? "prompt" : (r as PermState);
     }
     return "prompt";
-  } catch {
+  } catch (error) {
+    if (kind === "notifications" && "Notification" in window && Notification.permission === "denied") return "denied";
+    if (error instanceof DOMException && error.name === "NotAllowedError") return "denied";
     return "denied";
   }
 }
 
 export async function getAllPermissions(): Promise<Record<PermissionKind, Info>> {
-  const [camera, microphone, notifications] = await Promise.all([
+  const [camera, notifications] = await Promise.all([
     getPermissionStatus("camera"),
-    getPermissionStatus("microphone"),
     getPermissionStatus("notifications"),
   ]);
-  return { camera, microphone, notifications };
+  return { camera, notifications };
 }
 
 export const PERMISSION_LABELS_MR: Record<PermissionKind, string> = {
   camera: "कॅमेरा",
-  microphone: "मायक्रोफोन",
   notifications: "सूचना",
 };
