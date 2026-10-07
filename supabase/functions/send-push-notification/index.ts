@@ -51,38 +51,40 @@ Deno.serve(async (req: Request) => {
     return json({ error: "unauthorized" }, 401);
   }
 
-  let payload: { title?: string; body?: string; link?: string; category?: string };
+  let payload: { title?: string; body?: string; link?: string; category?: string; mode?: string; token?: string };
   try {
     payload = await req.json();
   } catch {
     return json({ error: "invalid json" }, 400);
   }
-  const title = (payload.title ?? "").trim();
-  const body = (payload.body ?? "").trim();
+  const isDeviceTest = payload.mode === "test";
+  const title = isDeviceTest ? "विचारमंच — चाचणी सूचना" : (payload.title ?? "").trim();
+  const body = isDeviceTest ? "ही विचारमंच अॅपची चाचणी सूचना आहे." : (payload.body ?? "").trim();
   const link = payload.link ?? null;
   const category = payload.category ?? "general";
-  if (!title) return json({ error: "title required" }, 400);
+  if (!isDeviceTest && !title) return json({ error: "title required" }, 400);
+  if (isDeviceTest && (typeof payload.token !== "string" || payload.token.length < 20 || payload.token.length > 4096)) {
+    return json({ error: "registered device required" }, 400);
+  }
 
   // Use the caller's own JWT (admin) for DB writes/reads — RLS allows
   // admin to insert notifications and read all push tokens. No service
   // role key is available on Lovable Cloud, so we cannot bypass RLS.
   const url = SUPABASE_URL || `https://${PROJECT_ID}.supabase.co`;
-  const callerToken = req.headers.get("Authorization")!.slice(7);
+  const authorization = req.headers.get("Authorization");
+  if (!authorization?.startsWith("Bearer ")) return json({ error: "unauthorized" }, 401);
+  const callerToken = authorization.slice(7);
   const adminClient = createClient(url, ANON_KEY, {
     global: { headers: { Authorization: `Bearer ${callerToken}` } },
   });
 
-  const { data: notifRow, error: notifErr } = await adminClient
-    .from("notifications")
-    .insert({
-      title,
-      body,
-      link,
-      category,
-      created_by: auth.userId,
-    })
-    .select("id")
-    .single();
+  const { data: notifRow, error: notifErr } = isDeviceTest
+    ? { data: null, error: null }
+    : await adminClient
+      .from("notifications")
+      .insert({ title, body, link, category, created_by: auth.userId })
+      .select("id")
+      .single();
   const notifId = notifRow?.id ?? null;
 
   // Fetch all device tokens (admin can read all per RLS policy).
@@ -91,14 +93,19 @@ Deno.serve(async (req: Request) => {
     .select("token")
     .order("created_at", { ascending: true });
 
-  const tokens: string[] = (subs ?? []).map((s) => s.token).filter(Boolean);
+  const tokens: string[] = isDeviceTest
+    ? (subs ?? []).map((s) => s.token).filter((token) => token === payload.token)
+    : (subs ?? []).map((s) => s.token).filter(Boolean);
+  if (isDeviceTest && tokens.length !== 1) {
+    return json({ error: "current device is not registered for notifications" }, 404);
+  }
 
   if (!LOVABLE_API_KEY || !FIREBASE_API_KEY) {
     return json({
-      ok: true,
+      ok: false,
       notification_id: notifId,
       pushed: 0,
-      warning: "firebase credentials not configured; notification saved only",
+      warning: "firebase credentials not configured; no push was delivered",
       insert_error: notifErr?.message ?? null,
     });
   }
@@ -112,6 +119,7 @@ Deno.serve(async (req: Request) => {
   let delivered = 0;
   let failed = 0;
   const staleTokens: string[] = [];
+  let providerError: { status: number; details: string } | null = null;
 
   // Fan out to each token. FCM v1 accepts one token per message.
   await Promise.all(
@@ -139,6 +147,8 @@ Deno.serve(async (req: Request) => {
           delivered++;
           return;
         }
+        const details = await res.text();
+        if (!providerError) providerError = { status: res.status, details };
         // 404 UNREGISTERED / 400 INVALID_ARGUMENT => stale token
         if (res.status === 404 || res.status === 400) {
           staleTokens.push(token);
@@ -159,12 +169,13 @@ Deno.serve(async (req: Request) => {
   }
 
   return json({
-    ok: true,
+    ok: delivered > 0 && failed === 0,
     notification_id: notifId,
     pushed: delivered,
     failed,
     stale_removed: staleTokens.length,
     total_subscribers: tokens.length,
     insert_error: notifErr?.message ?? null,
+    provider_error: providerError,
   });
 });
