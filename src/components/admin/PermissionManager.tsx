@@ -81,7 +81,7 @@ const PermissionManager = () => {
         })}
         <p className="text-[11px] text-muted-foreground pt-1 flex items-start gap-1.5">
           <Settings2 className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          नाकारलेली सूचना परवानगी पुन्हा सुरू करण्यासाठी ब्राउझर किंवा अ‍ॅप सेटिंग्जमध्ये परवानगी बदला.
+          Android 13+ वरील सूचना परवानगी ब्राउझरद्वारे मागितली जाते. नाकारल्यास पुन्हा सुरू करण्यासाठी Browser/App Settings मध्ये परवानगी बदला.
         </p>
       </CardContent>
     </Card>
