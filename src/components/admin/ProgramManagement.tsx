@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,21 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { notifySubscribers } from "@/lib/notify";
-import { Plus, Trash2, Trophy } from "lucide-react";
+import { Plus, Trash2, Trophy, CalendarDays, Clock3 } from "lucide-react";
+
+const istNowKey = () => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  }).formatToParts(new Date());
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
+};
+
+function programStatus(date: string, time: string, fallback: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return fallback;
+  return `${date}T${time}` > istNowKey() ? "upcoming" : "completed";
+}
 
 interface Program {
   id: string;
@@ -53,6 +67,12 @@ const ProgramManagement = () => {
   });
   const [winnersData, setWinnersData] = useState<Record<string, { first: string; second: string; third: string }>>({});
   const [showOnUi, setShowOnUi] = useState(true);
+  const [, setClock] = useState(0);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock((tick) => tick + 1), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const { data: programs, isLoading } = useQuery({
     queryKey: ["admin-programs"],
@@ -87,7 +107,7 @@ const ProgramManagement = () => {
         date: formData.date,
         time: formData.time,
         location: formData.location || null,
-        status: formData.status,
+        status: programStatus(formData.date, formData.time, "upcoming"),
         description: formData.description || null,
       });
       if (error) throw error;
@@ -107,19 +127,21 @@ const ProgramManagement = () => {
     onError: () => toast.error("कार्यक्रम जोडताना त्रुटी"),
   });
 
-  const updateProgram = useMutation({
-    mutationFn: async (program: Program) => {
-      const { error } = await supabase
-        .from("programs")
-        .update({ status: program.status === "upcoming" ? "completed" : "upcoming" })
-        .eq("id", program.id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-programs"] });
-      toast.success("स्थिती अपडेट केली!");
-    },
-  });
+  useEffect(() => {
+    if (!programs?.length) return;
+    const syncStatuses = async () => {
+      const updates = programs.filter((program) => {
+        const derived = programStatus(program.date, program.time, program.status);
+        return derived !== program.status;
+      });
+      for (const program of updates) {
+        const { error } = await supabase.from("programs").update({ status: programStatus(program.date, program.time, program.status) }).eq("id", program.id);
+        if (error) throw error;
+      }
+      if (updates.length) await queryClient.invalidateQueries({ queryKey: ["admin-programs"] });
+    };
+    void syncStatuses().catch(() => toast.error("कार्यक्रम स्थिती अद्ययावत करता आली नाही"));
+  }, [programs, queryClient]);
 
   const deleteProgram = useMutation({
     mutationFn: async (id: string) => {
@@ -213,18 +235,16 @@ const ProgramManagement = () => {
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <Input placeholder="कार्यक्रमाचे नाव" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-              <Input placeholder="तारीख (उदा. १४ एप्रिल २०२५)" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
-              <Input placeholder="वेळ (उदा. सकाळी ६:०० वाजता)" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} />
+              <Label className="flex items-center gap-2"><CalendarDays className="h-4 w-4" /> कार्यक्रमाची तारीख
+                <Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} />
+              </Label>
+              <Label className="flex items-center gap-2"><Clock3 className="h-4 w-4" /> कार्यक्रमाची वेळ (भारतीय प्रमाणवेळ)
+                <Input type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} />
+              </Label>
               <Input placeholder="ठिकाण" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
-              <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="upcoming">आगामी</SelectItem>
-                  <SelectItem value="completed">पूर्ण</SelectItem>
-                </SelectContent>
-              </Select>
+              <p className="text-sm text-muted-foreground">स्थिती आपोआप ठरेल: <b>{programStatus(formData.date, formData.time, "upcoming") === "upcoming" ? "आगामी" : "पूर्ण"}</b></p>
               <Textarea placeholder="वर्णन (पर्यायी)" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-              <Button onClick={() => addProgram.mutate()} className="w-full">जोडा</Button>
+              <Button onClick={() => addProgram.mutate()} disabled={!formData.name.trim() || !formData.date || !formData.time} className="w-full">जोडा</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -248,15 +268,13 @@ const ProgramManagement = () => {
                 {programs?.map((program) => (
                   <TableRow key={program.id}>
                     <TableCell className="font-medium">{program.name}</TableCell>
-                    <TableCell>{program.date}</TableCell>
-                    <TableCell>{program.time}</TableCell>
+                    <TableCell>{/^\d{4}-\d{2}-\d{2}$/.test(program.date) ? new Date(`${program.date}T12:00:00+05:30`).toLocaleDateString("mr-IN", { timeZone: "Asia/Kolkata" }) : program.date}</TableCell>
+                    <TableCell>{/^\d{2}:\d{2}$/.test(program.time) ? new Intl.DateTimeFormat("mr-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }).format(new Date(`2000-01-01T${program.time}:00+05:30`)) : program.time}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={program.status === "upcoming" ? "default" : "secondary"}
-                        className="cursor-pointer"
-                        onClick={() => updateProgram.mutate(program)}
+                        variant={programStatus(program.date, program.time, program.status) === "upcoming" ? "default" : "secondary"}
                       >
-                        {program.status === "upcoming" ? "आगामी" : "पूर्ण"}
+                        {programStatus(program.date, program.time, program.status) === "upcoming" ? "आगामी" : "पूर्ण"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">

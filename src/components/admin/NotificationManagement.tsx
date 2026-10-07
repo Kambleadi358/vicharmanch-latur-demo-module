@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Send, Bell, Trash2, Loader2 } from "lucide-react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface NotificationRow {
   id: string;
@@ -53,6 +54,8 @@ const NotificationManagement = () => {
     category: "general",
   });
   const { toast } = useToast();
+  const push = usePushNotifications();
+  const [testing, setTesting] = useState(false);
 
   const refresh = async () => {
     const [{ data: notifs }, { data: subs }] = await Promise.all([
@@ -68,6 +71,46 @@ const NotificationManagement = () => {
   };
 
   useEffect(() => { refresh(); }, []);
+
+  const testThisDevice = async () => {
+    if (!('Notification' in window)) {
+      toast({ title: "सूचना उपलब्ध नाहीत", description: "या ब्राउझरमध्ये सूचना समर्थित नाहीत.", variant: "destructive" });
+      return;
+    }
+    if (Notification.permission === "denied") {
+      toast({ title: "सूचना परवानगी नाकारली", description: "कृपया Browser/App Settings मधून सूचना सुरू करा.", variant: "destructive" });
+      return;
+    }
+    setTesting(true);
+    try {
+      const registration = await push.register();
+      if (registration.status !== "registered") {
+        const messages: Record<string, string> = {
+          "open-in-new-tab": "पूर्वावलोकन स्वतंत्र टॅबमध्ये उघडा किंवा प्रकाशित अॅप वापरा.",
+          denied: "कृपया Browser/App Settings मधून सूचना सुरू करा.",
+          unsupported: push.registrationError || "या उपकरणावर सूचना समर्थित नाहीत.",
+          "not-configured": "सूचना सेवा सध्या जोडलेली नाही.",
+        };
+        toast({ title: "सूचना चाचणी अयशस्वी", description: messages[registration.status], variant: "destructive" });
+        return;
+      }
+      const { data, error } = await supabase.functions.invoke("send-push-notification", { body: { mode: "test", token: registration.token } });
+      if (error) {
+        const details = (data as { details?: string; error?: string } | null)?.details || error.message;
+        toast({ title: "चाचणी सूचना पाठवता आली नाही", description: details, variant: "destructive" });
+        return;
+      }
+      const result = data as { ok?: boolean; pushed?: number; failed?: number; provider_error?: { status: number; details: string } | null };
+      if (!result?.ok || result.pushed !== 1 || result.failed) {
+        toast({ title: "चाचणी सूचना पोहोचवता आली नाही", description: result?.provider_error?.details || "सूचना सेवा वितरणाची पुष्टी करू शकली नाही.", variant: "destructive" });
+      } else {
+        toast({ title: "चाचणी सूचना पाठवली", description: "सूचना सेवेकडून या उपकरणासाठी स्वीकारली गेली. प्रत्यक्ष प्रदर्शनासाठी उपकरणाची सूचना परवानगी सुरू असणे आवश्यक आहे." });
+      }
+    } finally {
+      setTesting(false);
+      await refresh();
+    }
+  };
 
   const send = async () => {
     if (!form.title.trim()) {
@@ -104,6 +147,21 @@ const NotificationManagement = () => {
 
   return (
     <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> या उपकरणावर सूचना तपासा</CardTitle>
+          <CardDescription>
+            परवानगी: {typeof Notification === "undefined" ? "उपलब्ध नाही" : Notification.permission === "granted" ? "मंजूर" : Notification.permission === "denied" ? "नाकारली" : "विनंती बाकी"} · चाचणी फक्त या उपकरणावर पाठवली जाईल. Android वेब-अॅपमध्ये सूचना मिळणे वापरलेल्या APK रूपांतरकाच्या WebView/FCM समर्थनावर अवलंबून आहे.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={testThisDevice} disabled={testing}>
+            {testing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bell className="h-4 w-4 mr-2" />}
+            चाचणी सूचना पाठवा
+          </Button>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

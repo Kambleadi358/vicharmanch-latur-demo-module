@@ -61,7 +61,7 @@ const AnnualArchiveManager = () => {
   const reopenYear = async () => {
     if (!reopenTarget) return;
     setReopening(true);
-    const { data, error } = await supabase.rpc("reopen_archive_year", { _year: reopenTarget.year });
+    const { data, error } = await supabase.rpc("reopen_archive_year" as any, { _year: reopenTarget.year });
     setReopening(false);
     if (error) { toast.error("वर्ष पुन्हा उघडता आले नाही: " + error.message); return; }
     const counts = Object.values((data ?? {}) as Record<string, number>).reduce((a, n) => a + Number(n || 0), 0);

@@ -30,33 +30,43 @@ function deviceFingerprint(): string {
 export function usePushNotifications() {
   const [status, setStatus] = useState<PushResult['status'] | 'idle'>('idle');
   const [token, setToken] = useState<string | null>(null);
+  const [registrationError, setRegistrationError] = useState<string | null>(null);
 
   const register = useCallback(async (): Promise<PushResult> => {
-    const result = await enablePush();
-    setStatus(result.status);
-    if (result.status === 'registered') {
-      setToken(result.token);
-      localStorage.setItem(LS_KEY, '1');
-      // Upsert token so the edge function can broadcast to this device.
-      try {
-        await supabase.from('push_subscriptions').upsert(
-          {
-            token: result.token,
-            device_fingerprint: deviceFingerprint(),
-            user_agent: navigator.userAgent,
-            platform: /android/i.test(navigator.userAgent)
-              ? 'android'
-              : /iphone|ipad/i.test(navigator.userAgent)
-                ? 'ios'
-                : 'web',
-          },
-          { onConflict: 'token' }
-        );
-      } catch {
-        // non-fatal: token stored locally; next heartbeat will retry
+    setRegistrationError(null);
+    try {
+      const result = await enablePush();
+      if (result.status !== 'registered') {
+        setStatus(result.status);
+        return result;
       }
+      const { error } = await supabase.from('push_subscriptions').upsert(
+        {
+          token: result.token,
+          device_fingerprint: deviceFingerprint(),
+          user_agent: navigator.userAgent,
+          platform: /android/i.test(navigator.userAgent)
+            ? 'android'
+            : /iphone|ipad/i.test(navigator.userAgent)
+              ? 'ios'
+              : 'web',
+        },
+        { onConflict: 'token' }
+      );
+      if (error) {
+        setStatus('denied');
+        setRegistrationError('या उपकरणाची नोंद सुरक्षितपणे जतन करता आली नाही.');
+        return { status: 'denied' };
+      }
+      setToken(result.token);
+      setStatus(result.status);
+      localStorage.setItem(LS_KEY, '1');
+      return result;
+    } catch (error) {
+      setStatus('unsupported');
+      setRegistrationError(error instanceof Error ? error.message : 'सूचना नोंदणी अयशस्वी झाली.');
+      return { status: 'unsupported' };
     }
-    return result;
   }, []);
 
   // Heartbeat: refresh last_seen_at for the registered token periodically.
@@ -77,7 +87,7 @@ export function usePushNotifications() {
     return () => clearInterval(id);
   }, [token]);
 
-  return { status, token, register };
+  return { status, token, register, registrationError };
 }
 
 // Convenience helper to run a one-time prompt on first eligible visit.
@@ -85,6 +95,5 @@ export function useAutoPromptPush() {
   const { register, status } = usePushNotifications();
   // Permissions are never requested automatically on page load. Registration
   // is invoked only from the Permission Manager or an explicit test action.
-  useEffect(() => {}, []);
   return { register, status };
 }
