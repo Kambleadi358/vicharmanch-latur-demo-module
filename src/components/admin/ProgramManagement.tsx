@@ -49,7 +49,7 @@ const ProgramManagement = () => {
   const [formData, setFormData] = useState(emptyForm);
   const [winnersData, setWinnersData] = useState<Record<string, { first: string; second: string; third: string }>>({});
   const [showOnUi, setShowOnUi] = useState(true);
-  const [, setClock] = useState(0);
+  const [clock, setClock] = useState(0);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock((tick) => tick + 1), 30_000);
@@ -132,7 +132,7 @@ const ProgramManagement = () => {
       if (updates.length) await queryClient.invalidateQueries({ queryKey: ["admin-programs"] });
     };
     void syncStatuses().catch(() => toast.error("कार्यक्रम स्थिती अद्ययावत करता आली नाही"));
-  }, [programs, queryClient]);
+  }, [programs, queryClient, clock]);
 
   const deleteProgram = useMutation({
     mutationFn: async (id: string) => {
