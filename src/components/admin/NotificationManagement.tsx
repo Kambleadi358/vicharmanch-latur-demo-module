@@ -106,6 +106,8 @@ const NotificationManagement = () => {
       } else {
         toast({ title: "चाचणी सूचना पाठवली", description: "सूचना सेवेकडून या उपकरणासाठी स्वीकारली गेली. प्रत्यक्ष प्रदर्शनासाठी उपकरणाची सूचना परवानगी सुरू असणे आवश्यक आहे." });
       }
+    } catch (error) {
+      toast({ title: "चाचणी सूचना अयशस्वी", description: error instanceof Error ? error.message : "सूचना चाचणी पूर्ण करता आली नाही.", variant: "destructive" });
     } finally {
       setTesting(false);
       await refresh();
@@ -151,7 +153,7 @@ const NotificationManagement = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> या उपकरणावर सूचना तपासा</CardTitle>
           <CardDescription>
-            परवानगी: {typeof Notification === "undefined" ? "उपलब्ध नाही" : Notification.permission === "granted" ? "मंजूर" : Notification.permission === "denied" ? "नाकारली" : "विनंती बाकी"} · चाचणी फक्त या उपकरणावर पाठवली जाईल. Android वेब-अॅपमध्ये सूचना मिळणे वापरलेल्या APK रूपांतरकाच्या WebView/FCM समर्थनावर अवलंबून आहे.
+            परवानगी: {typeof Notification === "undefined" ? "उपलब्ध नाही" : Notification.permission === "granted" ? "मंजूर" : Notification.permission === "denied" ? "नाकारली — Browser/App Settings मध्ये सुरू करा" : "विनंती बाकी"} · उपकरण नोंदणी: {push.status === "registered" ? "नोंदणीकृत" : push.status === "idle" ? "अद्याप तपासलेली नाही" : push.status === "denied" ? "नाकारली" : push.status === "not-configured" ? "सेवा जोडलेली नाही" : push.status === "open-in-new-tab" ? "स्वतंत्र टॅब आवश्यक" : push.status === "unsupported" ? "समर्थित नाही" : "नोंदणी बाकी"} · चाचणी फक्त या उपकरणावर पाठवली जाईल. Android वेब-अॅपमध्ये सूचना मिळणे वापरलेल्या APK रूपांतरकाच्या WebView/FCM समर्थनावर अवलंबून आहे.
           </CardDescription>
         </CardHeader>
         <CardContent>

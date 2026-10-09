@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSeo } from "@/hooks/useSeo";
+import { programStatus } from "@/lib/programStatus";
 
 const programCategories = [
   {
@@ -70,11 +72,17 @@ interface ProgramWinner {
 }
 
 const Programs = () => {
+  const [, setClock] = useState(0);
   useSeo({
     title: "उपक्रम व कार्यक्रम | विचारमंच लातूर",
     description: "विचारमंचाचे वैचारिक, बौद्धिक, सामाजिक व सांस्कृतिक कार्यक्रम, स्पर्धा व विजेते.",
     canonical: "/programs",
   });
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock((tick) => tick + 1), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // Fetch programs from database
   const { data: dbPrograms, isLoading } = useQuery({
@@ -90,8 +98,8 @@ const Programs = () => {
     },
   });
 
-  const upcomingPrograms = dbPrograms?.filter((p) => p.status === "upcoming") || [];
-  const completedPrograms = dbPrograms?.filter((p) => p.status === "completed") || [];
+  const upcomingPrograms = dbPrograms?.filter((p) => programStatus(p.date, p.time, new Date(), p.status) === "upcoming") || [];
+  const completedPrograms = dbPrograms?.filter((p) => programStatus(p.date, p.time, new Date(), p.status) === "completed") || [];
 
   return (
     <Layout>
