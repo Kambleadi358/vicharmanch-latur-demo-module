@@ -106,6 +106,8 @@ const NotificationManagement = () => {
       } else {
         toast({ title: "चाचणी सूचना पाठवली", description: "सूचना सेवेकडून या उपकरणासाठी स्वीकारली गेली. प्रत्यक्ष प्रदर्शनासाठी उपकरणाची सूचना परवानगी सुरू असणे आवश्यक आहे." });
       }
+    } catch (error) {
+      toast({ title: "चाचणी सूचना अयशस्वी", description: error instanceof Error ? error.message : "सूचना चाचणी पूर्ण करता आली नाही.", variant: "destructive" });
     } finally {
       setTesting(false);
       await refresh();

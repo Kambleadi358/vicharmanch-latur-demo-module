@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -71,14 +72,14 @@ interface ProgramWinner {
 }
 
 const Programs = () => {
-  const [, setClock] = React.useState(0);
+  const [, setClock] = useState(0);
   useSeo({
     title: "उपक्रम व कार्यक्रम | विचारमंच लातूर",
     description: "विचारमंचाचे वैचारिक, बौद्धिक, सामाजिक व सांस्कृतिक कार्यक्रम, स्पर्धा व विजेते.",
     canonical: "/programs",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const timer = window.setInterval(() => setClock((tick) => tick + 1), 30_000);
     return () => window.clearInterval(timer);
   }, []);

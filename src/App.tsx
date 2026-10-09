@@ -2,8 +2,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { useEffect } from "react";
+import { listenForForegroundPush } from "@/lib/firebase";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { lazy, Suspense } from "react";
 import Index from "./pages/Index"; // keep landing eager for fast LCP
@@ -50,6 +52,40 @@ const PageFallback = () => (
   </div>
 );
 
+const PushNotificationBridge = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    let active = true;
+    const isAllowed = typeof Notification !== "undefined" && Notification.permission === "granted";
+    if (isAllowed) {
+      void listenForForegroundPush(async (payload) => {
+        const data = payload.data ?? {};
+        const title = payload.notification?.title ?? data.title ?? "विचारमंच";
+        const body = payload.notification?.body ?? data.body ?? "";
+        const link = typeof data.link === "string" && data.link.startsWith("/") ? data.link : "/";
+        const registration = await navigator.serviceWorker?.getRegistration();
+        await registration?.showNotification(title, { body, icon: "/favicon.jpeg", data: { link } });
+      }).then((stop) => {
+        if (!active) stop?.();
+        else if (stop) unsubscribe = stop;
+      }).catch(() => undefined);
+    }
+    const onServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data?.type === "notification-click" && typeof event.data.link === "string" && event.data.link.startsWith("/")) {
+        navigate(event.data.link);
+      }
+    };
+    navigator.serviceWorker?.addEventListener("message", onServiceWorkerMessage);
+    return () => {
+      active = false;
+      unsubscribe?.();
+      navigator.serviceWorker?.removeEventListener("message", onServiceWorkerMessage);
+    };
+  }, [navigate]);
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -57,6 +93,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <PushNotificationBridge />
           <MaintenanceGate>
             <AnimatePresence mode="wait">
               <Suspense fallback={<PageFallback />}>

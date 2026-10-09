@@ -196,27 +196,32 @@ const AnnualArchiveManager = () => {
       URL.revokeObjectURL(a.href);
 
       // Mark data as archived (read-only enforcement on supported tables)
-      const tablesToFlag: Array<keyof any> = [
-        "donation_payments",
-        "programs",
-        "participants",
-        "prize_allocations",
-        "quiz_sessions",
-        "notices",
-        "competition_entries",
-        "account_expenses",
-      ];
-      // donation_payments: only the year
-      await supabase.from("donation_payments").update({ is_archived: true, archived_year: year }).eq("year", year).eq("is_archived", false);
-      // Archive only data belonging to this year, never every live row.
-      await supabase.from("programs").update({ is_archived: true, archived_year: year }).eq("date", year).eq("is_archived", false);
-      await supabase.from("participants").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
-      await supabase.from("prize_allocations").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
-      await supabase.from("quiz_sessions").update({ is_archived: true, archived_year: year }).eq("created_at", `gte.${year}-01-01`).eq("is_archived", false);
-      await supabase.from("notices").update({ is_archived: true, archived_year: year }).eq("archived_year", year).eq("is_archived", false);
-      await supabase.from("competition_entries").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
-      await supabase.from("account_expenses").update({ is_archived: true, archived_year: year }).eq("year", year).eq("is_archived", false);
-      await supabase.from("suggestions").update({ is_archived: true, archived_year: year }).eq("is_archived", false);
+      const updateResults = await Promise.all([
+        supabase.from("donation_payments").update({ is_archived: true, archived_year: year }).eq("year", year).eq("is_archived", false),
+        supabase.from("account_expenses").update({ is_archived: true, archived_year: year }).eq("archived_year", year).eq("is_archived", false),
+        supabase.from("ledger_expenses").update({ is_archived: true, archived_year: year }).eq("year", year).eq("is_archived", false),
+        supabase.from("quiz_sessions").update({ is_archived: true, archived_year: year }).gte("created_at", `${year}-01-01T00:00:00.000Z`).lt("created_at", `${Number(year) + 1}-01-01T00:00:00.000Z`).eq("is_archived", false),
+      ]);
+      const failedUpdate = updateResults.find((result) => result.error);
+      if (failedUpdate?.error) throw failedUpdate.error;
+
+      // Programs have a reliable year only when their stored date is ISO-formatted.
+      // Archive related entries only through those program/competition links.
+      const programIds = (prog.data ?? []).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date.startsWith(`${year}-`)).map((item) => item.id);
+      if (programIds.length) {
+        const competitionIds = (comps.data ?? []).filter((item) => programIds.includes(item.program_id)).map((item) => item.id);
+        const relatedUpdates = [
+          supabase.from("programs").update({ is_archived: true, archived_year: year }).in("id", programIds).eq("is_archived", false),
+          supabase.from("prize_allocations").update({ is_archived: true, archived_year: year }).in("program_id", programIds).eq("is_archived", false),
+          ...(competitionIds.length ? [
+            supabase.from("participants").update({ is_archived: true, archived_year: year }).in("competition_id", competitionIds).eq("is_archived", false),
+            supabase.from("competition_entries").update({ is_archived: true, archived_year: year }).in("competition_id", competitionIds).eq("is_archived", false),
+          ] : []),
+        ];
+        const results = await Promise.all(relatedUpdates);
+        const failedRelatedUpdate = results.find((result) => result.error);
+        if (failedRelatedUpdate?.error) throw failedRelatedUpdate.error;
+      }
 
       // Carry-forward education promotion for new year
       if (year !== currentYear) await supabase.rpc("promote_education_levels" as any);

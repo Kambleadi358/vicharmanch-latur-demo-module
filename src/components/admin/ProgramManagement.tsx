@@ -45,14 +45,8 @@ const ProgramManagement = () => {
   const [isWinnersOpen, setIsWinnersOpen] = useState(false);
   const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    date: "",
-    time: "",
-    location: "",
-    status: "upcoming",
-    description: "",
-  });
+  const emptyForm = { name: "", date: "", time: "", location: "", status: "upcoming", description: "" };
+  const [formData, setFormData] = useState(emptyForm);
   const [winnersData, setWinnersData] = useState<Record<string, { first: string; second: string; third: string }>>({});
   const [showOnUi, setShowOnUi] = useState(true);
   const [, setClock] = useState(0);
@@ -118,7 +112,7 @@ const ProgramManagement = () => {
         category: "program",
       });
       setEditingProgram(null);
-      setFormData({ name: "", date: "", time: "", location: "", status: "upcoming", description: "" });
+      setFormData(emptyForm);
       toast.success(editingProgram ? "कार्यक्रम अद्ययावत केला!" : "कार्यक्रम जोडला!");
     },
     onError: (error) => toast.error(error.message || "कार्यक्रम जतन करताना त्रुटी"),
@@ -233,7 +227,10 @@ const ProgramManagement = () => {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl">कार्यक्रम व्यवस्थापन</CardTitle>
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <Dialog open={isAddOpen} onOpenChange={(open) => {
+          setIsAddOpen(open);
+          if (!open) { setEditingProgram(null); setFormData(emptyForm); }
+        }}>
             <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" /> कार्यक्रम जोडा

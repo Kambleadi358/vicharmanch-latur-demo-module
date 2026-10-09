@@ -1,7 +1,7 @@
 // Firebase Cloud Messaging client for web push.
 // Public Vite vars come from the firebase_messaging connector.
 import { initializeApp, type FirebaseApp } from 'firebase/app';
-import { getMessaging, getToken, isSupported, type Messaging } from 'firebase/messaging';
+import { getMessaging, getToken, isSupported, onMessage, type Messaging, type MessagePayload } from 'firebase/messaging';
 
 const appId = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_APP_ID;
 const vapidKey = import.meta.env.VITE_LOVABLE_CONNECTOR_FIREBASE_MESSAGING_VAPID_KEY;
@@ -66,3 +66,8 @@ export async function enablePush(): Promise<PushResult> {
 }
 
 export { ensureMessaging };
+
+export async function listenForForegroundPush(handler: (payload: MessagePayload) => void): Promise<(() => void) | null> {
+  const instance = await ensureMessaging();
+  return instance ? onMessage(instance, handler) : null;
+}
