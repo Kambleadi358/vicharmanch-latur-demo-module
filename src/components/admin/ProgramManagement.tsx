@@ -13,21 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { notifySubscribers } from "@/lib/notify";
+import { isIsoProgramDate, isIsoProgramTime, programStatus } from "@/lib/programStatus";
 import { Plus, Trash2, Trophy, CalendarDays, Clock3 } from "lucide-react";
-
-const istNowKey = () => {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit",
-    hour: "2-digit", minute: "2-digit", hourCycle: "h23",
-  }).formatToParts(new Date());
-  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
-  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
-};
-
-function programStatus(date: string, time: string, fallback: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return fallback;
-  return `${date}T${time}` > istNowKey() ? "upcoming" : "completed";
-}
 
 interface Program {
   id: string;
@@ -56,6 +43,7 @@ const ProgramManagement = () => {
   const queryClient = useQueryClient();
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isWinnersOpen, setIsWinnersOpen] = useState(false);
+  const [editingProgram, setEditingProgram] = useState<Program | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -100,42 +88,51 @@ const ProgramManagement = () => {
     enabled: !!selectedProgram,
   });
 
-  const addProgram = useMutation({
+  const saveProgram = useMutation({
     mutationFn: async () => {
-      const { error } = await supabase.from("programs").insert({
+      if (editingProgram && Boolean(formData.date) !== Boolean(formData.time)) {
+        throw new Error("तारीख आणि वेळ दोन्ही निवडा.");
+      }
+      const status = editingProgram && !formData.date
+        ? editingProgram.status
+        : programStatus(formData.date, formData.time);
+      const values = {
         name: formData.name,
-        date: formData.date,
-        time: formData.time,
+        ...(formData.date && formData.time ? { date: formData.date, time: formData.time } : {}),
         location: formData.location || null,
-        status: programStatus(formData.date, formData.time, "upcoming"),
+        status,
         description: formData.description || null,
-      });
+      };
+      const { error } = editingProgram
+        ? await supabase.from("programs").update(values).eq("id", editingProgram.id)
+        : await supabase.from("programs").insert({ ...values, date: formData.date, time: formData.time });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin-programs"] });
       setIsAddOpen(false);
-      notifySubscribers({
+      if (!editingProgram) notifySubscribers({
         title: `नवीन कार्यक्रम: ${formData.name}`,
         body: formData.description || undefined,
         link: "/programs",
         category: "program",
       });
+      setEditingProgram(null);
       setFormData({ name: "", date: "", time: "", location: "", status: "upcoming", description: "" });
-      toast.success("कार्यक्रम जोडला!");
+      toast.success(editingProgram ? "कार्यक्रम अद्ययावत केला!" : "कार्यक्रम जोडला!");
     },
-    onError: () => toast.error("कार्यक्रम जोडताना त्रुटी"),
+    onError: (error) => toast.error(error.message || "कार्यक्रम जतन करताना त्रुटी"),
   });
 
   useEffect(() => {
     if (!programs?.length) return;
     const syncStatuses = async () => {
       const updates = programs.filter((program) => {
-        const derived = programStatus(program.date, program.time, program.status);
+        const derived = programStatus(program.date, program.time, new Date(), program.status);
         return derived !== program.status;
       });
       for (const program of updates) {
-        const { error } = await supabase.from("programs").update({ status: programStatus(program.date, program.time, program.status) }).eq("id", program.id);
+        const { error } = await supabase.from("programs").update({ status: programStatus(program.date, program.time, new Date(), program.status) }).eq("id", program.id);
         if (error) throw error;
       }
       if (updates.length) await queryClient.invalidateQueries({ queryKey: ["admin-programs"] });
@@ -200,6 +197,19 @@ const ProgramManagement = () => {
     setIsWinnersOpen(true);
   };
 
+  const openProgramEditor = (program: Program) => {
+    setEditingProgram(program);
+    setFormData({
+      name: program.name,
+      date: isIsoProgramDate(program.date) ? program.date : "",
+      time: isIsoProgramTime(program.time) ? program.time : "",
+      location: program.location ?? "",
+      status: program.status,
+      description: program.description ?? "",
+    });
+    setIsAddOpen(true);
+  };
+
   // Update winners data when winners are fetched
   if (winners && Object.keys(winnersData).length === 0) {
     const data: Record<string, { first: string; second: string; third: string }> = {};
@@ -224,14 +234,14 @@ const ProgramManagement = () => {
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-xl">कार्यक्रम व्यवस्थापन</CardTitle>
         <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
+            <DialogTrigger asChild>
             <Button size="sm">
               <Plus className="mr-2 h-4 w-4" /> कार्यक्रम जोडा
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
-              <DialogTitle>नवीन कार्यक्रम</DialogTitle>
+              <DialogTitle>{editingProgram ? "कार्यक्रम संपादन" : "नवीन कार्यक्रम"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <Input placeholder="कार्यक्रमाचे नाव" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
@@ -241,10 +251,12 @@ const ProgramManagement = () => {
               <Label className="flex items-center gap-2"><Clock3 className="h-4 w-4" /> कार्यक्रमाची वेळ (भारतीय प्रमाणवेळ)
                 <Input type="time" value={formData.time} onChange={(e) => setFormData({ ...formData, time: e.target.value })} />
               </Label>
+              {editingProgram && !isIsoProgramDate(editingProgram.date) && !formData.date && <p className="text-xs text-muted-foreground">सध्याची तारीख: {editingProgram.date} · बदलायची असल्यास तारीख व वेळ दोन्ही निवडा.</p>}
+              {editingProgram && !isIsoProgramTime(editingProgram.time) && !formData.time && <p className="text-xs text-muted-foreground">सध्याची वेळ: {editingProgram.time}</p>}
               <Input placeholder="ठिकाण" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
               <p className="text-sm text-muted-foreground">स्थिती आपोआप ठरेल: <b>{programStatus(formData.date, formData.time, "upcoming") === "upcoming" ? "आगामी" : "पूर्ण"}</b></p>
               <Textarea placeholder="वर्णन (पर्यायी)" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-              <Button onClick={() => addProgram.mutate()} disabled={!formData.name.trim() || !formData.date || !formData.time} className="w-full">जोडा</Button>
+              <Button onClick={() => saveProgram.mutate()} disabled={!formData.name.trim() || (!editingProgram && (!formData.date || !formData.time)) || (Boolean(formData.date) !== Boolean(formData.time))} className="w-full">{editingProgram ? "बदल जतन करा" : "जोडा"}</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -272,12 +284,13 @@ const ProgramManagement = () => {
                     <TableCell>{/^\d{2}:\d{2}$/.test(program.time) ? new Intl.DateTimeFormat("mr-IN", { timeZone: "Asia/Kolkata", hour: "numeric", minute: "2-digit" }).format(new Date(`2000-01-01T${program.time}:00+05:30`)) : program.time}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={programStatus(program.date, program.time, program.status) === "upcoming" ? "default" : "secondary"}
+                        variant={programStatus(program.date, program.time, new Date(), program.status) === "upcoming" ? "default" : "secondary"}
                       >
-                        {programStatus(program.date, program.time, program.status) === "upcoming" ? "आगामी" : "पूर्ण"}
+                        {programStatus(program.date, program.time, new Date(), program.status) === "upcoming" ? "आगामी" : "पूर्ण"}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right space-x-2">
+                      <Button size="sm" variant="outline" onClick={() => openProgramEditor(program)}>संपादन</Button>
                       <Button size="icon" variant="outline" onClick={() => { setWinnersData({}); openWinnersDialog(program); }}>
                         <Trophy className="h-4 w-4" />
                       </Button>
