@@ -59,7 +59,7 @@ Deno.serve(async (req: Request) => {
   }
   const isDeviceTest = payload.mode === "test";
   const title = isDeviceTest ? "विचारमंच — चाचणी सूचना" : (payload.title ?? "").trim();
-  const body = isDeviceTest ? "ही विचारमंच अॅपची चाचणी सूचना आहे।” : (payload.body ?? "").trim();
+  const body = isDeviceTest ? "ही विचारमंच अॅपची चाचणी सूचना आहे।" : (payload.body ?? "").trim();
   const link = payload.link ?? null;
   const category = payload.category ?? "general";
   if (!isDeviceTest && !title) return json({ error: "title required" }, 400);
