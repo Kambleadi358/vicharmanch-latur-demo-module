@@ -215,7 +215,8 @@ const AnnualArchiveManager = () => {
 
       // Programs have a reliable year only when their stored date is ISO-formatted.
       // Archive related entries only through those program/competition links.
-      const programIds = (prog.data ?? []).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date.startsWith(`${year}-`) && !item.is_archived).map((item) => item.id);
+      const programRows = (prog.data ?? []) as unknown as Array<{ id: string; date: string; is_archived: boolean }>;
+      const programIds = programRows.filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date.startsWith(`${year}-`) && !item.is_archived).map((item) => item.id);
       if (programIds.length) {
         const competitionIds = (comps.data ?? []).filter((item) => programIds.includes(item.program_id)).map((item) => item.id);
         const relatedUpdates = [

@@ -251,7 +251,7 @@ const ProgramManagement = () => {
               {editingProgram && !isIsoProgramDate(editingProgram.date) && !formData.date && <p className="text-xs text-muted-foreground">सध्याची तारीख: {editingProgram.date} · बदलायची असल्यास तारीख व वेळ दोन्ही निवडा.</p>}
               {editingProgram && !isIsoProgramTime(editingProgram.time) && !formData.time && <p className="text-xs text-muted-foreground">सध्याची वेळ: {editingProgram.time}</p>}
               <Input placeholder="ठिकाण" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} />
-              <p className="text-sm text-muted-foreground">स्थिती आपोआप ठरेल: <b>{programStatus(formData.date, formData.time, "upcoming") === "upcoming" ? "आगामी" : "पूर्ण"}</b></p>
+              <p className="text-sm text-muted-foreground">स्थिती आपोआप ठरेल: <b>{programStatus(formData.date, formData.time, new Date(), "upcoming") === "upcoming" ? "आगामी" : "पूर्ण"}</b></p>
               <Textarea placeholder="वर्णन (पर्यायी)" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
               <Button onClick={() => saveProgram.mutate()} disabled={!formData.name.trim() || (!editingProgram && (!formData.date || !formData.time)) || (Boolean(formData.date) !== Boolean(formData.time))} className="w-full">{editingProgram ? "बदल जतन करा" : "जोडा"}</Button>
             </div>
