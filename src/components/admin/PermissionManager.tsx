@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Camera, Bell, ShieldCheck, XCircle, AlertCircle, MinusCircle, Settings2 } from "lucide-react";
+import { toast } from "sonner";
 import {
   getAllPermissions, requestPermission,
   PERMISSION_LABELS_MR, type PermissionKind, type PermState,
@@ -39,9 +40,17 @@ const PermissionManager = () => {
 
   const onRequest = async (k: PermissionKind) => {
     setBusy(k);
-    await requestPermission(k);
-    await refresh();
-    setBusy(null);
+    try {
+      const state = await requestPermission(k);
+      await refresh();
+      if (state === "denied") {
+        toast.error(k === "camera"
+          ? "कॅमेरा परवानगी नाकारली आहे. कृपया Browser/App Settings मधून कॅमेरा परवानगी द्या."
+          : "सूचना परवानगी नाकारली आहे. कृपया Browser/App Settings मधून सूचना सुरू करा.");
+      }
+    } finally {
+      setBusy(null);
+    }
   };
 
   return (
@@ -74,7 +83,7 @@ const PermissionManager = () => {
                 disabled={!info?.supported || info.state === "granted" || busy === k}
                 onClick={() => onRequest(k)}
               >
-                {info?.state === "granted" ? "मंजूर" : busy === k ? "..." : "परवानगी द्या"}
+                {info?.state === "granted" ? "मंजूर" : busy === k ? "..." : info?.state === "denied" ? "पुन्हा प्रयत्न करा" : "परवानगी द्या"}
               </Button>
             </div>
           );
