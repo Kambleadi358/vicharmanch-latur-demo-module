@@ -62,6 +62,7 @@ const ProgramManagement = () => {
       const { data, error } = await supabase
         .from("programs")
         .select("*")
+        .eq("is_archived", false)
         .order("date", { ascending: false });
       if (error) throw error;
       return data as Program[];

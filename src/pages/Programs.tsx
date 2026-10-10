@@ -92,6 +92,7 @@ const Programs = () => {
         .from("programs")
         .select("*")
         .eq("is_visible", true)
+        .eq("is_archived", false)
         .order("date", { ascending: false });
       if (error) throw error;
       return data as Program[];
