@@ -196,7 +196,6 @@ const AnnualArchiveManager = () => {
       URL.revokeObjectURL(a.href);
 
       // Mark data as archived (read-only enforcement on supported tables)
-      const householdIds = (hh.data ?? []).filter((item) => item.active_year === year && !item.is_archived).map((item) => item.id);
       const yearlyAccounts = await supabase.from("yearly_accounts").select("id").eq("year", year);
       if (yearlyAccounts.error) throw yearlyAccounts.error;
       const accountIds = (yearlyAccounts.data ?? []).map((item) => item.id);
@@ -205,17 +204,14 @@ const AnnualArchiveManager = () => {
         supabase.from("ledger_expenses").update({ is_archived: true, archived_year: year }).eq("year", year).eq("is_archived", false),
         supabase.from("quiz_sessions").update({ is_archived: true, archived_year: year }).gte("created_at", `${year}-01-01T00:00:00+05:30`).lt("created_at", `${Number(year) + 1}-01-01T00:00:00+05:30`).eq("is_archived", false),
         ...(accountIds.length ? [supabase.from("account_expenses").update({ is_archived: true, archived_year: year }).in("account_id", accountIds).eq("is_archived", false)] : []),
-        ...(householdIds.length ? [
-          supabase.from("households").update({ is_archived: true, archived_year: year }).in("id", householdIds).eq("is_archived", false),
-          supabase.from("household_members").update({ is_archived: true, archived_year: year }).in("household_id", householdIds).eq("is_archived", false),
-        ] : []),
       ]);
       const failedUpdate = updateResults.find((result) => result.error);
       if (failedUpdate?.error) throw failedUpdate.error;
 
       // Programs have a reliable year only when their stored date is ISO-formatted.
       // Archive related entries only through those program/competition links.
-      const programIds = (prog.data ?? []).filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date.startsWith(`${year}-`) && !item.is_archived).map((item) => item.id);
+      const programRows = (prog.data ?? []) as unknown as Array<{ id: string; date: string; is_archived: boolean }>;
+      const programIds = programRows.filter((item) => /^\d{4}-\d{2}-\d{2}$/.test(item.date) && item.date.startsWith(`${year}-`) && !item.is_archived).map((item) => item.id);
       if (programIds.length) {
         const competitionIds = (comps.data ?? []).filter((item) => programIds.includes(item.program_id)).map((item) => item.id);
         const relatedUpdates = [

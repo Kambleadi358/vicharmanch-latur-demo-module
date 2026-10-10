@@ -87,17 +87,23 @@ Deno.serve(async (req: Request) => {
       .single();
   const notifId = notifRow?.id ?? null;
 
-  // Fetch all device tokens (admin can read all per RLS policy).
-  const { data: subs } = await adminClient
-    .from("push_subscriptions")
-    .select("token")
-    .order("created_at", { ascending: true });
-
-  const tokens: string[] = isDeviceTest
-    ? (subs ?? []).map((s) => s.token).filter((token) => token === payload.token)
-    : (subs ?? []).map((s) => s.token).filter(Boolean);
-  if (isDeviceTest && tokens.length !== 1) {
-    return json({ error: "current device is not registered for notifications" }, 404);
+  let tokens: string[];
+  if (isDeviceTest) {
+    const { data: subscription, error: lookupError } = await adminClient
+      .from("push_subscriptions")
+      .select("token")
+      .eq("token", payload.token as string)
+      .maybeSingle();
+    if (lookupError) return json({ error: "device registration check failed", details: lookupError.message }, 500);
+    if (!subscription) return json({ error: "current device is not registered for notifications" }, 404);
+    tokens = [subscription.token];
+  } else {
+    const { data: subs, error: subscriptionsError } = await adminClient
+      .from("push_subscriptions")
+      .select("token")
+      .order("created_at", { ascending: true });
+    if (subscriptionsError) return json({ error: "device list could not be loaded", details: subscriptionsError.message }, 500);
+    tokens = (subs ?? []).map((s) => s.token).filter(Boolean);
   }
 
   if (!LOVABLE_API_KEY || !FIREBASE_API_KEY) {
@@ -154,7 +160,8 @@ Deno.serve(async (req: Request) => {
           staleTokens.push(token);
         }
         failed++;
-      } catch {
+      } catch (error) {
+        if (!providerError) providerError = { status: 0, details: error instanceof Error ? error.message : "Notification provider request failed" };
         failed++;
       }
     })

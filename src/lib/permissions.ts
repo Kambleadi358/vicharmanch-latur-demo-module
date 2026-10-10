@@ -33,12 +33,14 @@ export async function getPermissionStatus(kind: PermissionKind): Promise<Info> {
 export async function requestPermission(kind: PermissionKind): Promise<PermState> {
   try {
     if (kind === "camera") {
+      if (!navigator.mediaDevices?.getUserMedia) return "unsupported";
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       stream.getTracks().forEach((t) => t.stop());
       return "granted";
     }
     if (kind === "notifications") {
       if (!("Notification" in window)) return "unsupported";
+      if (Notification.permission === "denied") return "denied";
       const r = await Notification.requestPermission();
       return r === "default" ? "prompt" : (r as PermState);
     }
