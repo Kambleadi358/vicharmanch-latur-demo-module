@@ -57,20 +57,17 @@ const PushNotificationBridge = () => {
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     let active = true;
-    const isAllowed = typeof Notification !== "undefined" && Notification.permission === "granted";
-    if (isAllowed) {
-      void listenForForegroundPush(async (payload) => {
+    void listenForForegroundPush(async (payload) => {
         const data = payload.data ?? {};
         const title = payload.notification?.title ?? data.title ?? "विचारमंच";
         const body = payload.notification?.body ?? data.body ?? "";
         const link = typeof data.link === "string" && data.link.startsWith("/") ? data.link : "/";
         const registration = await navigator.serviceWorker?.getRegistration();
         await registration?.showNotification(title, { body, icon: "/favicon.jpeg", data: { link } });
-      }).then((stop) => {
-        if (!active) stop?.();
-        else if (stop) unsubscribe = stop;
-      }).catch(() => undefined);
-    }
+    }).then((stop) => {
+      if (!active) stop?.();
+      else if (stop) unsubscribe = stop;
+    }).catch(() => undefined);
     const onServiceWorkerMessage = (event: MessageEvent) => {
       if (event.data?.type === "notification-click" && typeof event.data.link === "string" && event.data.link.startsWith("/")) {
         navigate(event.data.link);
