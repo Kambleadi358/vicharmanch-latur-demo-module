@@ -78,13 +78,15 @@ const PermissionManager = () => {
                   <div className="mt-0.5">{info ? stateBadge(info.state) : <span className="text-xs text-muted-foreground">तपासत आहे...</span>}</div>
                 </div>
               </div>
-              <Button
-                size="sm" variant="outline"
-                disabled={!info?.supported || info.state === "granted" || busy === k}
-                onClick={() => onRequest(k)}
-              >
-                {info?.state === "granted" ? "मंजूर" : busy === k ? "..." : info?.state === "denied" ? "पुन्हा प्रयत्न करा" : "परवानगी द्या"}
-              </Button>
+              {k === "notifications" && (
+                <Button
+                  size="sm" variant="outline"
+                  disabled={!info?.supported || info.state === "granted" || busy === k}
+                  onClick={() => onRequest(k)}
+                >
+                  {info?.state === "granted" ? "मंजूर" : busy === k ? "..." : info?.state === "denied" ? "पुन्हा प्रयत्न करा" : "परवानगी द्या"}
+                </Button>
+              )}
             </div>
           );
         })}

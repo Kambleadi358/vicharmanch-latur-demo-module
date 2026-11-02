@@ -208,6 +208,22 @@ const AnnualArchiveManager = () => {
       const failedUpdate = updateResults.find((result) => result.error);
       if (failedUpdate?.error) throw failedUpdate.error;
 
+      const householdIds = (hh.data ?? [])
+        .filter((item: any) => String(item.active_year) === year && !item.is_archived)
+        .map((item: any) => item.id as string);
+      if (householdIds.length) {
+        const archivedHouseholds = await (supabase.from("households") as any)
+          .update({ is_archived: true, archived_year: year })
+          .in("id", householdIds)
+          .eq("is_archived", false);
+        if (archivedHouseholds.error) throw archivedHouseholds.error;
+        const archivedMembers = await (supabase.from("household_members") as any)
+          .update({ is_archived: true, archived_year: year })
+          .in("household_id", householdIds)
+          .eq("is_archived", false);
+        if (archivedMembers.error) throw archivedMembers.error;
+      }
+
       // Programs have a reliable year only when their stored date is ISO-formatted.
       // Archive related entries only through those program/competition links.
       const programRows = (prog.data ?? []) as unknown as Array<{ id: string; date: string; is_archived: boolean }>;
