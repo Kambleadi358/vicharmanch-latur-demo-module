@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import ashokStambh from "@/assets/ashok-stambh.png";
 import CommunityIntelligencePanel from "./CommunityIntelligencePanel";
+import { programStatus } from "@/lib/programStatus";
 
 type SectionKey =
   | "programs" | "competition" | "participants" | "quiz"
@@ -195,15 +196,18 @@ const DashboardHome = ({ onNavigate }: Props) => {
       // Notifications
       const notes: { title: string; tone: "warn" | "info" | "ok" }[] = [];
       if (pending > 0) notes.push({ title: `${fmtINR(pending)} देणगी प्रलंबित`, tone: "warn" });
-      const { data: upcoming } = await supabase
-        .from("programs").select("name, date").eq("status", "upcoming").limit(3);
-      (upcoming || []).forEach((p: any) =>
+      const { data: allPrograms } = await supabase
+        .from("programs").select("name, date, time, status").eq("is_archived", false);
+      (allPrograms || [])
+        .filter((p: any) => programStatus(p.date, p.time, now, p.status) === "upcoming")
+        .slice(0, 3)
+        .forEach((p: any) =>
         notes.push({ title: `आगामी कार्यक्रम: ${p.name} (${p.date})`, tone: "info" }),
       );
       if (totalPaid - totalExp >= 0) notes.push({ title: `शिल्लक रक्कम ${fmtINR(totalPaid - totalExp)}`, tone: "ok" });
       setNotifications(notes.slice(0, 5));
     })();
-  }, []);
+  }, [now]);
 
   const quote = useMemo(() => QUOTES[new Date().getDate() % QUOTES.length], []);
 
