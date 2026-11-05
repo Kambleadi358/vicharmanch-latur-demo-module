@@ -1903,6 +1903,10 @@ export type Database = {
       }
     }
     Functions: {
+      admin_delete_active_household: {
+        Args: { _household_id: string }
+        Returns: Json
+      }
       clear_all_participation: { Args: never; Returns: Json }
       get_vote_tally: {
         Args: { _competition_id: string }

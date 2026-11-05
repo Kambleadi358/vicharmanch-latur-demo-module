@@ -8,6 +8,13 @@
       "when": 1790866633832,
       "tag": "0000_reopen_archive_year",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793870055489,
+      "tag": "0001_admin_delete_active_household",
+      "breakpoints": true
     }
   ]
 }
