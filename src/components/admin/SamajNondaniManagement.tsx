@@ -360,22 +360,28 @@ const HouseholdDetailDialog = ({ household, members, onClose, onChanged }: {
   };
 
   // Dependency check so the confirmation shows exactly what will happen.
-  const [deps, setDeps] = useState<{ payments: number; archivedPayments: number; archivedMembers: number; hhArchived: boolean } | null>(null);
+  const [deps, setDeps] = useState<{ payments: number; archivedPayments: number; archivedMembers: number; archivedParticipants: number; hhArchived: boolean } | null>(null);
   const [deleting, setDeleting] = useState(false);
   useEffect(() => {
     if (!confirmDeleteHH) return;
     setDeps(null);
     (async () => {
-      const [pay, apay, amem, hh] = await Promise.all([
+      const [pay, apay, amem, hh, linkedMembers] = await Promise.all([
         supabase.from("donation_payments").select("id", { count: "exact", head: true }).eq("household_id", household.id),
         supabase.from("donation_payments").select("id", { count: "exact", head: true }).eq("household_id", household.id).eq("is_archived", true),
         supabase.from("household_members").select("id", { count: "exact", head: true }).eq("household_id", household.id).eq("is_archived", true),
         supabase.from("households").select("is_archived").eq("id", household.id).maybeSingle(),
+        supabase.from("household_members").select("id").eq("household_id", household.id),
       ]);
+      const memberIds = (linkedMembers.data ?? []).map((member) => member.id);
+      const linkedParticipants = memberIds.length
+        ? await supabase.from("participants").select("id,is_archived").in("household_member_id", memberIds)
+        : { data: [], error: null };
       setDeps({
         payments: pay.count ?? 0,
         archivedPayments: apay.count ?? 0,
         archivedMembers: amem.count ?? 0,
+        archivedParticipants: linkedParticipants.data?.filter((participant) => participant.is_archived).length ?? 0,
         hhArchived: !!(hh.data as any)?.is_archived,
       });
     })();
@@ -388,15 +394,19 @@ const HouseholdDetailDialog = ({ household, members, onClose, onChanged }: {
         ? `या घराच्या ${deps.archivedPayments} देणगी नोंदी संग्रहित आहेत — प्रथम सेटिंग्ज → वार्षिक अभिलेखागार मधून ते वर्ष पुन्हा उघडा.`
         : deps.archivedMembers > 0
           ? `या घराचे ${deps.archivedMembers} सदस्य संग्रहित आहेत — प्रथम ते वर्ष पुन्हा उघडा.`
+        : deps.archivedParticipants > 0
+          ? `या घराशी जोडलेल्या ${deps.archivedParticipants} सहभागी नोंदी संग्रहित आहेत — त्या सुरक्षित ठेवण्यासाठी घर हटवता येणार नाही.`
           : null
     : null;
 
   const deleteHousehold = async () => {
     if (!deps || blockedReason) return;
     setDeleting(true);
-    const { error } = await supabase.from("households").delete().eq("id", household.id);
+    const { data, error } = await supabase.rpc("admin_delete_active_household", { _household_id: household.id });
     setDeleting(false);
     if (error) { toast.error(explainDbError(error)); return; }
+    const result = data as { status?: string; reason?: string; members_deleted?: number; payments_deleted?: number } | null;
+    if (result?.status !== "deleted") { toast.error(result?.reason || "घर हटवता आले नाही."); return; }
     toast.success("घर हटवले");
     setConfirmDeleteHH(false);
     onChanged(); onClose();
