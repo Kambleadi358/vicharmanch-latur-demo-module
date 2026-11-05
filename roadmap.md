@@ -1,8 +1,8 @@
 # Current work
 
-- [x] Correctly identify archived household/payment dependencies and preserve archive-only read protection.
+- [x] Correctly identify archived household/payment/participant dependencies and preserve archive-only read protection.
 - [x] Provide audited admin reopening for a selected archived year.
 - [x] Route existing PDF/print flows through a shared web/Android output helper.
-- [ ] Complete contextual camera/notification permission and genuine current-device push testing.
-- [ ] Use IST date/time pickers and automatically derive upcoming/completed program status.
-- [ ] Verify build, tests, public mobile layout, and notification/PDF behavior; note platform limits.
+- [x] Request camera permission only when needed, keep microphone permission unused, and request notification permission only from an explicit action.
+- [x] Use IST date/time pickers and automatically derive upcoming/completed program status in public, admin, and dashboard views.
+- [x] Verify automated tests and public mobile layout; browser/device PDF output, real push receipt, and archived deletion remain platform/session-dependent and were not exercised end-to-end.
