@@ -377,6 +377,11 @@ const HouseholdDetailDialog = ({ household, members, onClose, onChanged }: {
       const linkedParticipants = memberIds.length
         ? await supabase.from("participants").select("id,is_archived").in("household_member_id", memberIds)
         : { data: [], error: null };
+      if ([pay, apay, amem, hh, linkedMembers, linkedParticipants].some((result) => result.error)) {
+        setDeps(null);
+        toast.error("संबंधित नोंदी तपासता आल्या नाहीत. जोडणी तपासून पुन्हा प्रयत्न करा.");
+        return;
+      }
       setDeps({
         payments: pay.count ?? 0,
         archivedPayments: apay.count ?? 0,
@@ -387,7 +392,9 @@ const HouseholdDetailDialog = ({ household, members, onClose, onChanged }: {
     })();
   }, [confirmDeleteHH, household.id]);
 
-  const blockedReason = deps
+  const blockedReason = !deps
+    ? "संबंधित नोंदींची सुरक्षित तपासणी पूर्ण झालेली नाही — पुन्हा प्रयत्न करा."
+    : deps
     ? deps.hhArchived
       ? "हे घर वार्षिक अभिलेखागारात संग्रहित आहे — फक्त वाचनासाठी."
       : deps.archivedPayments > 0
