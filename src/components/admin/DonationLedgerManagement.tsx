@@ -54,12 +54,13 @@ const DonationLedgerManagement = () => {
   const [loading, setLoading] = useState(true);
   const [detailHH, setDetailHH] = useState<Household | null>(null);
 
+  const activePayments = payments.filter((payment) => !payment.is_archived);
   const availableYears = useMemo(() => {
     const set = new Set<string>([currentYear]);
-    payments.forEach((p) => set.add(p.year));
+    activePayments.forEach((p) => set.add(p.year));
     assignments.forEach((a) => set.add(a.year));
     return Array.from(set).sort().reverse();
-  }, [payments, assignments]);
+  }, [activePayments, assignments]);
 
   const loadAll = async () => {
     setLoading(true);
@@ -78,7 +79,7 @@ const DonationLedgerManagement = () => {
   const enriched = households.map((h) => {
     const assigned = assignments.find((a) => a.household_id === h.id && a.year === year)?.assigned_amount || 0;
     const paid = payments
-      .filter((p) => p.household_id === h.id && p.year === year)
+      .filter((p) => p.household_id === h.id && p.year === year && !p.is_archived)
       .reduce((s, p) => s + Number(p.amount), 0);
     const remaining = Math.max(0, assigned - paid);
     let status: "unassigned" | "pending" | "partial" | "completed";
@@ -420,7 +421,7 @@ const LedgerDialog = ({ household, year, allPayments, assignment, onClose, onCha
     return Array.from(set).sort().reverse();
   }, [year, allPayments]);
 
-  const yearPayments = allPayments.filter((p) => p.year === filterYear);
+    const yearPayments = allPayments.filter((p) => p.year === filterYear && !p.is_archived);
   const yearPaid = yearPayments.reduce((s, p) => s + Number(p.amount), 0);
   const yearAssigned = filterYear === year
     ? assignment?.assigned_amount || 0
