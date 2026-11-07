@@ -88,8 +88,8 @@ const DashboardHome = ({ onNavigate }: Props) => {
       // Donations (new ledger)
       const [{ data: assigns }, { data: pays }, { data: hh }] = await Promise.all([
         supabase.from("household_year_assignments").select("household_id, year, assigned_amount"),
-        supabase.from("donation_payments").select("household_id, year, amount, payment_date, created_at"),
-        supabase.from("households").select("id, head_name"),
+        supabase.from("donation_payments").select("household_id, year, amount, payment_date, created_at").eq("is_archived", false),
+        supabase.from("households").select("id, head_name").eq("is_archived", false),
       ]);
       const hhMap = new Map<string, string>();
       (hh || []).forEach((h: any) => hhMap.set(h.id, h.head_name));
@@ -101,15 +101,16 @@ const DashboardHome = ({ onNavigate }: Props) => {
       const { data: expenses } = await supabase
         .from("ledger_expenses")
         .select("amount, title, created_at")
+        .eq("is_archived", false)
         .order("created_at", { ascending: false });
       const totalExp = (expenses || []).reduce((s: number, r: any) => s + Number(r.amount || 0), 0);
 
       // Competitions / participants
       const [{ count: compCount }, { count: partCount }, { data: comps }, { data: parts }] = await Promise.all([
         supabase.from("competitions").select("id", { count: "exact", head: true }),
-        supabase.from("participants").select("id", { count: "exact", head: true }),
+        supabase.from("participants").select("id", { count: "exact", head: true }).eq("is_archived", false),
         supabase.from("competitions").select("id, name"),
-        supabase.from("participants").select("competition_id, name, created_at").order("created_at", { ascending: false }),
+        supabase.from("participants").select("competition_id, name, created_at").eq("is_archived", false).order("created_at", { ascending: false }),
       ]);
 
       setStats({
