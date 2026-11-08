@@ -93,18 +93,19 @@ async function renderPdfBlob(iframe: HTMLIFrameElement, landscape: boolean): Pro
   return pdf.output("blob");
 }
 
-async function deliverPdf(blob: Blob, filename: string) {
+async function deliverPdf(blob: Blob, filename: string): Promise<boolean> {
   const file = new File([blob], filename, { type: "application/pdf" });
   const nav = navigator as any;
   if (nav.canShare?.({ files: [file] })) {
-    try { await nav.share({ files: [file], title: filename }); return; }
-    catch (e: any) { if (e?.name === "AbortError") return; }
+    try { await nav.share({ files: [file], title: filename }); return true; }
+    catch (e: any) { if (e?.name === "AbortError") return false; }
   }
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = filename; a.rel = "noopener";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return true;
 }
 
 export interface PrintOptions { filename?: string; forcePdf?: boolean; }
@@ -123,8 +124,9 @@ export async function printDocument(rawHtml: string, opts: PrintOptions = {}): P
     await waitForAssets(iframe.contentDocument);
     if (usePdf) {
       const blob = await renderPdfBlob(iframe, landscape);
-      await deliverPdf(blob, filename);
-      toast.success("PDF तयार झाली", { id: tid });
+      const delivered = await deliverPdf(blob, filename);
+      if (delivered) toast.success("PDF तयार झाली", { id: tid });
+      else toast.info("PDF तयार आहे; जतन करणे रद्द झाले.", { id: tid });
     } else {
       const win = iframe.contentWindow;
       if (!win) throw new Error("print window unavailable");

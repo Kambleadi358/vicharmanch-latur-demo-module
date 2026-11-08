@@ -1,8 +1,9 @@
 # Current work
 
-- [x] Correctly identify archived household/payment/participant dependencies and preserve archive-only read protection.
-- [x] Provide audited admin reopening for a selected archived year.
-- [x] Route existing PDF/print flows through a shared web/Android output helper.
-- [x] Request camera permission only when needed, keep microphone permission unused, and request notification permission only from an explicit action.
-- [x] Use IST date/time pickers and automatically derive upcoming/completed program status in public, admin, and dashboard views.
-- [x] Verify automated tests and public mobile layout; browser/device PDF output, real push receipt, and archived deletion remain platform/session-dependent and were not exercised end-to-end.
+- [x] Preserve archive protections and use the authorized household deletion function; active household, donation, linked-participant, and archived-payment guard paths were verified with temporary records or existing archived data.
+- [x] Route print/PDF features through the shared output helper; one generated A4 PDF was visually checked for Marathi, logo, and table rendering.
+- [x] Keep camera requests contextual, notifications explicit, and microphone permission unused.
+- [x] Derive program status from the full Asia/Kolkata schedule; add/edit date and time and status changes were exercised in admin and reflected on the public page.
+- [x] Run the complete automated test suite and TypeScript check.
+- [ ] Manually verify every existing print/PDF button and Android PDF share/save/viewer behavior on target devices.
+- [ ] Manually verify camera/notification permission states and real FCM foreground, background, closed-app, tap, and token-refresh behavior on the registered Android device.
