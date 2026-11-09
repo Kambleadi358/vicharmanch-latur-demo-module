@@ -1,6 +1,6 @@
 # Current work
 
-- [ ] Clearly label donation recovery as assigned amount minus collected amount in the ledger and PDF.
+- [x] Clearly label donation recovery as assigned amount minus collected amount in the ledger, household list, and PDF.
 - [x] Preserve archive protections and use the authorized household deletion function; active household, donation, linked-participant, and archived-payment guard paths were verified with temporary records or existing archived data.
 - [x] Route print/PDF features through the shared output helper; one generated A4 PDF was visually checked for Marathi, logo, and table rendering.
 - [x] Keep camera requests contextual, notifications explicit, and microphone permission unused.
