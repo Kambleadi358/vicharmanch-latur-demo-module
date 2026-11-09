@@ -5,3 +5,4 @@
 - Derive program lifecycle status from the program's local date and time in Asia/Kolkata so no manually editable status can contradict its scheduled datetime.
 - Preserve archive protections in database triggers; restore archived records only through the admin-authorized, audited reopen function because deletion cascades can encounter protected child rows.
 - Route household removal through an admin-checked database function that preserves linked participation history and blocks archived dependencies, so cascades cannot erase protected records.
+- Calculate each household's donation recovery balance through a shared utility so the ledger and its reports consistently use assigned amount minus collected payments.
