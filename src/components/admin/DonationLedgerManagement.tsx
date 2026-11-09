@@ -25,6 +25,7 @@ import { explainDbError, ARCHIVED_LABEL, ARCHIVED_HINT } from "@/lib/dbErrors";
 import logo from "@/assets/vicharmanch-logo.jpeg";
 import stampImg from "@/assets/vicharmanch-stamp.png";
 import { PDF_ATTRIBUTION_HTML } from "@/lib/attribution";
+import { recoverableAmount } from "@/lib/donationBalance";
 
 type PaymentMode = "cash" | "online";
 const MODE_LABEL: Record<PaymentMode, string> = { cash: "रोख", online: "ऑनलाइन" };
@@ -81,7 +82,7 @@ const DonationLedgerManagement = () => {
     const paid = payments
       .filter((p) => p.household_id === h.id && p.year === year && !p.is_archived)
       .reduce((s, p) => s + Number(p.amount), 0);
-    const remaining = Math.max(0, assigned - paid);
+    const remaining = recoverableAmount(assigned, paid);
     let status: "unassigned" | "pending" | "partial" | "completed";
     if (assigned === 0) status = "unassigned";
     else if (paid >= assigned) status = "completed";
@@ -160,7 +161,7 @@ const DonationLedgerManagement = () => {
   .hdr h1{margin:0;font-size:16px;color:#0c2340}
   .hdr h2{margin:2px 0 0;font-size:11px;color:#64748b;font-weight:500}
   .meta{display:flex;justify-content:space-between;margin:6px 0 10px;font-size:11px;color:#475569}
-  .totals{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:12px}
+  .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
   .t{border:1px solid #e2e8f0;border-radius:6px;padding:6px 8px}
   .t b{display:block;font-size:9.5px;color:#64748b;font-weight:500}
   .t span{font-size:13px;font-weight:700;color:#0c2340}
@@ -202,15 +203,16 @@ const DonationLedgerManagement = () => {
     <div class="t"><b>एकूण घरे</b><span>${enriched.length}</span></div>
     <div class="t"><b>नियुक्त</b><span>${fmtINR(tg.assigned)}</span></div>
     <div class="t paid"><b>जमा (देणगी)</b><span>${fmtINR(tg.paid)}</span></div>
+    <div class="t"><b>वसुली बाकी (नियुक्त − जमा)</b><span>${fmtINR(tg.remaining)}</span></div>
     <div class="t kharch"><b>एकूण खर्च</b><span>${fmtINR(totalKharch)}</span></div>
-    <div class="t balance"><b>शिल्लक</b><span>${fmtINR(shillak)}</span></div>
+    <div class="t balance"><b>हिशोबातील शिल्लक (जमा − खर्च)</b><span>${fmtINR(shillak)}</span></div>
   </div>
 
   <h3 class="section">देणगी नोंदी (जमा)</h3>
   <table>
     <thead><tr>
       <th>घर क्र.</th><th>नाव</th><th>मोबाईल</th>
-      <th class="right">नियुक्त</th><th class="right">जमा</th><th class="right">शिल्लक</th><th>स्थिती</th>
+      <th class="right">नियुक्त</th><th class="right">जमा</th><th class="right">वसुली बाकी</th><th>स्थिती</th>
     </tr></thead>
     <tbody>
       ${rows.map((h) => `<tr>
@@ -278,12 +280,13 @@ const DonationLedgerManagement = () => {
           { l: "एकूण घरे", v: enriched.length, c: "from-blue-500 to-indigo-600" },
           { l: "नियुक्त रक्कम", v: fmtINR(totals.assigned), c: "from-violet-500 to-purple-600" },
           { l: "जमा रक्कम", v: fmtINR(totals.paid), c: "from-emerald-500 to-teal-600" },
-          { l: "शिल्लक रक्कम", v: fmtINR(totals.remaining), c: "from-amber-500 to-orange-600" },
+          { l: "एकूण वसुली बाकी", formula: "नियुक्त − जमा", v: fmtINR(totals.remaining), c: "from-amber-500 to-orange-600" },
         ].map((s) => (
           <Card key={s.l} className="border-0 shadow-md overflow-hidden relative">
             <div className={`absolute inset-0 bg-gradient-to-br ${s.c} opacity-95`} />
             <CardContent className="relative p-3 text-white">
               <p className="text-[11px] opacity-90">{s.l}</p>
+              {"formula" in s && <p className="text-[10px] opacity-80">{s.formula}</p>}
               <p className="text-lg sm:text-xl font-bold tracking-tight truncate">{s.v}</p>
             </CardContent>
           </Card>
@@ -379,7 +382,7 @@ const DonationLedgerManagement = () => {
                       <span className={`text-[10px] px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${S.c}`}>
                         <SIcon className="h-3 w-3" /> {S.label}
                       </span>
-                      <div className="text-[11px] mt-1 text-muted-foreground">शिल्लक {fmtINR(h.remaining)}</div>
+                      <div className="text-[11px] mt-1 text-muted-foreground">वसुली बाकी {fmtINR(h.remaining)}</div>
                     </div>
                   </button>
                 );
@@ -508,7 +511,7 @@ th,td{border:1px solid #999;padding:5px 7px;text-align:left}th{background:#f1f4f
 <div class="hd"><img src="${logo}" alt=""/><div><h1>भारतरत्न डॉ. बाबासाहेब आंबेडकर विचारमंच, लातूर</h1><h2>देणगी विवरण — घर #${household.house_code} · ${esc(household.head_name)} · वर्ष ${filterYear}</h2></div></div>
 <table><thead><tr><th>दिनांक</th><th class="r">रक्कम</th><th>पद्धत</th><th>टीप</th></tr></thead><tbody>${rows || `<tr><td colspan="4">या वर्षात कोणतीही देणगी नाही</td></tr>`}
 <tr><th>एकूण</th><th class="r">${fmtINR(yearPaid)}</th><th colspan="2"></th></tr></tbody></table>
-<div class="sum"><div>नियुक्त<br/><b>${fmtINR(yearAssigned)}</b></div><div>जमा<br/><b>${fmtINR(yearPaid)}</b></div><div>शिल्लक<br/><b>${fmtINR(remaining)}</b></div></div>
+<div class="sum"><div>नियुक्त<br/><b>${fmtINR(yearAssigned)}</b></div><div>जमा<br/><b>${fmtINR(yearPaid)}</b></div><div>वसुली बाकी (नियुक्त − जमा)<br/><b>${fmtINR(remaining)}</b></div></div>
 ${PDF_ATTRIBUTION_HTML}</body></html>`;
     void printDocument(html, { filename: `donation-statement-${household.house_code}-${filterYear}` });
   };
