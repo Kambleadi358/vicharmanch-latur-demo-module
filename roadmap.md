@@ -5,5 +5,6 @@
 - [x] Keep camera requests contextual, notifications explicit, and microphone permission unused.
 - [x] Derive program status from the full Asia/Kolkata schedule; add/edit date and time and status changes were exercised in admin and reflected on the public page.
 - [x] Run the complete automated test suite and TypeScript check.
+- [x] Confirm public program layout does not overflow at the current 393px mobile viewport.
 - [ ] Manually verify every existing print/PDF button and Android PDF share/save/viewer behavior on target devices.
 - [ ] Manually verify camera/notification permission states and real FCM foreground, background, closed-app, tap, and token-refresh behavior on the registered Android device.
